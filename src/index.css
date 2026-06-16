@@ -305,9 +305,10 @@ button,input,select,textarea{font-family:inherit}
 
 /* ═══════════════ AJUSTES SESIÓN 2 ═══════════════ */
 
-/* ─── HERO · cupos ─── */
-.hero-invite-cupos{display:inline-flex;align-items:center;gap:.4rem;margin-top:.38rem;padding:.22rem .85rem;border-radius:999px;background:rgba(255,200,80,.10);border:1px solid rgba(255,200,80,.30);font-family:var(--fb);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,224,172,.95)}
-.hero-invite-cupos svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* ─── HERO · cupos (con protagonismo) ─── */
+.hero-invite-cupos{display:inline-flex;align-items:baseline;gap:.45rem;margin-top:.55rem;padding:.34rem 1.1rem;border-radius:999px;background:rgba(255,200,80,.16);border:1px solid rgba(255,200,80,.46);box-shadow:0 0 18px rgba(255,200,80,.14)}
+.hero-cupos-n{font-family:var(--fd);font-weight:500;font-size:clamp(1.5rem,3.4vw,1.85rem);line-height:1;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 0 14px rgba(255,200,80,.35)}
+.hero-cupos-t{font-family:var(--fb);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,230,185,.96)}
 
 /* ─── HERO · ajuste desktop para que entre toda la información ─── */
 @media(min-width:768px){
@@ -349,10 +350,14 @@ button,input,select,textarea{font-family:inherit}
   .dress-top-logo{width:54px;margin-bottom:.3rem}
 }
 
-/* ─── RSVP · nombre + cupos ─── */
-.rsvp-who{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-bottom:1rem;padding:.55rem .95rem;border-radius:12px;background:rgba(0,0,0,.26);border:1px solid rgba(255,200,80,.20)}
-.rsvp-who-name{font-family:var(--fd);font-style:italic;font-weight:300;font-size:clamp(1.05rem,2.4vw,1.4rem);color:var(--gold);line-height:1.2}
-.rsvp-who-cupos{margin-left:auto;font-family:var(--fb);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);padding:.22rem .7rem;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);white-space:nowrap}
+/* ─── RSVP · nombre + cupos (con protagonismo) ─── */
+.rsvp-who{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1rem;padding:.55rem .65rem .55rem 1rem;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid rgba(255,200,80,.24)}
+.rsvp-who-l{display:flex;flex-direction:column;gap:.06rem;min-width:0;flex:1}
+.rsvp-who-label{font-family:var(--fb);font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.rsvp-who-name{font-family:var(--fd);font-style:italic;font-weight:300;font-size:clamp(1.1rem,2.4vw,1.45rem);color:var(--gold);line-height:1.18}
+.rsvp-who-cupos{margin-left:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:62px;padding:.32rem .7rem;border-radius:12px;background:rgba(255,200,80,.16);border:1px solid rgba(255,200,80,.44);box-shadow:0 0 16px rgba(255,200,80,.12)}
+.rsvp-who-cupos b{font-family:var(--fd);font-weight:500;font-size:1.7rem;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 0 12px rgba(255,200,80,.3)}
+.rsvp-who-cupos span{font-family:var(--fb);font-size:.48rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,230,185,.96);margin-top:.12rem}
 
 /* ─── RSVP · foto en desktop, logo en móvil ─── */
 .rsvp-img-col .rsvp-logo{display:none}

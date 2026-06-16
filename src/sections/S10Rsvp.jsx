@@ -53,9 +53,15 @@ export default function S10Rsvp({ onToast }) {
 
         {nombre && (
           <div className="rsvp-who">
-            <span className="rsvp-who-name">{nombre}</span>
+            <div className="rsvp-who-l">
+              <span className="rsvp-who-label">Invitación para</span>
+              <span className="rsvp-who-name">{nombre}</span>
+            </div>
             {cupos > 0 && (
-              <span className="rsvp-who-cupos">{cupos === 1 ? '1 cupo' : `${cupos} cupos`}</span>
+              <div className="rsvp-who-cupos">
+                <b>{cupos}</b>
+                <span>{cupos === 1 ? 'cupo' : 'cupos'}</span>
+              </div>
             )}
           </div>
         )}
