@@ -79,6 +79,9 @@ CREATE POLICY "admin_all_confirmation_members" ON confirmation_members FOR ALL T
 -- ─────────────────────────────────────────────
 -- Vista útil para el dashboard de admin
 -- ─────────────────────────────────────────────
+-- NOTA: total_members y attending_count usan COUNT(DISTINCT ...) a propósito.
+-- Al unir guest_members y confirmation_members en la misma consulta se genera
+-- un producto cartesiano (N×M filas); sin DISTINCT los conteos se inflan.
 CREATE OR REPLACE VIEW guest_summary AS
 SELECT
   g.id,
@@ -87,10 +90,10 @@ SELECT
   g.invitation_type,
   g.whatsapp,
   g.notes,
-  COUNT(gm.id)                                   AS total_members,
+  COUNT(DISTINCT gm.id)                           AS total_members,
   c.attending,
   c.confirmed_at,
-  COUNT(cm.member_id)                            AS attending_count
+  COUNT(DISTINCT cm.member_id)                    AS attending_count
 FROM guests g
 LEFT JOIN guest_members gm        ON gm.guest_id      = g.id
 LEFT JOIN confirmations c         ON c.guest_id        = g.id
