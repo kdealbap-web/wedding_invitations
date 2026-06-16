@@ -174,6 +174,21 @@ body.admin-body {
 .adm-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #c8a96e; color: #0f1117; font-weight: 600; padding: .6rem 1.2rem; border-radius: 999px; font-size: .85rem; z-index: 200; box-shadow: 0 8px 30px rgba(0,0,0,.45); animation: adm-toast-in .25s ease }
 @keyframes adm-toast-in { from { opacity: 0; transform: translate(-50%, 10px) } to { opacity: 1; transform: translate(-50%, 0) } }
 
+/* RSVP details (alimentación / canciones) */
+.adm-details      { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem }
+@media(max-width: 760px) { .adm-details { grid-template-columns: 1fr } }
+.adm-detail-card  { background: #161b26; border: 1px solid #1e293b; border-radius: 12px; padding: 1.25rem }
+.adm-detail-head  { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .9rem }
+.adm-detail-head h3 { display: flex; align-items: center; gap: .5rem; font-size: .95rem; font-weight: 600; color: #e2e8f0 }
+.adm-detail-head h3 b { font-size: .72rem; font-weight: 700; color: #c8a96e; background: rgba(200,169,110,.15); border: 1px solid rgba(200,169,110,.3); border-radius: 999px; padding: .1rem .55rem }
+.adm-detail-ico   { font-size: 1.05rem }
+.adm-detail-empty { font-size: .85rem; color: #475569; padding: .5rem 0 }
+.adm-detail-list  { list-style: none; display: flex; flex-direction: column; gap: .55rem; max-height: 280px; overflow-y: auto }
+.adm-detail-list li { font-size: .85rem; color: #cbd5e1; line-height: 1.45; padding-bottom: .55rem; border-bottom: 1px solid #0f1117 }
+.adm-detail-list li:last-child { border-bottom: none; padding-bottom: 0 }
+.adm-detail-list li b { color: #e2e8f0 }
+.adm-detail-list li span { color: #64748b }
+
 @media(max-width: 768px) {
   .adm-wrap    { flex-direction: column }
   .adm-sidebar { width: 100%; flex-direction: row; align-items: center; padding: .75rem 1rem; flex-wrap: wrap }

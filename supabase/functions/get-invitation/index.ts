@@ -23,7 +23,7 @@ serve(async (req) => {
 
     const { data, error } = await supabase
       .from('guests')
-      .select('id, name, invitation_type, guest_members(id, name, order_num)')
+      .select('id, name, invitation_type, guest_members(id, name, order_num), confirmations(attending, dietary_notes, song_request, confirmed_at, confirmation_members(member_id))')
       .eq('token', token)
       .single()
 
@@ -33,7 +33,21 @@ serve(async (req) => {
       .sort((a, b) => a.order_num - b.order_num)
       .map(({ id, name }) => ({ id, name }))
 
-    return json({ id: data.id, name: data.name, invitation_type: data.invitation_type, members })
+    // Confirmación existente (hay como máximo una por guest_id)
+    const confRow = (data.confirmations as Array<{
+      attending: boolean; dietary_notes: string | null; song_request: string | null;
+      confirmed_at: string; confirmation_members: { member_id: string }[] | null
+    }> | null)?.[0] ?? null
+
+    const confirmation = confRow ? {
+      attending:            confRow.attending,
+      dietary_notes:        confRow.dietary_notes,
+      song_request:         confRow.song_request,
+      confirmed_at:         confRow.confirmed_at,
+      attending_member_ids: (confRow.confirmation_members ?? []).map((cm) => cm.member_id),
+    } : null
+
+    return json({ id: data.id, name: data.name, invitation_type: data.invitation_type, members, confirmation })
   } catch (e) {
     return json({ error: 'internal_error' }, 500)
   }

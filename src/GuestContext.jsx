@@ -6,6 +6,7 @@ const DEFAULT = {
   nombre:  null,
   tipo:    'completa',
   members: [],
+  confirmation: null,
   loading: true,
   error:   null,
 }
@@ -45,13 +46,14 @@ export function GuestProvider({ children }) {
 
     if (payload) {
       // Show name immediately from URL payload; then fetch members from DB
-      setGuest({ guestId: null, nombre: payload.n, tipo: payload.k, members: [], loading: true, error: null })
+      setGuest({ guestId: null, nombre: payload.n, tipo: payload.k, members: [], confirmation: null, loading: true, error: null })
       getInvitation(payload.t)
         .then(data => setGuest({
           guestId: data.id,
           nombre:  data.name,
           tipo:    data.invitation_type,
           members: data.members,
+          confirmation: data.confirmation || null,
           loading: false,
           error:   null,
         }))
@@ -63,6 +65,7 @@ export function GuestProvider({ children }) {
           nombre:  data.name,
           tipo:    data.invitation_type,
           members: data.members,
+          confirmation: data.confirmation || null,
           loading: false,
           error:   null,
         }))

@@ -63,6 +63,7 @@ const FILTERS = [
 
 export default function Dashboard() {
   const [rows, setRows]         = useState([])
+  const [details, setDetails]   = useState([])
   const [loading, setLoading]   = useState(true)
   const [search, setSearch]     = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -82,6 +83,10 @@ export default function Dashboard() {
     setLoading(true)
     const { data } = await supabase.from('guest_summary').select('*').order('group_name')
     setRows(data || [])
+    const { data: confs } = await supabase
+      .from('confirmations')
+      .select('guest_id, attending, dietary_notes, song_request')
+    setDetails(confs || [])
     setSelected(new Set())
     setLoading(false)
   }, [])
@@ -123,6 +128,17 @@ export default function Dashboard() {
   }
   const counts = { all: stats.invitations, confirmed: stats.confirmed, pending: stats.pending, declined: stats.declined }
   const daysLeft = Math.max(0, Math.ceil((WEDDING.getTime() - Date.now()) / 86400000))
+
+  // ── Detalles del RSVP (alimentación / canciones) ──
+  const nameOf = (gid) => rows.find(r => r.id === gid)?.group_name || 'Invitado'
+  const dietaryList = details.filter(d => (d.dietary_notes || '').trim())
+  const songList    = details.filter(d => (d.song_request || '').trim())
+  const copyDietary = () => navigator.clipboard.writeText(
+    dietaryList.map(d => `${nameOf(d.guest_id)}: ${d.dietary_notes.trim()}`).join('\n')
+  ).then(() => flash('Restricciones copiadas'))
+  const copyPlaylist = () => navigator.clipboard.writeText(
+    songList.map(d => `${d.song_request.trim()} — (${nameOf(d.guest_id)})`).join('\n')
+  ).then(() => flash('Playlist copiada'))
 
   // ── Selección ──
   const allSelected = filtered.length > 0 && filtered.every(r => selected.has(r.id))
@@ -325,6 +341,36 @@ export default function Dashboard() {
             </tbody>
           </table>
         )}
+      </div>
+
+      {/* Detalles del RSVP — alimentación y canciones */}
+      <div className="adm-details">
+        <div className="adm-detail-card">
+          <div className="adm-detail-head">
+            <h3><span className="adm-detail-ico">🍽️</span> Restricciones alimentarias <b>{dietaryList.length}</b></h3>
+            {dietaryList.length > 0 && <button className="adm-btn adm-btn-ghost" onClick={copyDietary}>Copiar</button>}
+          </div>
+          {dietaryList.length === 0
+            ? <p className="adm-detail-empty">Sin restricciones registradas todavía.</p>
+            : <ul className="adm-detail-list">
+                {dietaryList.map(d => (
+                  <li key={d.guest_id}><b>{nameOf(d.guest_id)}:</b> {d.dietary_notes.trim()}</li>
+                ))}
+              </ul>}
+        </div>
+        <div className="adm-detail-card">
+          <div className="adm-detail-head">
+            <h3><span className="adm-detail-ico">🎵</span> Canciones para la playlist <b>{songList.length}</b></h3>
+            {songList.length > 0 && <button className="adm-btn adm-btn-ghost" onClick={copyPlaylist}>Copiar</button>}
+          </div>
+          {songList.length === 0
+            ? <p className="adm-detail-empty">Aún no hay canciones sugeridas.</p>
+            : <ul className="adm-detail-list">
+                {songList.map(d => (
+                  <li key={d.guest_id}><b>{d.song_request.trim()}</b> <span>· {nameOf(d.guest_id)}</span></li>
+                ))}
+              </ul>}
+        </div>
       </div>
 
       {showForm && (

@@ -368,6 +368,20 @@ button,input,select,textarea{font-family:inherit}
 .rsvp-who-cupos b{font-family:var(--fd);font-weight:500;font-size:1.7rem;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 0 12px rgba(255,200,80,.3)}
 .rsvp-who-cupos span{font-family:var(--fb);font-size:.48rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,230,185,.96);margin-top:.12rem}
 
+/* ─── RSVP · estado "ya confirmó" (solo lectura) ─── */
+.rsvp-confirmed{display:flex;flex-direction:column;align-items:center;text-align:center;padding:.4rem 0}
+.rsvp-confirmed-badge{width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:.85rem;background:linear-gradient(135deg,rgba(120,185,90,.32),rgba(70,140,60,.2));border:1px solid rgba(130,205,95,.45);box-shadow:0 0 22px rgba(120,200,90,.18)}
+.rsvp-confirmed-badge.soft{background:linear-gradient(135deg,rgba(200,160,100,.3),rgba(150,100,40,.2));border-color:rgba(200,169,110,.45);box-shadow:0 0 22px rgba(200,169,110,.16)}
+.rsvp-confirmed-badge svg{width:30px;height:30px;stroke:#c6ecb0;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.rsvp-confirmed-badge.soft svg{stroke:var(--gold);fill:rgba(255,200,120,.28)}
+.rsvp-confirmed-lead{font-family:var(--fd);font-size:clamp(1rem,2vw,1.18rem);line-height:1.7;color:rgba(255,255,255,.82);max-width:440px;margin:0 auto .9rem}
+.rsvp-confirmed-lead strong{color:var(--gold);font-weight:500}
+.rsvp-confirmed-list{display:flex;flex-direction:column;gap:.5rem;width:100%;max-width:440px;margin:0 auto}
+.rcr{display:flex;flex-direction:column;gap:.12rem;text-align:left;padding:.6rem .9rem;border-radius:10px;background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.1)}
+.rcr-label{font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.5);font-family:var(--fb)}
+.rcr-value{font-family:var(--fd);font-size:clamp(.95rem,1.8vw,1.1rem);color:rgba(255,255,255,.9);line-height:1.35}
+.rsvp-confirmed-foot{font-family:var(--fd);font-style:italic;font-size:.85rem;color:rgba(255,255,255,.5);margin-top:1rem;max-width:380px}
+
 /* ─── RSVP · foto en desktop, logo en móvil ─── */
 .rsvp-img-col .rsvp-logo{display:none}
 @media(max-width:680px){
