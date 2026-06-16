@@ -71,6 +71,7 @@ export default function Dashboard() {
   const [editing, setEditing]   = useState(null)
   const [selected, setSelected] = useState(() => new Set())
   const [toast, setToast]       = useState('')
+  const [live, setLive]         = useState(true)
   const toastTimer = useRef(null)
 
   const flash = useCallback((msg) => {
@@ -79,17 +80,30 @@ export default function Dashboard() {
     toastTimer.current = setTimeout(() => setToast(''), 2400)
   }, [])
 
+  const fetchData = useCallback(async () => {
+    const [{ data: gs }, { data: confs }] = await Promise.all([
+      supabase.from('guest_summary').select('*').order('group_name'),
+      supabase.from('confirmations').select('guest_id, attending, dietary_notes, song_request'),
+    ])
+    return { rows: gs || [], details: confs || [] }
+  }, [])
+
+  // Carga completa (con spinner; reinicia la selección)
   const load = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase.from('guest_summary').select('*').order('group_name')
-    setRows(data || [])
-    const { data: confs } = await supabase
-      .from('confirmations')
-      .select('guest_id, attending, dietary_notes, song_request')
-    setDetails(confs || [])
-    setSelected(new Set())
-    setLoading(false)
-  }, [])
+    const { rows: r, details: d } = await fetchData()
+    setRows(r); setDetails(d); setSelected(new Set()); setLoading(false)
+  }, [fetchData])
+
+  // Actualización silenciosa (sin spinner; conserva la selección válida)
+  const refresh = useCallback(async () => {
+    const { rows: r, details: d } = await fetchData()
+    setRows(r); setDetails(d)
+    setSelected(s => {
+      const ids = new Set(r.map(x => x.id))
+      return new Set([...s].filter(id => ids.has(id)))
+    })
+  }, [fetchData])
 
   const loadWithMembers = useCallback(async (guestId) => {
     const { data: guest } = await supabase.from('guests').select('*, guest_members(id, name, order_num)').eq('id', guestId).single()
@@ -101,6 +115,21 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Actualización automática: cada 15s y al volver a la pestaña.
+  // Se pausa con el modal abierto o si la pestaña está oculta.
+  useEffect(() => {
+    if (!live) return
+    const tick = () => { if (!document.hidden && !showForm) refresh() }
+    const id = setInterval(tick, 15000)
+    window.addEventListener('focus', tick)
+    document.addEventListener('visibilitychange', tick)
+    return () => {
+      clearInterval(id)
+      window.removeEventListener('focus', tick)
+      document.removeEventListener('visibilitychange', tick)
+    }
+  }, [live, showForm, refresh])
 
   const isPending = (r) => r.attending !== true && r.attending !== false
 
@@ -191,7 +220,20 @@ export default function Dashboard() {
           <h1 className="adm-page-title">Panel de invitados</h1>
           <p className="adm-page-sub">Angely &amp; Kevin · 12 de septiembre de 2026</p>
         </div>
-        <div className="adm-days"><b>{daysLeft}</b> días para la boda</div>
+        <div className="adm-head-right">
+          <button
+            className={`adm-live${live ? ' on' : ''}`}
+            onClick={() => setLive(v => !v)}
+            title={live ? 'Actualización automática activa · clic para pausar' : 'Actualización en pausa · clic para activar'}
+          >
+            <span className="adm-live-dot" />
+            {live ? 'En vivo' : 'Pausado'}
+          </button>
+          <button className="adm-ico" title="Actualizar ahora" onClick={() => { refresh(); flash('Actualizado') }}>
+            <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <div className="adm-days"><b>{daysLeft}</b> días para la boda</div>
+        </div>
       </div>
 
       {/* Stats */}

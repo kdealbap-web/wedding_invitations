@@ -133,6 +133,14 @@ body.admin-body {
 .adm-days       { background: rgba(200,169,110,.1); border: 1px solid rgba(200,169,110,.3); color: #c8a96e; border-radius: 999px; padding: .45rem 1rem; font-size: .8rem; white-space: nowrap }
 .adm-days b     { font-size: 1.05rem; font-weight: 700 }
 
+/* Live / auto-refresh */
+.adm-head-right { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap }
+.adm-live       { display: inline-flex; align-items: center; gap: .45rem; border-radius: 999px; padding: .42rem .85rem; font-size: .78rem; cursor: pointer; border: 1px solid #1e293b; background: #161b26; color: #64748b; transition: all .15s }
+.adm-live.on    { border-color: rgba(72,187,120,.4); color: #48bb78 }
+.adm-live-dot   { width: 8px; height: 8px; border-radius: 50%; background: #475569 }
+.adm-live.on .adm-live-dot { background: #48bb78; animation: adm-pulse 1.8s ease-out infinite }
+@keyframes adm-pulse { 0% { box-shadow: 0 0 0 0 rgba(72,187,120,.6) } 70% { box-shadow: 0 0 0 6px rgba(72,187,120,0) } 100% { box-shadow: 0 0 0 0 rgba(72,187,120,0) } }
+
 /* Stat variants */
 .adm-stat.hl      { border-color: rgba(200,169,110,.5); background: linear-gradient(180deg, rgba(200,169,110,.1), #161b26) }
 .adm-stat-n small { font-size: 1rem; color: #64748b; font-weight: 500 }
