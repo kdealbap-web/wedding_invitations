@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { GuestProvider, useGuest } from './GuestContext'
 import { p5810, p5722, p5651, p5787, p5887, p5783, p5927, p5807, p5824, p5842, p5762, p5860 } from './assets/images'
 import ProgBar     from './components/ProgBar'
@@ -81,7 +82,10 @@ const NAV_ICONS = {
 }
 
 function AppInner() {
-  const { tipo }        = useGuest()
+  const { tipo, loading, guestId, nombre } = useGuest()
+  const navigate        = useNavigate()
+  // Acceso directo (sin link de invitación) → al login del panel
+  const noInvite        = !loading && !guestId && !nombre
   const [cur, setCur]   = useState(0)
   const [exitIdx, setExitIdx] = useState(null)
   const [autoPlay, setAutoPlay] = useState(false)
@@ -123,6 +127,11 @@ function AppInner() {
     const id = setTimeout(() => goTo((cur + 1) % sections.length), 5000)
     return () => clearTimeout(id)
   }, [autoPlay, cur, sections.length, goTo])
+
+  // Sin invitación válida en la URL → redirige al login del panel
+  useEffect(() => {
+    if (noInvite) navigate('/admin/login', { replace: true })
+  }, [noInvite, navigate])
 
   // Navegación circular (loop): el último vuelve al primero y viceversa
   const next = useCallback(() => goTo((cur + 1) % sections.length), [cur, goTo, sections.length])
@@ -171,6 +180,9 @@ function AppInner() {
   }, [next, prev])
 
   const pct = sections.length > 1 ? (cur / (sections.length - 1)) * 100 : 100
+
+  // Mientras redirige al login no mostramos la invitación en blanco
+  if (noInvite) return null
 
   return (
     <div id="app">
