@@ -31,7 +31,7 @@ export default function MapaSection({ show }) {
     L.marker([10.9796, -74.8095], { icon: makePin('#4F5D3A') }).addTo(map)
       .bindPopup(
         '<strong style="font-family:Georgia,serif">Casona del Prado</strong>' +
-        '<br><span style="color:#666;font-size:13px">Calle 70 Esq. Cra 60 · Recepción 8:00 PM</span>' +
+        '<br><span style="color:#666;font-size:13px">Calle 70 Esq. Cra 60 · Recepción 8:30 PM</span>' +
         '<br><br><a href="https://maps.google.com/?q=Casona+del+Prado+Calle+70+Barranquilla" target="_blank" style="display:inline-block;margin-top:8px;padding:5px 14px;border-radius:999px;font-size:13px;color:white;background:#4F5D3A">Abrir en Maps</a>'
       )
 

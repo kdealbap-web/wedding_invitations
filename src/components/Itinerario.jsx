@@ -9,7 +9,7 @@ const items = [
   { hora: '6:30 PM · Ceremonia', titulo: 'Parroquia San Luis Beltrán',
     dir: 'Cl. 75b #42F-73, Nte. Centro Histórico, Barranquilla',
     url: 'https://maps.google.com/?q=Parroquia+San+Luis+Beltr%C3%A1n+Barranquilla+Colombia', key: true },
-  { hora: '8:00 PM · Recepción', titulo: 'Casona del Prado',
+  { hora: '8:30 PM · Recepción', titulo: 'Casona del Prado',
     dir: 'Calle 70 Esq. Cra 60 #60-11, Barrio Viejo Prado',
     url: 'https://maps.google.com/?q=Casona+del+Prado+Calle+70+Barranquilla+Colombia' },
   { hora: '9:00 PM · Cena',     titulo: 'Cena de Gala',        dir: 'Salón principal' },
@@ -60,7 +60,7 @@ export default function Itinerario() {
               <p style={{ color: 'var(--muted)', fontSize: '14px', marginTop: '8px' }}>
                 Calle 70 Esq. Cra 60 #60-11<br />Barrio Viejo Prado, Barranquilla
               </p>
-              <p className="meta" style={{ marginTop: '12px' }}>8:00 PM · Hasta el amanecer</p>
+              <p className="meta" style={{ marginTop: '12px' }}>8:30 PM · Hasta el amanecer</p>
             </div>
           </div>
         </div>

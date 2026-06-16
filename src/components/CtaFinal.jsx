@@ -5,7 +5,7 @@ function addToCalendar() {
     'DTSTART:20260912T233000Z',
     'DTEND:20260913T070000Z',
     'SUMMARY:Boda Angely & Kevin',
-    'DESCRIPTION:Ceremonia 6:30 PM - Parroquia San Luis Beltrán\\nRecepción 8:00 PM - Casona del Prado',
+    'DESCRIPTION:Ceremonia 6:30 PM - Parroquia San Luis Beltrán\\nRecepción 8:30 PM - Casona del Prado',
     'LOCATION:Parroquia San Luis Beltrán\\, Barranquilla\\, Colombia',
     'END:VEVENT', 'END:VCALENDAR',
   ].join('\r\n')
