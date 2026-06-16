@@ -405,7 +405,7 @@ button,input,select,textarea{font-family:inherit}
 @media(max-width:500px){.audio-hint{font-size:.56rem;left:3.35rem;padding:.36rem .68rem}}
 
 /* ─── PARENTS · ornamento más compacto y limpio ─── */
-.parents-illus{max-width:250px;padding:.2rem;border:none;background:none;margin-bottom:.4rem}
+.parents-illus{max-width:250px;padding:.2rem;border:none;background:none;backdrop-filter:none;border-radius:0;margin-bottom:.4rem}
 
 .hidden{display:none!important}
 
