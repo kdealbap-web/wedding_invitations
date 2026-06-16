@@ -1,4 +1,4 @@
-import { p5783 } from '../assets/images'
+import { p5783, logoWedding } from '../assets/images'
 
 const SWATCHES_F = [
   { bg: 'oklch(72% .1 75)',   title: 'Ocre' },
@@ -16,6 +16,7 @@ const PINTEREST_URL = 'https://co.pinterest.com/search/pins/?q=vestido%20de%20ga
 export default function S6DressF() {
   return (
     <>
+      <img className="dress-top-logo" src={logoWedding} alt="Angely & Kevin" />
       <p className="eyebrow" style={{ marginBottom: '.6rem' }}>Código de vestimenta</p>
       <h2 className="sec-title">Para <em>ellas</em></h2>
       <p className="sec-subtitle" style={{ marginBottom: '.25rem' }}>Noche elegante · Etiqueta formal</p>

@@ -1,43 +1,37 @@
 function ParentsIllustration() {
+  // Ramas de laurel a cada lado (se reflejan con transform)
+  const laurel = (
+    <g stroke="url(#po-gold)" strokeWidth="1.4" fill="none" strokeLinecap="round">
+      <path d="M0 0 C 26 -4 50 -2 70 8" />
+      {[8, 20, 32, 44, 56].map((x, i) => (
+        <path key={i} d={`M${x} ${2 - i * 0.6} q 7 -9 16 -5 q -5 9 -16 5`} fill="url(#po-leaf)" stroke="none" />
+      ))}
+    </g>
+  )
   return (
     <div className="parents-illus">
-      <svg viewBox="0 0 380 158" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <radialGradient id="pi-bg" cx="50%" cy="50%" r="70%">
-            <stop offset="0%" stopColor="rgba(255,195,80,0.16)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+          <linearGradient id="po-gold" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,222,150,.95)" />
+            <stop offset="100%" stopColor="rgba(196,150,70,.7)" />
+          </linearGradient>
+          <radialGradient id="po-leaf" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stopColor="rgba(255,215,130,.5)" />
+            <stop offset="100%" stopColor="rgba(196,150,70,.28)" />
           </radialGradient>
-          <linearGradient id="pi-m" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(255,215,130,0.80)" />
-            <stop offset="100%" stopColor="rgba(190,150,60,0.58)" />
-          </linearGradient>
-          <linearGradient id="pi-f" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(255,200,145,0.75)" />
-            <stop offset="100%" stopColor="rgba(200,155,80,0.52)" />
-          </linearGradient>
         </defs>
-        <ellipse cx="190" cy="79" rx="185" ry="74" fill="url(#pi-bg)" />
-        {/* Groom parents — left */}
-        <circle cx="62" cy="36" r="16" fill="url(#pi-m)" />
-        <path d="M46 54Q62 45 78 54L81 128 43 128Z" fill="url(#pi-m)" />
-        <path d="M58 54L62 66L66 54" fill="rgba(0,0,0,.14)" />
-        <circle cx="102" cy="36" r="16" fill="url(#pi-f)" />
-        <path d="M80 54Q102 45 124 54L136 128 68 128Z" fill="url(#pi-f)" />
-        {/* Center rings */}
-        <circle cx="174" cy="70" r="22" fill="none" stroke="rgba(255,195,80,.88)" strokeWidth="2.5" />
-        <circle cx="206" cy="70" r="22" fill="none" stroke="rgba(255,195,80,.88)" strokeWidth="2.5" />
-        <circle cx="190" cy="113" r="2.5" fill="rgba(255,195,80,.45)" />
-        <circle cx="183" cy="120" r="1.8" fill="rgba(255,195,80,.30)" />
-        <circle cx="197" cy="120" r="1.8" fill="rgba(255,195,80,.30)" />
-        {/* Connector lines */}
-        <line x1="136" y1="70" x2="150" y2="70" stroke="rgba(255,195,80,.32)" strokeWidth="1" />
-        <line x1="230" y1="70" x2="244" y2="70" stroke="rgba(255,195,80,.32)" strokeWidth="1" />
-        {/* Bride parents — right */}
-        <circle cx="278" cy="36" r="16" fill="url(#pi-f)" />
-        <path d="M256 54Q278 45 300 54L312 128 244 128Z" fill="url(#pi-f)" />
-        <circle cx="318" cy="36" r="16" fill="url(#pi-m)" />
-        <path d="M302 54Q318 45 334 54L337 128 299 128Z" fill="url(#pi-m)" />
-        <path d="M314 54L318 66L322 54" fill="rgba(0,0,0,.14)" />
+        {/* Anillos entrelazados */}
+        <circle cx="128" cy="52" r="24" fill="none" stroke="url(#po-gold)" strokeWidth="2.4" />
+        <circle cx="152" cy="52" r="24" fill="none" stroke="url(#po-gold)" strokeWidth="2.4" />
+        {/* Destellos */}
+        <path d="M118 34 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="rgba(255,230,160,.9)" />
+        {/* Laureles */}
+        <g transform="translate(96 64)">{laurel}</g>
+        <g transform="translate(184 64) scale(-1 1)">{laurel}</g>
+        {/* Línea + corazón inferior */}
+        <path d="M120 100 h40" stroke="url(#po-gold)" strokeWidth="1" opacity=".5" />
+        <path d="M140 96 c-3 -4 -9 -2 -9 3 c0 4 9 9 9 9 c0 0 9 -5 9 -9 c0 -5 -6 -7 -9 -3z" fill="rgba(255,215,130,.55)" />
       </svg>
     </div>
   )

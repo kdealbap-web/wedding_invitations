@@ -1,4 +1,4 @@
-import { p5927 } from '../assets/images'
+import { p5927, logoWedding } from '../assets/images'
 
 const SWATCHES_M = [
   { bg: 'oklch(30% .06 248)', title: 'Azul navy' },
@@ -14,6 +14,8 @@ const PINTEREST_URL = 'https://co.pinterest.com/search/pins/?q=traje%20boda%20ho
 export default function S7DressM() {
   return (
     <>
+      <img className="dress-top-logo" src={logoWedding} alt="Angely & Kevin" />
+      <p className="eyebrow" style={{ marginBottom: '.6rem' }}>Código de vestimenta</p>
       <h2 className="sec-title">Para <em>ellos</em></h2>
       <p className="sec-subtitle" style={{ marginBottom: '.25rem' }}>Noche elegante · Traje formal</p>
       <div className="dress-content">

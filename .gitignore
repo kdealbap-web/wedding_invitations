@@ -4,6 +4,15 @@
 .env.local
 .env.*.local
 
+# Imágenes originales sin comprimir (respaldo local)
+src/assets/img/_originals
+
+# Datos de invitados (nombres + tokens) — NO subir al repositorio
+invite-urls.tsv
+
+# Supabase CLI — archivos temporales/internos
+supabase/.temp
+
 # Logs
 logs
 *.log

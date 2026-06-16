@@ -10,7 +10,8 @@ function compute() {
 }
 
 export default function S1Hero() {
-  const { nombre } = useGuest()
+  const { nombre, members } = useGuest()
+  const cupos = members.length
   const [cd, setCd] = useState(compute)
   useEffect(() => {
     const id = setInterval(() => setCd(compute()), 1000)
@@ -25,6 +26,12 @@ export default function S1Hero() {
         <div className="hero-invite">
           <span className="hero-invite-para">Esta invitación es para</span>
           <span className="hero-invite-name">{nombre}</span>
+          {cupos > 0 && (
+            <span className="hero-invite-cupos">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M2 21v-1a6 6 0 0 1 12 0v1"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M22 21v-1a6 6 0 0 0-4-5.65"/></svg>
+              {cupos === 1 ? '1 cupo reservado' : `${cupos} cupos reservados`}
+            </span>
+          )}
         </div>
       )}
       <h1 className="hero-k">Angely</h1>
