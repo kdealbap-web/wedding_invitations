@@ -17,7 +17,7 @@ function downloadIcs() {
 }
 
 export default function S12Final({ onGoTo }) {
-  const { nombre } = useGuest()
+  const { nombre, confirmation } = useGuest()
   return (
     <>
       <img src={logoWedding} alt="Angely & Kevin" className="logo-boda" style={{ maxWidth: 'clamp(120px,18vw,200px)', marginBottom: '1rem' }} />
@@ -34,10 +34,12 @@ export default function S12Final({ onGoTo }) {
         </p>
       )}
       <div className="final-btns">
-        <button className="btn btn-acc btn-shimmer" onClick={() => onGoTo('s10')}>
-          <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          Confirmar asistencia
-        </button>
+        {!confirmation && (
+          <button className="btn btn-acc btn-shimmer" onClick={() => onGoTo('s10')}>
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Confirmar asistencia
+          </button>
+        )}
         <button className="btn btn-ghost" onClick={downloadIcs}>
           <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Guardar fecha

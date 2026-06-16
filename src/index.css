@@ -236,7 +236,7 @@ button,input,select,textarea{font-family:inherit}
 .pinterest-btn svg{width:14px;height:14px;fill:currentColor;flex-shrink:0}
 
 /* ─── S10 RSVP ─── */
-#s10 .sec-c{padding:1.5rem clamp(1rem,4vw,3rem) calc(5rem + env(safe-area-inset-bottom));overflow-y:auto}
+#s10 .sec-c{padding:1.5rem clamp(1rem,4vw,3rem) calc(4rem + env(safe-area-inset-bottom))}
 .rsvp-layout{display:grid;grid-template-columns:1fr 1.6fr;gap:1.8rem;align-items:stretch;width:100%}
 @media(max-width:680px){.rsvp-layout{grid-template-columns:1fr}}
 .rsvp-img-col{border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
@@ -388,7 +388,7 @@ button,input,select,textarea{font-family:inherit}
   .rsvp-img-col{border:none;background:none;overflow:visible}
   .rsvp-img-col .rsvp-photo{display:none}
   .rsvp-img-col .rsvp-logo{display:block;width:clamp(96px,30vw,148px);height:auto;min-height:0;margin:.2rem auto .3rem;opacity:.95;filter:drop-shadow(0 2px 14px rgba(0,0,0,.55))}
-  #s10 .sec-c{padding-top:1rem}
+  #s10 .sec-c{overflow-y:auto;padding-top:1rem;padding-bottom:calc(5rem + env(safe-area-inset-bottom))}
 }
 
 /* ─── AUDIO · estado nota (sonando / silenciado) ─── */
