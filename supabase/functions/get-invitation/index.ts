@@ -33,11 +33,15 @@ serve(async (req) => {
       .sort((a, b) => a.order_num - b.order_num)
       .map(({ id, name }) => ({ id, name }))
 
-    // Confirmación existente (hay como máximo una por guest_id)
-    const confRow = (data.confirmations as Array<{
+    // Confirmación existente (máximo una por guest_id). Por el UNIQUE en
+    // guest_id, PostgREST devuelve `confirmations` como OBJETO (relación 1-a-1);
+    // en otros casos podría venir como arreglo. Normalizamos ambos.
+    type ConfRow = {
       attending: boolean; dietary_notes: string | null; song_request: string | null;
       confirmed_at: string; confirmation_members: { member_id: string }[] | null
-    }> | null)?.[0] ?? null
+    }
+    const confRaw = data.confirmations as ConfRow | ConfRow[] | null
+    const confRow = Array.isArray(confRaw) ? (confRaw[0] ?? null) : (confRaw ?? null)
 
     const confirmation = confRow ? {
       attending:            confRow.attending,
