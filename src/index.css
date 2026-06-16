@@ -336,22 +336,28 @@ button,input,select,textarea{font-family:inherit}
 }
 
 /* ─── DRESS · logo arriba (como en el hero), NO sobre la foto ─── */
-.dress-top-logo{display:block;width:clamp(64px,9vw,92px);height:auto;margin:0 auto .45rem;opacity:.9;filter:drop-shadow(0 2px 12px rgba(0,0,0,.5))}
+.dress-top-logo{display:block;width:clamp(58px,7vw,80px);height:auto;margin:0 auto .4rem;opacity:.9;filter:drop-shadow(0 2px 12px rgba(0,0,0,.5))}
 
-/* ─── DRESS · scroll interno (como el RSVP) para que Pinterest sea
-   alcanzable cuando hay mucha info ─── */
-#s6 .sec-c,#s7 .sec-c{overflow-y:auto;padding-bottom:calc(5rem + env(safe-area-inset-bottom))}
-
-/* ─── DRESS · la foto mantiene sus dimensiones y estilo originales;
-   solo se compacta el espaciado en móvil ─── */
+/* ─── DRESS · en desktop entra sin scroll; en móvil se habilita scroll
+   interno (como el RSVP) y se compacta el espaciado para alcanzar Pinterest.
+   La foto conserva sus dimensiones y estilo originales. ─── */
 @media(max-width:680px){
-  #s6 .sec-c,#s7 .sec-c{padding-top:.9rem}
+  #s6 .sec-c,#s7 .sec-c{overflow-y:auto;padding-top:.9rem;padding-bottom:calc(5rem + env(safe-area-inset-bottom))}
   .dress-content{grid-template-columns:1fr;gap:.85rem;margin-top:.7rem}
   .dress-info{gap:.6rem}
   .dress-rule{padding:.78rem .9rem}
   .pinterest-btn{margin-top:.45rem}
   .dress-top-logo{width:54px;margin-bottom:.3rem}
 }
+
+/* ─── S8 · Solo adultos ─── */
+#s8 .sec-c{text-align:center;display:flex;flex-direction:column;align-items:center}
+.adults-card{max-width:480px;width:100%;border-radius:20px;padding:1.6rem 1.5rem;margin:1.2rem 0 .9rem;border:1px solid rgba(255,200,100,.2);background:rgba(0,0,0,.3);backdrop-filter:blur(12px)}
+.adults-ico{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;border:1px solid rgba(255,200,100,.28);background:linear-gradient(135deg,rgba(180,120,40,.28),rgba(140,80,20,.18))}
+.adults-ico svg{width:26px;height:26px;stroke:oklch(80% .12 78);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.adults-txt{font-family:var(--fd);font-weight:300;font-size:clamp(1rem,1.9vw,1.18rem);line-height:1.75;color:rgba(255,255,255,.8)}
+.adults-txt em{font-style:italic;color:var(--gold)}
+.adults-foot{font-family:var(--fd);font-style:italic;font-size:clamp(.82rem,1.5vw,.95rem);color:rgba(255,255,255,.45);margin-top:.2rem}
 
 /* ─── RSVP · nombre + cupos (con protagonismo) ─── */
 .rsvp-who{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1rem;padding:.55rem .65rem .55rem 1rem;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid rgba(255,200,80,.24)}

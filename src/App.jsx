@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { GuestProvider, useGuest } from './GuestContext'
-import { p5810, p5722, p5651, p5787, p5887, p5783, p5927, p5807, p5824, p5842, p5762 } from './assets/images'
+import { p5810, p5722, p5651, p5787, p5887, p5783, p5927, p5807, p5824, p5842, p5762, p5860 } from './assets/images'
 import ProgBar     from './components/ProgBar'
 import AudioBtn    from './components/AudioBtn'
 import NavDots     from './components/NavDots'
@@ -26,6 +26,9 @@ const ALL_SECTIONS = [
   { id: 's1',  Component: S1Hero,     label: 'Inicio',
     bg: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1920&q=80&auto=format&fit=crop',
     ov: 'linear-gradient(to bottom,rgba(0,0,0,.18) 0%,rgba(0,0,0,.03) 45%,rgba(0,0,0,.40) 100%)' },
+  { id: 's11', Component: S11Parents, label: 'Nuestros padres',
+    bg: p5824,
+    ov: 'linear-gradient(to bottom,rgba(0,0,0,.52),rgba(0,0,0,.62))' },
   { id: 's2',  Component: S2Gallery,  label: 'Nuestra galería',
     bg: p5810,
     ov: 'linear-gradient(160deg,rgba(8,4,1,.52),rgba(12,6,2,.58))' },
@@ -47,18 +50,15 @@ const ALL_SECTIONS = [
   { id: 's7',  Component: S7DressM,   label: 'Ellos · Vestimenta',
     bg: p5927,
     ov: 'linear-gradient(140deg,rgba(6,4,2,.40),rgba(10,6,3,.48))' },
-/*   { id: 's8',  Component: S8Info,     label: 'Información',
-    bg: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=1920&q=80&auto=format&fit=crop',
-    ov: 'linear-gradient(150deg,rgba(8,4,1,.30),rgba(14,7,3,.28))' },
- */  { id: 's9',  Component: S9Gifts,    label: 'Regalos',
+  { id: 's8',  Component: S8Info,     label: 'Solo adultos',
+    bg: p5860,
+    ov: 'linear-gradient(150deg,rgba(8,4,1,.50),rgba(14,7,3,.56))' },
+  { id: 's9',  Component: S9Gifts,    label: 'Regalos',
     bg: p5787,
     ov: 'linear-gradient(160deg,rgba(10,6,2,.52),rgba(18,10,3,.56))' },
   { id: 's10', Component: S10Rsvp,    label: 'Confirma tu asistencia',
     bg: p5842,
     ov: 'linear-gradient(160deg,rgba(8,4,1,.38),rgba(16,8,3,.45))' },
-  { id: 's11', Component: S11Parents, label: 'Nuestros padres',
-    bg: p5824,
-    ov: 'linear-gradient(to bottom,rgba(0,0,0,.52),rgba(0,0,0,.62))' },
   { id: 's12', Component: S12Final,   label: 'Cierre',
     bg: p5887,
     ov: 'linear-gradient(to bottom,rgba(0,0,0,.22),rgba(0,0,0,.06) 40%,rgba(0,0,0,.52))' },

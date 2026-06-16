@@ -126,6 +126,54 @@ body.admin-body {
 /* Invite URL copy */
 .adm-invite-url { font-family: monospace; font-size: .75rem; color: #94a3b8; background: #0f1117; border-radius: 6px; padding: .35rem .65rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 
+/* Page header */
+.adm-page-head  { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem }
+.adm-page-title { font-size: 1.5rem; font-weight: 700; color: #e2e8f0; letter-spacing: -.01em }
+.adm-page-sub   { font-size: .85rem; color: #64748b; margin-top: .2rem }
+.adm-days       { background: rgba(200,169,110,.1); border: 1px solid rgba(200,169,110,.3); color: #c8a96e; border-radius: 999px; padding: .45rem 1rem; font-size: .8rem; white-space: nowrap }
+.adm-days b     { font-size: 1.05rem; font-weight: 700 }
+
+/* Stat variants */
+.adm-stat.hl      { border-color: rgba(200,169,110,.5); background: linear-gradient(180deg, rgba(200,169,110,.1), #161b26) }
+.adm-stat-n small { font-size: 1rem; color: #64748b; font-weight: 500 }
+.adm-stat-n.warn  { color: #fbbf24 }
+.adm-stat-n.danger{ color: #fc814a }
+.adm-stat-l2      { font-size: .75rem; color: #64748b; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .55rem }
+.adm-stat-types   { display: flex; gap: .4rem; flex-wrap: wrap }
+
+/* Alert */
+.adm-alert   { display: flex; align-items: center; gap: .75rem; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3); color: #fbbf24; border-radius: 10px; padding: .7rem 1rem; margin-bottom: 1.25rem; font-size: .85rem }
+.adm-alert svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0 }
+.adm-alert span { flex: 1 }
+.adm-alert .adm-btn { background: rgba(251,191,36,.15); color: #fbbf24 }
+.adm-alert .adm-btn:hover { background: rgba(251,191,36,.25) }
+
+/* Filter chips */
+.adm-chips  { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.25rem }
+.adm-chip   { display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .85rem; border-radius: 999px; border: 1px solid #1e293b; background: #161b26; color: #94a3b8; font-size: .8rem; cursor: pointer; transition: all .15s }
+.adm-chip b { color: #e2e8f0; font-weight: 600 }
+.adm-chip:hover { border-color: #334155 }
+.adm-chip.on   { background: rgba(200,169,110,.15); border-color: rgba(200,169,110,.5); color: #c8a96e }
+.adm-chip.on b { color: #c8a96e }
+.adm-chip.warn:not(.on) { border-color: rgba(251,191,36,.4); color: #fbbf24 }
+.adm-chip.warn:not(.on) b { color: #fbbf24 }
+
+/* Bulk action bar */
+.adm-bulk         { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; background: #161b26; border: 1px solid rgba(200,169,110,.3); border-radius: 10px; padding: .6rem 1rem; margin-bottom: 1rem }
+.adm-bulk > span  { font-size: .85rem; color: #c8a96e; font-weight: 600 }
+.adm-bulk-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-left: auto }
+.adm-bulk-lbl     { font-size: .8rem; color: #64748b }
+
+/* Checkboxes */
+.adm-check { width: 16px; height: 16px; cursor: pointer; accent-color: #c8a96e }
+
+/* Pending row highlight */
+.adm-table tr.row-pending td:first-child { box-shadow: inset 3px 0 0 #fbbf24 }
+
+/* Toast */
+.adm-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #c8a96e; color: #0f1117; font-weight: 600; padding: .6rem 1.2rem; border-radius: 999px; font-size: .85rem; z-index: 200; box-shadow: 0 8px 30px rgba(0,0,0,.45); animation: adm-toast-in .25s ease }
+@keyframes adm-toast-in { from { opacity: 0; transform: translate(-50%, 10px) } to { opacity: 1; transform: translate(-50%, 0) } }
+
 @media(max-width: 768px) {
   .adm-wrap    { flex-direction: column }
   .adm-sidebar { width: 100%; flex-direction: row; align-items: center; padding: .75rem 1rem; flex-wrap: wrap }

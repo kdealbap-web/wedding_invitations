@@ -16,7 +16,7 @@ const items = [
   { hora: '10:30 PM · Brindis', titulo: 'Palabras & Brindis' },
   { hora: '11:00 PM · Pastel',  titulo: 'Corte de torta' },
   { hora: '11:30 PM · Fiesta',  titulo: '¡A bailar!',
-    dir: 'Pista de baile abierta hasta el amanecer', key: true },
+    dir: 'Pista de baile abierta hasta las 3am', key: true },
 ]
 
 export default function Itinerario() {
@@ -60,7 +60,7 @@ export default function Itinerario() {
               <p style={{ color: 'var(--muted)', fontSize: '14px', marginTop: '8px' }}>
                 Calle 70 Esq. Cra 60 #60-11<br />Barrio Viejo Prado, Barranquilla
               </p>
-              <p className="meta" style={{ marginTop: '12px' }}>8:30 PM · Hasta el amanecer</p>
+              <p className="meta" style={{ marginTop: '12px' }}>8:30 PM · Hasta las 3am</p>
             </div>
           </div>
         </div>
