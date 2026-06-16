@@ -23,9 +23,9 @@ export default function S9Gifts() {
             <rect width="28" height="28" rx="7" fill="#820AD1"/>
             <path d="M7 21V7l10 11.5V7h4v14l-10-11.5V21z" fill="white"/>
           </svg>
-          Nu · Nubank Colombia
+        Nu
         </div>
-        <p className="regalo-key-label">Llave BRE-B Banco Nu</p>
+        <p className="regalo-key-label">LLave de BRE-B:</p>
         <p className="regalo-key">@KDP680</p>
         <p className="regalo-min">Valor mínimo sugerido: $100.000 COP</p>
       </div>
