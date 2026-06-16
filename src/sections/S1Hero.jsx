@@ -27,9 +27,8 @@ export default function S1Hero() {
           <span className="hero-invite-para">Esta invitación es para</span>
           <span className="hero-invite-name">{nombre}</span>
           {cupos > 0 && (
-            <span className="hero-invite-cupos">
+            <span className="hero-invite-cupos" title={cupos === 1 ? '1 cupo' : `${cupos} cupos`}>
               <b className="hero-cupos-n">{cupos}</b>
-              <span className="hero-cupos-t">{cupos === 1 ? 'cupo reservado' : 'cupos reservados'}</span>
             </span>
           )}
         </div>

@@ -47,7 +47,7 @@ export default function S5Reception() {
           type="Recepción & Fiesta"
           name="Casona del Prado"
           addr="Calle 70 Esq. Cra 60 #60-11, Barrio Viejo Prado<br/>Barranquilla, Colombia"
-          arrival="Te esperamos a partir de las 8:15 PM"
+          arrival="Te esperamos a partir de las 8:30 PM"
           btnClass="btn-olive"
           btnHref="https://maps.app.goo.gl/LGt4MroYB55CimpUA"
           btnLabel="Cómo llegar"

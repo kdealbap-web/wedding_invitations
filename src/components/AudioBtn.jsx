@@ -6,8 +6,10 @@ const PLAYLIST = [
 ]
 
 export default function AudioBtn() {
-  // `on` = el usuario quiere sonido. Arranca en true → intenta autoplay.
+  // `on` = el usuario quiere sonido (arranca en true → intenta autoplay)
+  // `started` = el audio realmente está sonando
   const [on, setOn] = useState(true)
+  const [started, setStarted] = useState(false)
   const trackIdx = useRef(0)
   const audioRef = useRef(null)
 
@@ -15,12 +17,12 @@ export default function AudioBtn() {
     const a = audioRef.current
     if (!a) return Promise.reject()
     if (!a.src) a.src = PLAYLIST[trackIdx.current]
-    return a.play()
+    return a.play().then(() => setStarted(true))
   }
 
-  // Autoplay al cargar. Los navegadores bloquean el audio con sonido
-  // hasta que haya una interacción, así que si falla reintentamos en
-  // el primer gesto del usuario (toque, clic, tecla o scroll).
+  // Autoplay al cargar. Los navegadores (sobre todo móviles) bloquean el
+  // audio con sonido hasta que haya una interacción; si falla, reintentamos
+  // en el primer gesto del usuario (toque, clic, tecla o scroll).
   useEffect(() => {
     let removed = false
     const start = () => { play().catch(() => {}); cleanup() }
@@ -50,6 +52,7 @@ export default function AudioBtn() {
     if (on) {
       a.pause()
       setOn(false)
+      setStarted(false)
     } else {
       play().catch(() => {})
       setOn(true)
@@ -63,6 +66,9 @@ export default function AudioBtn() {
     a.src = PLAYLIST[trackIdx.current]
     a.play().catch(() => {})
   }
+
+  // El aviso aparece cuando queremos música pero aún no ha empezado
+  const showHint = on && !started
 
   return (
     <>
@@ -83,6 +89,12 @@ export default function AudioBtn() {
           {!on && <line x1="2" y1="2" x2="22" y2="22" />}
         </svg>
       </button>
+      {showHint && (
+        <button className="audio-hint" onClick={() => { play().catch(() => {}); setOn(true) }}>
+          <span className="audio-hint-dot" aria-hidden="true" />
+          Toca para escuchar la música
+        </button>
+      )}
     </>
   )
 }

@@ -305,10 +305,9 @@ button,input,select,textarea{font-family:inherit}
 
 /* ═══════════════ AJUSTES SESIÓN 2 ═══════════════ */
 
-/* ─── HERO · cupos (con protagonismo) ─── */
-.hero-invite-cupos{display:inline-flex;align-items:baseline;gap:.45rem;margin-top:.55rem;padding:.34rem 1.1rem;border-radius:999px;background:rgba(255,200,80,.16);border:1px solid rgba(255,200,80,.46);box-shadow:0 0 18px rgba(255,200,80,.14)}
-.hero-cupos-n{font-family:var(--fd);font-weight:500;font-size:clamp(1.5rem,3.4vw,1.85rem);line-height:1;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 0 14px rgba(255,200,80,.35)}
-.hero-cupos-t{font-family:var(--fb);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,230,185,.96)}
+/* ─── HERO · cupos (solo el número, con protagonismo) ─── */
+.hero-invite-cupos{display:inline-flex;align-items:center;justify-content:center;margin-top:.55rem;min-width:2.4em;padding:.26rem .7rem;border-radius:999px;background:rgba(255,200,80,.16);border:1px solid rgba(255,200,80,.5);box-shadow:0 0 18px rgba(255,200,80,.16)}
+.hero-cupos-n{font-family:var(--fd);font-weight:500;font-size:clamp(1.6rem,3.6vw,2rem);line-height:1;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 0 14px rgba(255,200,80,.4)}
 
 /* ─── HERO · ajuste desktop para que entre toda la información ─── */
 @media(min-width:768px){
@@ -339,10 +338,14 @@ button,input,select,textarea{font-family:inherit}
 /* ─── DRESS · logo arriba (como en el hero), NO sobre la foto ─── */
 .dress-top-logo{display:block;width:clamp(64px,9vw,92px);height:auto;margin:0 auto .45rem;opacity:.9;filter:drop-shadow(0 2px 12px rgba(0,0,0,.5))}
 
-/* ─── DRESS · solo se compacta el espaciado en móvil; la foto mantiene
-   sus dimensiones y estilo originales ─── */
+/* ─── DRESS · scroll interno (como el RSVP) para que Pinterest sea
+   alcanzable cuando hay mucha info ─── */
+#s6 .sec-c,#s7 .sec-c{overflow-y:auto;padding-bottom:calc(5rem + env(safe-area-inset-bottom))}
+
+/* ─── DRESS · la foto mantiene sus dimensiones y estilo originales;
+   solo se compacta el espaciado en móvil ─── */
 @media(max-width:680px){
-  #s6 .sec-c,#s7 .sec-c{padding-top:.9rem;padding-bottom:calc(4.25rem + env(safe-area-inset-bottom))}
+  #s6 .sec-c,#s7 .sec-c{padding-top:.9rem}
   .dress-content{grid-template-columns:1fr;gap:.85rem;margin-top:.7rem}
   .dress-info{gap:.6rem}
   .dress-rule{padding:.78rem .9rem}
@@ -373,6 +376,14 @@ button,input,select,textarea{font-family:inherit}
 #audio-btn:not(.playing){color:rgba(255,255,255,.6)}
 #audio-btn:not(.playing) svg line{stroke:rgba(255,140,120,.95)}
 
+/* ─── AUDIO · aviso para activar la música ─── */
+.audio-hint{position:fixed;top:1.18rem;left:3.55rem;z-index:601;display:inline-flex;align-items:center;gap:.45rem;padding:.4rem .8rem;border-radius:999px;border:1px solid rgba(255,200,80,.45);background:rgba(0,0,0,.55);backdrop-filter:blur(10px);color:rgba(255,232,190,.96);font-family:var(--fb);font-size:.62rem;letter-spacing:.03em;cursor:pointer;white-space:nowrap;box-shadow:0 4px 18px rgba(0,0,0,.4);animation:audio-hint-in .5s var(--sp) both,audio-hint-glow 2.4s ease-in-out .6s infinite}
+.audio-hint-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:audio-dot-pulse 1.8s ease-out infinite}
+@keyframes audio-hint-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@keyframes audio-hint-glow{0%,100%{border-color:rgba(255,200,80,.4)}50%{border-color:rgba(255,200,80,.85)}}
+@keyframes audio-dot-pulse{0%{box-shadow:0 0 0 0 rgba(255,200,80,.6)}70%{box-shadow:0 0 0 7px rgba(255,200,80,0)}100%{box-shadow:0 0 0 0 rgba(255,200,80,0)}}
+@media(max-width:500px){.audio-hint{font-size:.56rem;left:3.35rem;padding:.36rem .68rem}}
+
 /* ─── PARENTS · ornamento más compacto y limpio ─── */
 .parents-illus{max-width:250px;padding:.2rem;border:none;background:none;margin-bottom:.4rem}
 
@@ -384,4 +395,5 @@ button,input,select,textarea{font-family:inherit}
   .petal{animation:none!important;display:none}
   .hero-scroll{animation:none!important;opacity:.5}
   .btn-shimmer::after{animation:none!important}
+  .audio-hint,.audio-hint-dot{animation:none!important}
 }

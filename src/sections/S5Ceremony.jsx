@@ -47,7 +47,7 @@ export default function S5Ceremony() {
           type="Ceremonia religiosa"
           name="Parroquia San Luis Beltrán"
           addr="Cl. 75b #42F-73, Norte Centro Histórico<br/>Barranquilla, Colombia"
-          arrival="Te esperamos a partir de las 6:15 PM"
+          arrival="Te esperamos a partir de las 6:30 PM"
           btnClass="btn-acc"
           btnHref="https://maps.app.goo.gl/5vT4446MhuM34mVk7"
           btnLabel="Cómo llegar"

@@ -124,17 +124,21 @@ function AppInner() {
     return () => clearTimeout(id)
   }, [autoPlay, cur, sections.length, goTo])
 
+  // Navegación circular (loop): el último vuelve al primero y viceversa
+  const next = useCallback(() => goTo((cur + 1) % sections.length), [cur, goTo, sections.length])
+  const prev = useCallback(() => goTo((cur - 1 + sections.length) % sections.length), [cur, goTo, sections.length])
+
   // Keyboard
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  { e.preventDefault(); goTo(cur + 1) }
-      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    { e.preventDefault(); goTo(cur - 1) }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  { e.preventDefault(); next() }
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    { e.preventDefault(); prev() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [cur, goTo])
+  }, [next, prev])
 
-  // Swipe
+  // Swipe — respeta el scroll interno de las secciones desplazables
   useEffect(() => {
     const onStart = (e) => {
       touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
@@ -143,7 +147,19 @@ function AppInner() {
       const dx = touchStart.current.x - e.changedTouches[0].clientX
       const dy = touchStart.current.y - e.changedTouches[0].clientY
       if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 45) {
-        dy > 0 ? goTo(cur + 1) : goTo(cur - 1)
+        // Si la sección activa puede hacer scroll, solo navegar en los bordes
+        const c = document.querySelector('.sec.active .sec-c')
+        if (c) {
+          const oy = getComputedStyle(c).overflowY
+          const scrollable = (oy === 'auto' || oy === 'scroll') && c.scrollHeight > c.clientHeight + 2
+          if (scrollable) {
+            const atTop    = c.scrollTop <= 0
+            const atBottom = c.scrollTop + c.clientHeight >= c.scrollHeight - 2
+            if (dy > 0 && !atBottom) return   // desplazando hacia abajo dentro del contenido
+            if (dy < 0 && !atTop)    return   // desplazando hacia arriba dentro del contenido
+          }
+        }
+        dy > 0 ? next() : prev()
       }
     }
     window.addEventListener('touchstart', onStart, { passive: true })
@@ -152,7 +168,7 @@ function AppInner() {
       window.removeEventListener('touchstart', onStart)
       window.removeEventListener('touchend',   onEnd)
     }
-  }, [cur, goTo])
+  }, [next, prev])
 
   const pct = sections.length > 1 ? (cur / (sections.length - 1)) * 100 : 100
 
@@ -162,7 +178,7 @@ function AppInner() {
       <AudioBtn />
       <PetalRain />
       <NavDots sections={sections} cur={cur} onGo={goTo} icons={NAV_ICONS} />
-      <NavArrows cur={cur} total={sections.length} onPrev={() => goTo(cur - 1)} onNext={() => goTo(cur + 1)} />
+      <NavArrows cur={cur} total={sections.length} onPrev={prev} onNext={next} />
       <AutoPlayBtn active={autoPlay} onToggle={() => setAutoPlay(p => !p)} />
 
       {sections.map((sec, i) => {
