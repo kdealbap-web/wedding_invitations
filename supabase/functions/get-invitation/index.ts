@@ -51,6 +51,9 @@ serve(async (req) => {
       attending_member_ids: (confRow.confirmation_members ?? []).map((cm) => cm.member_id),
     } : null
 
+    // Registrar la visita (nunca debe romper la invitación si falla)
+    try { await supabase.from('invitation_views').insert({ guest_id: data.id }) } catch { /* ignore */ }
+
     return json({ id: data.id, name: data.name, invitation_type: data.invitation_type, members, confirmation })
   } catch (e) {
     return json({ error: 'internal_error' }, 500)

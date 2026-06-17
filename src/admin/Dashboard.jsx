@@ -54,11 +54,24 @@ function TypeBadge({ type }) {
     : <span className="badge badge-blue">Recepción</span>
 }
 
+function fmtDate(s) {
+  if (!s) return ''
+  try { return new Date(s).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) } catch { return '' }
+}
+
+function ViewBadge({ count, last }) {
+  const title = last ? `Última vista: ${fmtDate(last)}` : 'Aún no abierta'
+  if (!count)      return <span className="badge badge-gray"  title="Aún no abierta">Sin abrir</span>
+  if (count === 1) return <span className="badge badge-blue"  title={title}>1 vista</span>
+  return            <span className="badge badge-green" title={title}>{count} vistas</span>
+}
+
 const FILTERS = [
   { key: 'all',       lbl: 'Todas' },
   { key: 'confirmed', lbl: 'Confirmadas' },
   { key: 'pending',   lbl: 'Sin confirmar' },
   { key: 'declined',  lbl: 'No asisten' },
+  { key: 'unopened',  lbl: 'Sin abrir' },
 ]
 
 export default function Dashboard() {
@@ -140,7 +153,8 @@ export default function Dashboard() {
       statusFilter === 'all' ||
       (statusFilter === 'confirmed' && r.attending === true) ||
       (statusFilter === 'declined'  && r.attending === false) ||
-      (statusFilter === 'pending'   && isPending(r))
+      (statusFilter === 'pending'   && isPending(r)) ||
+      (statusFilter === 'unopened'  && !r.view_count)
     return matchSearch && matchStatus
   })
 
@@ -154,8 +168,9 @@ export default function Dashboard() {
     pendingCupos:rows.reduce((s, r) => s + (isPending(r) ? (r.total_members || 0) : 0), 0),
     completa:    rows.filter(r => r.invitation_type === 'completa').length,
     recepcion:   rows.filter(r => r.invitation_type === 'recepcion').length,
+    unopened:    rows.filter(r => !r.view_count).length,
   }
-  const counts = { all: stats.invitations, confirmed: stats.confirmed, pending: stats.pending, declined: stats.declined }
+  const counts = { all: stats.invitations, confirmed: stats.confirmed, pending: stats.pending, declined: stats.declined, unopened: stats.unopened }
   const daysLeft = Math.max(0, Math.ceil((WEDDING.getTime() - Date.now()) / 86400000))
 
   // ── Detalles del RSVP (alimentación / canciones) ──
@@ -255,6 +270,10 @@ export default function Dashboard() {
           <div className="adm-stat-l">No asisten</div>
         </div>
         <div className="adm-stat">
+          <div className="adm-stat-n warn">{stats.unopened}</div>
+          <div className="adm-stat-l">Sin abrir · posible no enviadas</div>
+        </div>
+        <div className="adm-stat">
           <div className="adm-stat-l2">Tipo de invitación</div>
           <div className="adm-stat-types">
             <span className="badge badge-gold">Completa · {stats.completa}</span>
@@ -332,6 +351,7 @@ export default function Dashboard() {
                 <th>Tipo</th>
                 <th>Cupos</th>
                 <th>Estado</th>
+                <th>Vistas</th>
                 <th>Asistirán</th>
                 <th>Acciones</th>
               </tr>
@@ -351,6 +371,7 @@ export default function Dashboard() {
                   <td><TypeBadge type={row.invitation_type} /></td>
                   <td><span style={{ color: '#94a3b8' }}>{row.total_members ?? 0}</span></td>
                   <td><StatusBadge attending={row.attending} /></td>
+                  <td><ViewBadge count={row.view_count ?? 0} last={row.last_viewed_at} /></td>
                   <td><span style={{ color: '#94a3b8' }}>{row.attending ? (row.attending_count ?? 0) : '—'}</span></td>
                   <td>
                     <div className="adm-actions">
@@ -376,7 +397,7 @@ export default function Dashboard() {
                 </tr>
               ))}
               {filtered.length === 0 && !loading && (
-                <tr><td colSpan={7} style={{ textAlign: 'center', color: '#475569', padding: '2rem' }}>
+                <tr><td colSpan={8} style={{ textAlign: 'center', color: '#475569', padding: '2rem' }}>
                   {search || statusFilter !== 'all' ? 'No hay resultados para este filtro.' : 'Aún no hay invitados. Crea el primero.'}
                 </td></tr>
               )}
