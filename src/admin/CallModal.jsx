@@ -13,6 +13,7 @@ export default function CallModal({ row, onClose, onSaved }) {
   const [ready, setReady]         = useState(false)
   const [members, setMembers]     = useState([])
   const [confId, setConfId]       = useState(null)
+  const [pre, setPre]             = useState(null)   // preconfirmación que dejó por el link
   const [attending, setAttending] = useState(null)
   const [checked, setChecked]     = useState({})
   const [total, setTotal]         = useState('')
@@ -28,7 +29,7 @@ export default function CallModal({ row, onClose, onSaved }) {
     const load = async () => {
       const { data, error: err } = await supabase
         .from('guests')
-        .select('id, name, contact_notes, guest_members(id, name, order_num), confirmations(id, attending, attending_total, dietary_notes, source, confirmation_members(member_id))')
+        .select('id, name, contact_notes, guest_members(id, name, order_num), confirmations(id, attending, attending_total, dietary_notes, source, confirmed_at, confirmation_members(member_id))')
         .eq('id', row.id)
         .single()
       if (!alive) return
@@ -53,6 +54,13 @@ export default function CallModal({ row, onClose, onSaved }) {
         const preAll = conf.attending === true && ids.size === 0
         setConfId(conf.id)
         setAttending(conf.attending)
+        if (conf.source === 'guest') {
+          setPre({
+            attending: conf.attending,
+            marcados:  ids.size,
+            cuando:    conf.confirmed_at,
+          })
+        }
         setChecked(Object.fromEntries(mem.map(m => [m.id, preAll || ids.has(m.id)])))
         setDietary(conf.dietary_notes || '')
         if (conf.attending_total != null) { setTotal(String(conf.attending_total)); setTouched(true) }
@@ -199,6 +207,19 @@ export default function CallModal({ row, onClose, onSaved }) {
           )}
         </div>
 
+        {pre && (
+          <p className="adm-call-pre">
+            <b>Preconfirmado por el link</b>
+            {pre.cuando ? ' el ' + new Date(pre.cuando).toLocaleDateString('es-CO', { day: '2-digit', month: 'long' }) : ''}:
+            {pre.attending
+              ? (pre.marcados > 0
+                  ? ` dijo que sí y marcó ${pre.marcados} persona(s).`
+                  : ' dijo que sí, pero no alcanzó a marcar a nadie (la tarjeta aún no tenía nombres).')
+              : ' dijo que no asiste.'}
+            {' '}Falta que lo confirmes por teléfono para que entre en el conteo.
+          </p>
+        )}
+
         {error && <p className="adm-err" style={{ marginBottom: '1rem' }}>{error}</p>}
 
         {!ready ? (
@@ -290,7 +311,7 @@ export default function CallModal({ row, onClose, onSaved }) {
               <div className="adm-call-spacer" />
               <button type="button" className="adm-btn adm-btn-ghost" onClick={onClose} disabled={saving}>Cancelar</button>
               <button type="button" className="adm-btn adm-btn-gold" onClick={save} disabled={saving}>
-                {saving ? 'Guardando…' : 'Guardar respuesta'}
+                {saving ? 'Guardando…' : 'Confirmar por teléfono'}
               </button>
             </div>
           </>

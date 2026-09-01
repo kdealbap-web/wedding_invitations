@@ -43,53 +43,43 @@ function waUrl(row) {
   return `https://wa.me/${(row.whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent(buildMessage(row))}`
 }
 
-// ─── Estados de contacto telefónico ───
-// Un clic en el badge de la fila avanza al siguiente estado del ciclo.
-const CONTACT = {
-  pendiente:   { lbl: 'Sin contactar', cls: 'badge-gray',  next: 'contactado'  },
-  contactado:  { lbl: 'Contactado',    cls: 'badge-blue',  next: 'no_contesta' },
-  no_contesta: { lbl: 'No contesta',   cls: 'badge-amber', next: 'pendiente'   },
+// ─── Un solo eje de estado ───
+// Solo la llamada confirma. Lo que el invitado responde desde su link es una
+// PRECONFIRMACIÓN: sirve para saber a quién llamar primero, pero no entra en el
+// número que se le pasa al catering.
+const ESTADOS = {
+  confirmado:    { lbl: 'Confirmado',    cls: 'badge-green', desc: 'La wedding habló con ellos y confirmaron' },
+  preconfirmado: { lbl: 'Preconfirmado', cls: 'badge-blue',  desc: 'Respondió que sí desde su link · falta validar por teléfono' },
+  no_asiste:     { lbl: 'No asiste',     cls: 'badge-red',   desc: 'Avisó que no puede acompañarnos' },
+  no_contesta:   { lbl: 'No contesta',   cls: 'badge-amber', desc: 'Se intentó llamar y no hubo respuesta' },
+  sin_respuesta: { lbl: 'Sin respuesta', cls: 'badge-gray',  desc: 'Nadie ha respondido ni contestado el teléfono' },
 }
-const contactOf = (r) => (CONTACT[r.contact_status] ? r.contact_status : 'pendiente')
 
-// Tarjeta que dice "asisto" pero no tiene ni un asistente definido: cuenta
-// como confirmada y aporta 0 personas. Hay que resolverla en la llamada.
-const needsReview = (r) => r.attending === true && (r.attending_count || 0) === 0
+// Excluyentes y en este orden: la respuesta pesa más que el intento de llamada.
+const estadoOf = (r) => {
+  if (r.attending === false)                        return 'no_asiste'
+  if (r.attending === true)
+    return r.confirmation_source === 'admin' ? 'confirmado' : 'preconfirmado'
+  if (r.contact_status === 'no_contesta')           return 'no_contesta'
+  return 'sin_respuesta'
+}
+
+// Personas que aporta una tarjeta.
+// Confirmada  → el dato exacto de la llamada.
+// Preconfirmada → lo que el invitado marcó y, si no marcó a nadie, los cupos de
+//   la tarjeta: es un número provisional, así que se cuenta el sobre completo.
+const personasOf = (r) => {
+  const e = estadoOf(r)
+  if (e === 'confirmado')    return r.attending_count || 0
+  if (e === 'preconfirmado') return (r.attending_count || 0) || (r.total_members || 0)
+  return 0
+}
 
 function StatusBadge({ row }) {
-  if (row.attending === true) {
-    const byPhone = row.confirmation_source === 'admin'
-    return (
-      <span
-        className="badge badge-green"
-        title={byPhone
-          ? 'Confirmado en llamada' + (row.registered_by ? ' · registró ' + row.registered_by : '')
-          : 'Confirmado por el invitado desde su link'}
-      >
-        {byPhone ? '☎ ' : ''}Confirmado
-      </span>
-    )
-  }
-  if (row.attending === false) {
-    const byPhone = row.confirmation_source === 'admin'
-    return <span className="badge badge-red" title={byPhone ? 'Avisó en la llamada' : 'Respondió desde su link'}>{byPhone ? '☎ ' : ''}No asiste</span>
-  }
-  return <span className="badge badge-gray">Pendiente</span>
-}
-
-function ContactCell({ row, onCycle }) {
-  const st = contactOf(row)
-  const c  = CONTACT[st]
-  const when = row.contacted_at ? ' · ' + fmtDate(row.contacted_at) : ''
-  return (
-    <button
-      className={`adm-contact badge ${c.cls}`}
-      title={`${c.lbl}${when}\nClic para marcar como "${CONTACT[c.next].lbl}"`}
-      onClick={() => onCycle(row, c.next)}
-    >
-      {c.lbl}{st === 'no_contesta' && row.contact_attempts > 0 ? ` · ${row.contact_attempts}` : ''}
-    </button>
-  )
+  const e = ESTADOS[estadoOf(row)]
+  const intentos = row.contact_attempts > 0 ? ` · ${row.contact_attempts} int.` : ''
+  const quien = row.registered_by ? `\nRegistró: ${row.registered_by}` : ''
+  return <span className={`badge ${e.cls}`} title={e.desc + quien}>{e.lbl}{intentos}</span>
 }
 
 function TypeBadge({ type }) {
@@ -110,28 +100,25 @@ function ViewBadge({ count, last }) {
   return            <span className="badge badge-green" title={title}>{count} vistas</span>
 }
 
-// Dos grupos de filtros: la respuesta que dieron y el estado de la llamada.
-const FILTERS_RESP = [
-  { key: 'all',       lbl: 'Todas' },
-  { key: 'confirmed', lbl: 'Confirmadas' },
-  { key: 'pending',   lbl: 'Sin confirmar' },
-  { key: 'declined',  lbl: 'No asisten' },
-  { key: 'review',    lbl: 'Revisar' },
-]
-const FILTERS_CALL = [
-  { key: 'uncontacted', lbl: 'Sin contactar' },
-  { key: 'noanswer',    lbl: 'No contesta' },
-  { key: 'talked',      lbl: 'Contactado' },
-  { key: 'unopened',    lbl: 'Sin abrir' },
+// Una sola fila de filtros: los cinco estados, en el orden en que se trabajan.
+const FILTERS = [
+  { key: 'all',           lbl: 'Todas' },
+  { key: 'preconfirmado', lbl: 'Preconfirmado' },
+  { key: 'sin_respuesta', lbl: 'Sin respuesta' },
+  { key: 'no_contesta',   lbl: 'No contesta' },
+  { key: 'confirmado',    lbl: 'Confirmado' },
+  { key: 'no_asiste',     lbl: 'No asiste' },
 ]
 
-// Orden de trabajo: primero lo que hay que resolver, al final lo ya respondido.
-const CALL_RANK = { pendiente: 1, no_contesta: 2, contactado: 3 }
-const workRank = (r) => {
-  if (needsReview(r)) return 0
-  if (r.attending !== true && r.attending !== false) return CALL_RANK[contactOf(r)]
-  return 5
+// Orden de trabajo para la wedding: primero a quién llamar, al final lo cerrado.
+const WORK_RANK = {
+  preconfirmado: 0,   // ya dijeron que sí: la llamada es un trámite corto
+  sin_respuesta: 1,
+  no_contesta:   2,
+  confirmado:    3,
+  no_asiste:     4,
 }
+const workRank = (r) => WORK_RANK[estadoOf(r)]
 
 export default function Dashboard() {
   const [rows, setRows]         = useState([])
@@ -205,21 +192,10 @@ export default function Dashboard() {
     }
   }, [live, showForm, calling, refresh])
 
-  const isPending = (r) => r.attending !== true && r.attending !== false
-
   const filtered = rows.filter(r => {
     const q = search.toLowerCase()
     const matchSearch = r.group_name?.toLowerCase().includes(q) || r.whatsapp?.includes(search)
-    const matchStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'confirmed'   && r.attending === true) ||
-      (statusFilter === 'declined'    && r.attending === false) ||
-      (statusFilter === 'pending'     && isPending(r)) ||
-      (statusFilter === 'review'      && needsReview(r)) ||
-      (statusFilter === 'uncontacted' && contactOf(r) === 'pendiente') ||
-      (statusFilter === 'noanswer'    && contactOf(r) === 'no_contesta') ||
-      (statusFilter === 'talked'      && contactOf(r) === 'contactado') ||
-      (statusFilter === 'unopened'    && !r.view_count)
+    const matchStatus = statusFilter === 'all' || estadoOf(r) === statusFilter
     return matchSearch && matchStatus
   }).sort((a, b) => (
     sortMode === 'name'
@@ -227,32 +203,31 @@ export default function Dashboard() {
       : workRank(a) - workRank(b) || a.group_name.localeCompare(b.group_name, 'es')
   ))
 
+  // Cuenta tarjetas y personas por estado en una sola pasada.
+  const por = { confirmado: 0, preconfirmado: 0, no_asiste: 0, no_contesta: 0, sin_respuesta: 0 }
+  const gente = { confirmado: 0, preconfirmado: 0, no_contesta: 0, sin_respuesta: 0 }
+  for (const r of rows) {
+    const e = estadoOf(r)
+    por[e]++
+    if (e === 'confirmado' || e === 'preconfirmado') gente[e] += personasOf(r)
+    else if (e !== 'no_asiste') gente[e] += r.total_members || 0
+  }
+
   const stats = {
     invitations: rows.length,
-    confirmed:   rows.filter(r => r.attending === true).length,
-    declined:    rows.filter(r => r.attending === false).length,
-    pending:     rows.filter(isPending).length,
     capacity:    rows.reduce((s, r) => s + (r.total_members || 0), 0),
-    people:      rows.reduce((s, r) => s + (r.attending === true ? (r.attending_count || 0) : 0), 0),
-    pendingCupos:rows.reduce((s, r) => s + (isPending(r) ? (r.total_members || 0) : 0), 0),
+    // El número real: solo lo validado por teléfono.
+    people:      gente.confirmado,
+    // Provisional: lo que respondieron por el link, todavía sin llamar.
+    prePeople:   gente.preconfirmado,
+    // Cupos que siguen en el aire (sin respuesta + no contesta).
+    openCupos:   gente.sin_respuesta + gente.no_contesta,
     completa:    rows.filter(r => r.invitation_type === 'completa').length,
     recepcion:   rows.filter(r => r.invitation_type === 'recepcion').length,
     unopened:    rows.filter(r => !r.view_count).length,
-    // Seguimiento de llamadas
-    uncontacted: rows.filter(r => contactOf(r) === 'pendiente').length,
-    noanswer:    rows.filter(r => contactOf(r) === 'no_contesta').length,
-    talked:      rows.filter(r => contactOf(r) === 'contactado').length,
-    // Confirmadas que no aportan personas
-    review:      rows.filter(needsReview).length,
-    reviewCupos: rows.reduce((s, r) => s + (needsReview(r) ? (r.total_members || 0) : 0), 0),
-    noCupos:     rows.filter(r => !r.total_members).length,
+    por,
   }
-  const counts = {
-    all: stats.invitations, confirmed: stats.confirmed, pending: stats.pending,
-    declined: stats.declined, review: stats.review, unopened: stats.unopened,
-    uncontacted: stats.uncontacted, noanswer: stats.noanswer, talked: stats.talked,
-  }
-  const contactPct = stats.invitations ? Math.round(((stats.invitations - stats.uncontacted) / stats.invitations) * 100) : 0
+  const counts = { all: stats.invitations, ...por }
   const daysLeft = Math.max(0, Math.ceil((WEDDING.getTime() - Date.now()) / 86400000))
 
   // ── Detalles del RSVP (alimentación / canciones) ──
@@ -281,16 +256,6 @@ export default function Dashboard() {
     flash(`${ids.length} cambiada(s) a ${type === 'completa' ? 'Completa' : 'Solo Recepción'}`)
     load()
   }
-  const bulkContact = async (status) => {
-    const ids = [...selected]
-    const patch = status === 'pendiente'
-      ? { contact_status: 'pendiente', contacted_at: null, contact_attempts: 0 }
-      : { contact_status: status, contacted_at: new Date().toISOString() }
-    const { error } = await supabase.from('guests').update(patch).in('id', ids)
-    if (error) return flash('Error al actualizar contacto')
-    flash(`${ids.length} marcada(s) como ${CONTACT[status].lbl}`)
-    load()
-  }
   const bulkDelete = async () => {
     if (!confirm(`¿Eliminar ${selected.size} invitación(es)? Esta acción no se puede deshacer.`)) return
     const { error } = await supabase.from('guests').delete().in('id', [...selected])
@@ -306,20 +271,6 @@ export default function Dashboard() {
   }
 
   // ── Acciones por fila ──
-  // Avanza el estado de contacto de una tarjeta. Se pinta optimista para que
-  // el clic responda al instante; si la escritura falla se recarga la verdad.
-  const cycleContact = async (row, next) => {
-    const patch = next === 'pendiente'
-      ? { contact_status: 'pendiente', contacted_at: null, contact_attempts: 0 }
-      : { contact_status: next, contacted_at: new Date().toISOString() }
-    if (next === 'no_contesta') patch.contact_attempts = (row.contact_attempts || 0) + 1
-
-    setRows(rs => rs.map(r => (r.id === row.id ? { ...r, ...patch } : r)))
-    const { error } = await supabase.from('guests').update(patch).eq('id', row.id)
-    if (error) { flash('Error al actualizar contacto'); return refresh() }
-    flash(`${row.group_name}: ${CONTACT[next].lbl}`)
-  }
-
   const handleEdit = async (row) => {
     const full = await loadWithMembers(row.id)
     if (full) { setEditing(full); setShowForm(true) }
@@ -357,41 +308,28 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — el número que manda es el confirmado por teléfono */}
       <div className="adm-stats">
         <div className="adm-stat hl">
           <div className="adm-stat-n">{stats.people}<small> / {stats.capacity}</small></div>
-          <div className="adm-stat-l">Personas confirmadas · de {stats.capacity} cupos</div>
-          {stats.review > 0 && (
-            <button className="adm-stat-hint" onClick={() => setStatusFilter('review')}>
-              ⚠ falta definir {stats.reviewCupos} cupo(s) de {stats.review} tarjeta(s) confirmada(s)
-            </button>
-          )}
+          <div className="adm-stat-l">Personas confirmadas por teléfono</div>
+          <div className="adm-stat-foot">Este es el número para el catering</div>
         </div>
         <div className="adm-stat">
-          <div className="adm-stat-n">{stats.confirmed}<small> / {stats.invitations}</small></div>
-          <div className="adm-stat-l">Invitaciones confirmadas</div>
+          <div className="adm-stat-n info">{stats.prePeople}</div>
+          <div className="adm-stat-l">Preconfirmadas · {stats.por.preconfirmado} tarjetas</div>
+          <div className="adm-stat-foot">Dijeron sí por el link · falta llamarlas</div>
         </div>
         <div className="adm-stat">
-          <div className="adm-stat-n warn">{stats.pending}</div>
-          <div className="adm-stat-l">Sin confirmar · {stats.pendingCupos} cupos</div>
-        </div>
-        <div className="adm-stat">
-          <div className="adm-stat-n danger">{stats.declined}</div>
-          <div className="adm-stat-l">No asisten</div>
-        </div>
-        <div className="adm-stat">
-          <div className="adm-stat-n warn">{stats.unopened}</div>
-          <div className="adm-stat-l">Sin abrir · posible no enviadas</div>
-        </div>
-        <div className="adm-stat">
-          <div className="adm-stat-l2">Seguimiento de llamadas · {contactPct}%</div>
-          <div className="adm-call-bar"><span style={{ width: contactPct + '%' }} /></div>
-          <div className="adm-stat-types" style={{ marginTop: '.55rem' }}>
-            <span className="badge badge-gray">Sin contactar · {stats.uncontacted}</span>
-            <span className="badge badge-amber">No contesta · {stats.noanswer}</span>
-            <span className="badge badge-blue">Contactado · {stats.talked}</span>
+          <div className="adm-stat-n warn">{stats.openCupos}</div>
+          <div className="adm-stat-l">Cupos en el aire · {stats.por.sin_respuesta + stats.por.no_contesta} tarjetas</div>
+          <div className="adm-stat-foot">
+            {stats.unopened > 0 ? `${stats.unopened} sin abrir el link · quizá no se enviaron` : 'Todas abrieron su link'}
           </div>
+        </div>
+        <div className="adm-stat">
+          <div className="adm-stat-n danger">{stats.por.no_asiste}</div>
+          <div className="adm-stat-l">No asisten</div>
         </div>
         <div className="adm-stat">
           <div className="adm-stat-l2">Tipo de invitación</div>
@@ -402,58 +340,30 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Alerta de confirmadas que no aportan personas */}
-      {stats.review > 0 && statusFilter !== 'review' && (
-        <div className="adm-alert danger">
-          <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+      {/* Qué sigue: la cola de llamadas */}
+      {stats.por.preconfirmado > 0 && statusFilter !== 'preconfirmado' && (
+        <div className="adm-alert info">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           <span>
-            <b>{stats.review}</b> tarjeta(s) dicen «Confirmado» pero no tienen ni un asistente
-            definido — <b>{stats.reviewCupos}</b> cupos que hoy <b>no</b> se están contando.
-            Resuélvelas en la llamada.
+            <b>{stats.por.preconfirmado}</b> tarjetas dijeron que sí por el link
+            (<b>{stats.prePeople}</b> personas) y esperan la llamada para quedar confirmadas.
+            Son las más fáciles: ya dijeron que van.
           </span>
-          <button className="adm-btn adm-btn-ghost" onClick={() => setStatusFilter('review')}>Ver estas {stats.review}</button>
+          <button className="adm-btn adm-btn-ghost" onClick={() => setStatusFilter('preconfirmado')}>Empezar por estas</button>
         </div>
       )}
 
-      {/* Alerta de pendientes */}
-      {stats.pending > 0 && statusFilter !== 'pending' && (
-        <div className="adm-alert">
-          <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-          <span><b>{stats.pending}</b> invitación(es) aún sin confirmar — <b>{stats.pendingCupos}</b> cupos por definir.</span>
-          <button className="adm-btn adm-btn-ghost" onClick={() => setStatusFilter('pending')}>Ver pendientes</button>
-        </div>
-      )}
-
-      {/* Filtros */}
-      <div className="adm-chip-groups">
-        <div className="adm-chip-group">
-          <span className="adm-chip-lbl">Respuesta</span>
-          <div className="adm-chips">
-            {FILTERS_RESP.map(f => (
-              <button
-                key={f.key}
-                className={`adm-chip${statusFilter === f.key ? ' on' : ''}${f.key === 'pending' && counts.pending > 0 ? ' warn' : ''}${f.key === 'review' && counts.review > 0 ? ' danger' : ''}`}
-                onClick={() => setStatusFilter(f.key)}
-              >
-                {f.lbl} <b>{counts[f.key]}</b>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="adm-chip-group">
-          <span className="adm-chip-lbl">Contacto</span>
-          <div className="adm-chips">
-            {FILTERS_CALL.map(f => (
-              <button
-                key={f.key}
-                className={`adm-chip${statusFilter === f.key ? ' on' : ''}${(f.key === 'uncontacted' || f.key === 'noanswer') && counts[f.key] > 0 ? ' warn' : ''}`}
-                onClick={() => setStatusFilter(f.key)}
-              >
-                {f.lbl} <b>{counts[f.key]}</b>
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Filtros — un solo eje, en el orden en que se trabajan */}
+      <div className="adm-chips">
+        {FILTERS.map(f => (
+          <button
+            key={f.key}
+            className={`adm-chip${statusFilter === f.key ? ' on' : ''}${f.key === 'preconfirmado' && counts.preconfirmado > 0 ? ' info' : ''}${(f.key === 'sin_respuesta' || f.key === 'no_contesta') && counts[f.key] > 0 ? ' warn' : ''}`}
+            onClick={() => setStatusFilter(f.key)}
+          >
+            {f.lbl} <b>{counts[f.key]}</b>
+          </button>
+        ))}
       </div>
 
       {/* Header de acciones */}
@@ -482,9 +392,6 @@ export default function Dashboard() {
         <div className="adm-bulk">
           <span>{selected.size} seleccionada(s)</span>
           <div className="adm-bulk-actions">
-            <span className="adm-bulk-lbl">Contacto:</span>
-            <button className="adm-btn adm-btn-ghost" onClick={() => bulkContact('contactado')}>→ Contactado</button>
-            <button className="adm-btn adm-btn-ghost" onClick={() => bulkContact('pendiente')}>→ Sin contactar</button>
             <span className="adm-bulk-lbl">Tipo:</span>
             <button className="adm-btn adm-btn-ghost" onClick={() => bulkType('completa')}>→ Completa</button>
             <button className="adm-btn adm-btn-ghost" onClick={() => bulkType('recepcion')}>→ Solo Recepción</button>
@@ -510,15 +417,14 @@ export default function Dashboard() {
                 <th>Tipo</th>
                 <th>Cupos</th>
                 <th>Estado</th>
-                <th>Contacto</th>
+                <th>Personas</th>
                 <th>Vistas</th>
-                <th>Asistirán</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(row => (
-                <tr key={row.id} className={needsReview(row) ? 'row-review' : (isPending(row) ? 'row-pending' : '')}>
+                <tr key={row.id} className={`row-${estadoOf(row)}`}>
                   <td>
                     <input type="checkbox" className="adm-check" checked={selected.has(row.id)} onChange={() => toggleSel(row.id)} aria-label={`Seleccionar ${row.group_name}`} />
                   </td>
@@ -535,15 +441,16 @@ export default function Dashboard() {
                       : <span className="adm-flag" title="Tarjeta sin miembros cargados: no suma cupos ni asistentes">sin cupos</span>}
                   </td>
                   <td><StatusBadge row={row} /></td>
-                  <td><ContactCell row={row} onCycle={cycleContact} /></td>
-                  <td><ViewBadge count={row.view_count ?? 0} last={row.last_viewed_at} /></td>
                   <td>
-                    {row.attending === true
-                      ? (needsReview(row)
-                          ? <span className="adm-flag" title="Confirmada sin asistentes definidos — resuélvela en la llamada">⚠ definir</span>
-                          : <b style={{ color: '#48bb78' }}>{row.attending_count ?? 0}</b>)
-                      : <span style={{ color: '#475569' }}>—</span>}
+                    {(() => {
+                      const e = estadoOf(row)
+                      const n = personasOf(row)
+                      if (e === 'confirmado')    return <b style={{ color: '#48bb78' }}>{n}</b>
+                      if (e === 'preconfirmado') return <span style={{ color: '#63b3ed' }} title="Provisional: se fija en la llamada">~{n}</span>
+                      return <span style={{ color: '#475569' }}>—</span>
+                    })()}
                   </td>
+                  <td><ViewBadge count={row.view_count ?? 0} last={row.last_viewed_at} /></td>
                   <td>
                     <div className="adm-actions">
                       <button className="adm-ico gold" title="Registrar llamada de confirmación" onClick={() => setCalling(row)}>
@@ -571,7 +478,7 @@ export default function Dashboard() {
                 </tr>
               ))}
               {filtered.length === 0 && !loading && (
-                <tr><td colSpan={9} style={{ textAlign: 'center', color: '#475569', padding: '2rem' }}>
+                <tr><td colSpan={8} style={{ textAlign: 'center', color: '#475569', padding: '2rem' }}>
                   {search || statusFilter !== 'all' ? 'No hay resultados para este filtro.' : 'Aún no hay invitados. Crea el primero.'}
                 </td></tr>
               )}

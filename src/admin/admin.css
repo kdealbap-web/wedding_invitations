@@ -176,40 +176,30 @@ body.admin-body {
 /* Checkboxes */
 .adm-check { width: 16px; height: 16px; cursor: pointer; accent-color: #c8a96e }
 
-/* Pending row highlight */
-.adm-table tr.row-pending td:first-child { box-shadow: inset 3px 0 0 #fbbf24 }
-.adm-table tr.row-review  td:first-child { box-shadow: inset 3px 0 0 #fc814a }
-.adm-table tr.row-review  td { background: rgba(252,129,74,.05) }
+/* Marca de franja izquierda según el estado de la tarjeta */
+.adm-table tr.row-preconfirmado td:first-child { box-shadow: inset 3px 0 0 #63b3ed }
+.adm-table tr.row-sin_respuesta td:first-child { box-shadow: inset 3px 0 0 #fbbf24 }
+.adm-table tr.row-no_contesta   td:first-child { box-shadow: inset 3px 0 0 #fbbf24 }
+.adm-table tr.row-confirmado    td:first-child { box-shadow: inset 3px 0 0 #48bb78 }
 
 /* ── Confirmación telefónica ── */
 
-/* Badge de contacto: es un badge, pero clicable (cicla el estado) */
-.adm-contact { cursor: pointer; font-family: inherit; white-space: nowrap; transition: filter .15s }
-.adm-contact:hover { filter: brightness(1.35) }
-
-/* Marca de dato faltante (sin cupos · asistentes por definir) */
+/* Marca de dato faltante (tarjeta sin cupos cargados) */
 .adm-flag { display: inline-block; font-size: .72rem; color: #fc814a; background: rgba(252,129,74,.1); border: 1px solid rgba(252,129,74,.25); border-radius: 20px; padding: .2rem .55rem; white-space: nowrap }
 
-/* Barra de avance de las llamadas */
-.adm-call-bar { height: 6px; border-radius: 99px; background: #0f1117; border: 1px solid #1e293b; overflow: hidden }
-.adm-call-bar span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #c8a96e, #48bb78); transition: width .3s ease }
+/* Pie explicativo de cada tarjeta de stats */
+.adm-stat-foot { font-size: .7rem; color: #475569; margin-top: .45rem; line-height: 1.4 }
+.adm-stat.hl .adm-stat-foot { color: #c8a96e; opacity: .8 }
+.adm-stat-n.info { color: #63b3ed }
 
-/* Aviso dentro de la tarjeta de personas confirmadas */
-.adm-stat-hint { display: block; margin-top: .55rem; background: rgba(252,129,74,.1); border: 1px solid rgba(252,129,74,.25); border-radius: 8px; color: #fc814a; font-size: .72rem; font-family: inherit; text-align: left; padding: .35rem .55rem; cursor: pointer; width: 100%; line-height: 1.35 }
-.adm-stat-hint:hover { background: rgba(252,129,74,.18) }
+/* Alerta informativa (cola de llamadas) */
+.adm-alert.info { background: rgba(99,179,237,.09); border-color: rgba(99,179,237,.3); color: #63b3ed }
+.adm-alert.info .adm-btn { background: rgba(99,179,237,.16); color: #63b3ed }
+.adm-alert.info .adm-btn:hover { background: rgba(99,179,237,.26) }
 
-/* Alerta en tono de error */
-.adm-alert.danger { background: rgba(252,129,74,.1); border-color: rgba(252,129,74,.32); color: #fc814a }
-.adm-alert.danger .adm-btn { background: rgba(252,129,74,.16); color: #fc814a }
-.adm-alert.danger .adm-btn:hover { background: rgba(252,129,74,.26) }
-
-/* Grupos de filtros */
-.adm-chip-groups { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem }
-.adm-chip-group  { display: flex; flex-direction: column; gap: .4rem }
-.adm-chip-lbl    { font-size: .68rem; color: #475569; text-transform: uppercase; letter-spacing: .08em }
-.adm-chip-group .adm-chips { margin-bottom: 0 }
-.adm-chip.danger:not(.on)   { border-color: rgba(252,129,74,.45); color: #fc814a }
-.adm-chip.danger:not(.on) b { color: #fc814a }
+/* Chip informativo */
+.adm-chip.info:not(.on)   { border-color: rgba(99,179,237,.45); color: #63b3ed }
+.adm-chip.info:not(.on) b { color: #63b3ed }
 
 /* Selector de orden */
 .adm-sort { width: auto; cursor: pointer; padding-right: .5rem }
@@ -235,6 +225,9 @@ body.admin-body {
 .adm-call-total input { width: 90px }
 .adm-call-total-note { font-size: .72rem; color: #475569 }
 .adm-call-total-note.warn { color: #fbbf24 }
+
+.adm-call-pre { font-size: .78rem; color: #a8c9e4; line-height: 1.55; background: rgba(99,179,237,.09); border: 1px solid rgba(99,179,237,.28); border-radius: 8px; padding: .6rem .75rem; margin-bottom: 1.25rem }
+.adm-call-pre b { color: #63b3ed }
 
 .adm-call-hint { font-size: .78rem; color: #64748b; line-height: 1.5; background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.22); border-radius: 8px; padding: .6rem .75rem; margin-bottom: 1rem }
 .adm-call-hint b { color: #fbbf24 }
