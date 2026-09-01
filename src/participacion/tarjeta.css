@@ -1,0 +1,199 @@
+/* ══════════════════════════════════════════════════════════════════
+   TARJETA DE PARTICIPACIÓN — versión imprimible (5 × 7 pulgadas)
+   Ruta: /participacion
+
+   Paleta clara derivada de los tokens de src/index.css: la misma
+   terracota (--acc) y las mismas tres tipografías, pero sobre marfil
+   en vez del fondo oscuro del sitio, porque esto va a papel.
+   ══════════════════════════════════════════════════════════════════ */
+
+.tp-root{
+  /* Tinta y papel */
+  --p-bg:    oklch(97.5% 0.014 78);   /* marfil cálido */
+  --p-ink:   oklch(29% 0.028 48);     /* marrón muy oscuro, casi negro */
+  --p-soft:  oklch(46% 0.030 46);     /* texto secundario */
+  --p-mute:  oklch(58% 0.022 50);     /* apoyos, direcciones */
+  --p-acc:   oklch(50% 0.10 42);      /* terracota — idéntica a --acc */
+  --p-gold:  oklch(60% 0.095 74);     /* dorado legible sobre marfil */
+  --p-line:  oklch(84% 0.028 62);     /* filetes */
+
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1.5rem;
+  padding:2.5rem 1rem 4rem;
+  background:
+    radial-gradient(120% 90% at 50% 0%, oklch(24% 0.03 48) 0%, oklch(15% 0.02 45) 60%, oklch(11% 0.015 42) 100%);
+  font-family:var(--fb);
+  overflow-y:auto;
+}
+
+/* ─── Barra de acciones (nunca se imprime) ─── */
+.tp-bar{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;align-items:center}
+.tp-bar .btn{padding:.6rem 1.4rem}
+.tp-hint{
+  font-family:var(--fb);font-size:.68rem;letter-spacing:.06em;
+  color:rgba(255,255,255,.45);text-align:center;max-width:34rem;line-height:1.7;
+}
+
+/* ─── El papel ─── */
+.tp-card{
+  width:127mm;height:178mm;              /* 5 × 7 pulgadas exactas */
+  flex-shrink:0;
+  background:var(--p-bg);
+  color:var(--p-ink);
+  padding:13mm 12mm 12mm;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  position:relative;
+  box-shadow:0 24px 60px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35);
+  /* Textura sutil de papel de algodón */
+  background-image:
+    radial-gradient(circle at 22% 18%, oklch(94% 0.02 70/.55) 0%, transparent 42%),
+    radial-gradient(circle at 78% 82%, oklch(95% 0.018 82/.45) 0%, transparent 45%);
+}
+
+/* Filete interior doble, el marco clásico de las participaciones */
+.tp-card::before{
+  content:'';position:absolute;inset:6mm;
+  border:.5pt solid var(--p-line);
+  pointer-events:none;
+}
+.tp-card::after{
+  content:'';position:absolute;inset:7.2mm;
+  border:.25pt solid var(--p-line);
+  opacity:.55;pointer-events:none;
+}
+
+/* ─── Monograma superior ─── */
+.tp-crest{width:17mm;height:auto;margin-bottom:3.6mm;opacity:.92}
+
+/* ─── Versículo (epígrafe) ─── */
+.tp-verse{
+  font-family:var(--fd);font-style:italic;font-weight:400;
+  font-size:9pt;line-height:1.62;color:var(--p-soft);
+  max-width:74mm;margin:0 auto;
+}
+.tp-verse-ref{
+  font-family:var(--fb);font-weight:400;
+  font-size:6pt;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--p-gold);margin-top:1.6mm;
+}
+
+/* ─── Filete ornamental ─── */
+.tp-rule{display:flex;align-items:center;justify-content:center;gap:2.4mm;width:66mm;margin:4.6mm auto}
+.tp-rule-l{flex:1;height:.5pt;background:linear-gradient(90deg,transparent,var(--p-line) 22%,var(--p-line) 78%,transparent)}
+.tp-rule-d{width:1.6mm;height:1.6mm;transform:rotate(45deg);background:var(--p-gold);opacity:.75;flex-shrink:0}
+
+/* ─── Padres ─── */
+.tp-parents{
+  display:grid;grid-template-columns:1fr auto 1fr;
+  gap:0 4mm;width:100%;align-items:start;
+}
+.tp-parents-div{width:.5pt;height:100%;background:var(--p-line);opacity:.7;justify-self:center}
+.tp-parent-role{
+  font-family:var(--fb);font-size:5.4pt;font-weight:500;
+  letter-spacing:.2em;text-transform:uppercase;
+  color:var(--p-acc);opacity:.75;margin-bottom:1.8mm;
+}
+.tp-parent-name{
+  font-family:var(--fd);font-weight:500;font-size:8pt;
+  line-height:1.44;color:var(--p-ink);
+}
+.tp-parent-name + .tp-parent-name{margin-top:1.8mm}
+
+/* ─── Fórmula de participación ─── */
+.tp-participan{
+  font-family:var(--fd);font-style:italic;font-weight:400;
+  font-size:8pt;line-height:1.6;color:var(--p-soft);
+  max-width:72mm;margin:5mm auto 0;
+}
+
+/* ─── Los novios ─── */
+.tp-names{margin:3.5mm 0 0}
+.tp-name{
+  font-family:var(--fs);font-weight:400;
+  font-size:27pt;line-height:1.06;color:var(--p-acc);
+}
+.tp-surname{
+  font-family:var(--fb);font-weight:400;
+  font-size:6pt;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--p-mute);margin-top:.6mm;
+}
+.tp-amp{
+  font-family:var(--fd);font-style:italic;font-weight:300;
+  font-size:12pt;color:var(--p-gold);margin:1mm 0;line-height:1;
+}
+
+/* ─── Espaciador flexible: reparte el aire sobrante ─── */
+.tp-grow{flex:1;min-height:2mm}
+
+/* ─── Fecha y eventos ─── */
+.tp-date{
+  font-family:var(--fd);font-weight:500;font-size:10.5pt;
+  letter-spacing:.02em;color:var(--p-ink);
+}
+.tp-year{
+  font-family:var(--fb);font-size:6.2pt;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--p-mute);margin-top:1.4mm;
+}
+.tp-events{
+  display:grid;grid-template-columns:1fr 1fr;gap:0 4mm;
+  width:100%;margin-top:5.8mm;align-items:start;
+}
+.tp-ev-label{
+  font-family:var(--fb);font-size:5.4pt;font-weight:500;
+  letter-spacing:.2em;text-transform:uppercase;
+  color:var(--p-acc);opacity:.75;margin-bottom:1.4mm;
+}
+.tp-ev-place{font-family:var(--fd);font-weight:500;font-size:8.4pt;line-height:1.34;color:var(--p-ink)}
+.tp-ev-addr{font-family:var(--fb);font-weight:300;font-size:6pt;line-height:1.55;color:var(--p-mute);margin-top:1mm}
+.tp-ev-time{
+  font-family:var(--fb);font-weight:500;font-size:7.6pt;
+  letter-spacing:.12em;color:var(--p-gold);margin-top:1.4mm;
+}
+
+/* ─── Escenario: permite escalar la tarjeta en pantallas pequeñas ─── */
+.tp-stage{display:flex;justify-content:center;width:100%}
+
+@media(max-width:560px){
+  .tp-root{padding:1.5rem .5rem 3rem}
+  .tp-stage{height:calc(178mm * .70)}
+  .tp-card{transform:scale(.70);transform-origin:top center}
+}
+@media(min-width:561px) and (max-width:700px){
+  .tp-stage{height:calc(178mm * .88)}
+  .tp-card{transform:scale(.88);transform-origin:top center}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   IMPRESIÓN — 5 × 7 pulgadas, sin márgenes de página.
+   En el diálogo de impresión hay que dejar "Gráficos de fondo"
+   activado para que salgan el marfil y los filetes dorados.
+   ══════════════════════════════════════════════════════════════════ */
+@page{size:127mm 178mm;margin:0}
+
+@media print{
+  html,body{
+    width:auto!important;height:auto!important;
+    overflow:visible!important;background:#fff!important;
+  }
+  #root{height:auto!important}
+
+  .tp-bar,.tp-hint{display:none!important}
+
+  .tp-root{
+    display:block;min-height:0;padding:0;gap:0;
+    background:none;overflow:visible;
+  }
+  .tp-stage{display:block;height:auto!important}
+
+  .tp-card{
+    width:127mm!important;height:178mm!important;
+    transform:none!important;margin:0!important;
+    box-shadow:none!important;
+    break-inside:avoid;page-break-inside:avoid;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+}
