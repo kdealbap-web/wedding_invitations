@@ -21,11 +21,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    // Upsert confirmation (re-submit is allowed)
+    // Upsert confirmation (re-submit is allowed).
+    // source y attending_total se mandan explícitos: si la wedding ya había
+    // registrado esta tarjeta por teléfono (source='admin', attending_total=N),
+    // la respuesta del propio invitado manda y debe limpiar ese conteo manual;
+    // sin enviarlos, ON CONFLICT DO UPDATE los dejaría intactos.
     const { data: conf, error: confErr } = await supabase
       .from('confirmations')
       .upsert(
-        { guest_id, attending, dietary_notes: dietary_notes || null, song_request: song_request || null, confirmed_at: new Date().toISOString() },
+        { guest_id, attending, dietary_notes: dietary_notes || null, song_request: song_request || null, source: 'guest', attending_total: null, confirmed_at: new Date().toISOString() },
         { onConflict: 'guest_id' },
       )
       .select('id')

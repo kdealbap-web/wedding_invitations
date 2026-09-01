@@ -63,6 +63,7 @@ body.admin-body {
 .badge-green { background: rgba(72,187,120,.12); color: #48bb78; border: 1px solid rgba(72,187,120,.25) }
 .badge-red   { background: rgba(252,129,74,.12); color: #fc814a; border: 1px solid rgba(252,129,74,.25) }
 .badge-gray  { background: rgba(148,163,184,.1); color: #64748b; border: 1px solid rgba(148,163,184,.2) }
+.badge-amber { background: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.28) }
 
 /* Action icons */
 .adm-actions { display: flex; gap: .4rem }
@@ -177,6 +178,70 @@ body.admin-body {
 
 /* Pending row highlight */
 .adm-table tr.row-pending td:first-child { box-shadow: inset 3px 0 0 #fbbf24 }
+.adm-table tr.row-review  td:first-child { box-shadow: inset 3px 0 0 #fc814a }
+.adm-table tr.row-review  td { background: rgba(252,129,74,.05) }
+
+/* ── Confirmación telefónica ── */
+
+/* Badge de contacto: es un badge, pero clicable (cicla el estado) */
+.adm-contact { cursor: pointer; font-family: inherit; white-space: nowrap; transition: filter .15s }
+.adm-contact:hover { filter: brightness(1.35) }
+
+/* Marca de dato faltante (sin cupos · asistentes por definir) */
+.adm-flag { display: inline-block; font-size: .72rem; color: #fc814a; background: rgba(252,129,74,.1); border: 1px solid rgba(252,129,74,.25); border-radius: 20px; padding: .2rem .55rem; white-space: nowrap }
+
+/* Barra de avance de las llamadas */
+.adm-call-bar { height: 6px; border-radius: 99px; background: #0f1117; border: 1px solid #1e293b; overflow: hidden }
+.adm-call-bar span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #c8a96e, #48bb78); transition: width .3s ease }
+
+/* Aviso dentro de la tarjeta de personas confirmadas */
+.adm-stat-hint { display: block; margin-top: .55rem; background: rgba(252,129,74,.1); border: 1px solid rgba(252,129,74,.25); border-radius: 8px; color: #fc814a; font-size: .72rem; font-family: inherit; text-align: left; padding: .35rem .55rem; cursor: pointer; width: 100%; line-height: 1.35 }
+.adm-stat-hint:hover { background: rgba(252,129,74,.18) }
+
+/* Alerta en tono de error */
+.adm-alert.danger { background: rgba(252,129,74,.1); border-color: rgba(252,129,74,.32); color: #fc814a }
+.adm-alert.danger .adm-btn { background: rgba(252,129,74,.16); color: #fc814a }
+.adm-alert.danger .adm-btn:hover { background: rgba(252,129,74,.26) }
+
+/* Grupos de filtros */
+.adm-chip-groups { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem }
+.adm-chip-group  { display: flex; flex-direction: column; gap: .4rem }
+.adm-chip-lbl    { font-size: .68rem; color: #475569; text-transform: uppercase; letter-spacing: .08em }
+.adm-chip-group .adm-chips { margin-bottom: 0 }
+.adm-chip.danger:not(.on)   { border-color: rgba(252,129,74,.45); color: #fc814a }
+.adm-chip.danger:not(.on) b { color: #fc814a }
+
+/* Selector de orden */
+.adm-sort { width: auto; cursor: pointer; padding-right: .5rem }
+
+/* Icono de acción dorado (registrar llamada) */
+.adm-ico.gold { background: rgba(200,169,110,.14); color: #c8a96e }
+.adm-ico.gold:hover { background: rgba(200,169,110,.26); color: #e3c88c }
+
+/* ── Modal de llamada ── */
+.adm-call-who  { display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: #0f1117; border: 1px solid #1e293b; border-radius: 10px; padding: .75rem .9rem; margin-bottom: 1.25rem }
+.adm-call-name { font-size: .95rem; font-weight: 600; color: #e2e8f0 }
+.adm-call-meta { font-size: .75rem; color: #64748b; margin-top: .15rem }
+
+.adm-call-members { display: flex; flex-wrap: wrap; gap: .4rem }
+.adm-call-chk   { display: inline-flex; align-items: center; gap: .45rem; padding: .4rem .7rem; border: 1px solid #1e293b; border-radius: 8px; font-size: .82rem; color: #64748b; cursor: pointer; transition: all .15s }
+.adm-call-chk:hover { border-color: #334155 }
+.adm-call-chk input { display: none }
+.adm-call-chk.on { background: rgba(72,187,120,.1); border-color: rgba(72,187,120,.45); color: #d3e6da }
+.adm-call-box   { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 4px; border: 1px solid #334155; font-size: .68rem; color: #0f1117; flex-shrink: 0 }
+.adm-call-chk.on .adm-call-box { background: #48bb78; border-color: #48bb78 }
+
+.adm-call-total { display: flex; align-items: center; gap: .75rem }
+.adm-call-total input { width: 90px }
+.adm-call-total-note { font-size: .72rem; color: #475569 }
+.adm-call-total-note.warn { color: #fbbf24 }
+
+.adm-call-hint { font-size: .78rem; color: #64748b; line-height: 1.5; background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.22); border-radius: 8px; padding: .6rem .75rem; margin-bottom: 1rem }
+.adm-call-hint b { color: #fbbf24 }
+
+.adm-call-actions { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #1e293b }
+.adm-call-spacer  { flex: 1 }
+.adm-call-actions svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round }
 
 /* Toast */
 .adm-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #c8a96e; color: #0f1117; font-weight: 600; padding: .6rem 1.2rem; border-radius: 999px; font-size: .85rem; z-index: 200; box-shadow: 0 8px 30px rgba(0,0,0,.45); animation: adm-toast-in .25s ease }

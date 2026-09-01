@@ -33,9 +33,18 @@ export default function S10Rsvp({ onToast }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!guestId) { onToast('Invitación no encontrada. Pide tu link personalizado a los novios.'); return }
+
+    const memberIds = attending ? members.filter(m => checked[m.id]).map(m => m.id) : []
+
+    // Confirmar "sí asisto" sin marcar a nadie dejaba la tarjeta contando como
+    // confirmada pero con 0 personas, y el panel perdía esos cupos.
+    if (attending && members.length > 0 && memberIds.length === 0) {
+      onToast('Marca al menos una persona que asistirá.')
+      return
+    }
+
     setSubmitting(true)
     try {
-      const memberIds = attending ? members.filter(m => checked[m.id]).map(m => m.id) : []
       await submitRsvp({ guest_id: guestId, attending, member_ids: memberIds, dietary_notes: dietary, song_request: song })
       setJustSent({ attending, memberIds, dietary, song })
       onToast(attending ? '¡Confirmación recibida! Nos vemos el 12 de septiembre.' : 'Gracias por avisarnos, los recordaremos.')

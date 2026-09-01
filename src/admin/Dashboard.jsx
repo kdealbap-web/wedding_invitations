@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import GuestForm from './GuestForm'
+import CallModal from './CallModal'
 
 const APP_URL = import.meta.env.VITE_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
 const WEDDING = new Date('2026-09-12T00:00:00-05:00')
@@ -42,10 +43,53 @@ function waUrl(row) {
   return `https://wa.me/${(row.whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent(buildMessage(row))}`
 }
 
-function StatusBadge({ attending }) {
-  if (attending === true)  return <span className="badge badge-green">Confirmado</span>
-  if (attending === false) return <span className="badge badge-red">No asiste</span>
+// ─── Estados de contacto telefónico ───
+// Un clic en el badge de la fila avanza al siguiente estado del ciclo.
+const CONTACT = {
+  pendiente:   { lbl: 'Sin contactar', cls: 'badge-gray',  next: 'contactado'  },
+  contactado:  { lbl: 'Contactado',    cls: 'badge-blue',  next: 'no_contesta' },
+  no_contesta: { lbl: 'No contesta',   cls: 'badge-amber', next: 'pendiente'   },
+}
+const contactOf = (r) => (CONTACT[r.contact_status] ? r.contact_status : 'pendiente')
+
+// Tarjeta que dice "asisto" pero no tiene ni un asistente definido: cuenta
+// como confirmada y aporta 0 personas. Hay que resolverla en la llamada.
+const needsReview = (r) => r.attending === true && (r.attending_count || 0) === 0
+
+function StatusBadge({ row }) {
+  if (row.attending === true) {
+    const byPhone = row.confirmation_source === 'admin'
+    return (
+      <span
+        className="badge badge-green"
+        title={byPhone
+          ? 'Confirmado en llamada' + (row.registered_by ? ' · registró ' + row.registered_by : '')
+          : 'Confirmado por el invitado desde su link'}
+      >
+        {byPhone ? '☎ ' : ''}Confirmado
+      </span>
+    )
+  }
+  if (row.attending === false) {
+    const byPhone = row.confirmation_source === 'admin'
+    return <span className="badge badge-red" title={byPhone ? 'Avisó en la llamada' : 'Respondió desde su link'}>{byPhone ? '☎ ' : ''}No asiste</span>
+  }
   return <span className="badge badge-gray">Pendiente</span>
+}
+
+function ContactCell({ row, onCycle }) {
+  const st = contactOf(row)
+  const c  = CONTACT[st]
+  const when = row.contacted_at ? ' · ' + fmtDate(row.contacted_at) : ''
+  return (
+    <button
+      className={`adm-contact badge ${c.cls}`}
+      title={`${c.lbl}${when}\nClic para marcar como "${CONTACT[c.next].lbl}"`}
+      onClick={() => onCycle(row, c.next)}
+    >
+      {c.lbl}{st === 'no_contesta' && row.contact_attempts > 0 ? ` · ${row.contact_attempts}` : ''}
+    </button>
+  )
 }
 
 function TypeBadge({ type }) {
@@ -66,13 +110,28 @@ function ViewBadge({ count, last }) {
   return            <span className="badge badge-green" title={title}>{count} vistas</span>
 }
 
-const FILTERS = [
+// Dos grupos de filtros: la respuesta que dieron y el estado de la llamada.
+const FILTERS_RESP = [
   { key: 'all',       lbl: 'Todas' },
   { key: 'confirmed', lbl: 'Confirmadas' },
   { key: 'pending',   lbl: 'Sin confirmar' },
   { key: 'declined',  lbl: 'No asisten' },
-  { key: 'unopened',  lbl: 'Sin abrir' },
+  { key: 'review',    lbl: 'Revisar' },
 ]
+const FILTERS_CALL = [
+  { key: 'uncontacted', lbl: 'Sin contactar' },
+  { key: 'noanswer',    lbl: 'No contesta' },
+  { key: 'talked',      lbl: 'Contactado' },
+  { key: 'unopened',    lbl: 'Sin abrir' },
+]
+
+// Orden de trabajo: primero lo que hay que resolver, al final lo ya respondido.
+const CALL_RANK = { pendiente: 1, no_contesta: 2, contactado: 3 }
+const workRank = (r) => {
+  if (needsReview(r)) return 0
+  if (r.attending !== true && r.attending !== false) return CALL_RANK[contactOf(r)]
+  return 5
+}
 
 export default function Dashboard() {
   const [rows, setRows]         = useState([])
@@ -80,8 +139,10 @@ export default function Dashboard() {
   const [loading, setLoading]   = useState(true)
   const [search, setSearch]     = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [sortMode, setSortMode] = useState('work')
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing]   = useState(null)
+  const [calling, setCalling]   = useState(null)
   const [selected, setSelected] = useState(() => new Set())
   const [toast, setToast]       = useState('')
   const [live, setLive]         = useState(true)
@@ -133,7 +194,7 @@ export default function Dashboard() {
   // Se pausa con el modal abierto o si la pestaña está oculta.
   useEffect(() => {
     if (!live) return
-    const tick = () => { if (!document.hidden && !showForm) refresh() }
+    const tick = () => { if (!document.hidden && !showForm && !calling) refresh() }
     const id = setInterval(tick, 15000)
     window.addEventListener('focus', tick)
     document.addEventListener('visibilitychange', tick)
@@ -142,7 +203,7 @@ export default function Dashboard() {
       window.removeEventListener('focus', tick)
       document.removeEventListener('visibilitychange', tick)
     }
-  }, [live, showForm, refresh])
+  }, [live, showForm, calling, refresh])
 
   const isPending = (r) => r.attending !== true && r.attending !== false
 
@@ -151,12 +212,20 @@ export default function Dashboard() {
     const matchSearch = r.group_name?.toLowerCase().includes(q) || r.whatsapp?.includes(search)
     const matchStatus =
       statusFilter === 'all' ||
-      (statusFilter === 'confirmed' && r.attending === true) ||
-      (statusFilter === 'declined'  && r.attending === false) ||
-      (statusFilter === 'pending'   && isPending(r)) ||
-      (statusFilter === 'unopened'  && !r.view_count)
+      (statusFilter === 'confirmed'   && r.attending === true) ||
+      (statusFilter === 'declined'    && r.attending === false) ||
+      (statusFilter === 'pending'     && isPending(r)) ||
+      (statusFilter === 'review'      && needsReview(r)) ||
+      (statusFilter === 'uncontacted' && contactOf(r) === 'pendiente') ||
+      (statusFilter === 'noanswer'    && contactOf(r) === 'no_contesta') ||
+      (statusFilter === 'talked'      && contactOf(r) === 'contactado') ||
+      (statusFilter === 'unopened'    && !r.view_count)
     return matchSearch && matchStatus
-  })
+  }).sort((a, b) => (
+    sortMode === 'name'
+      ? a.group_name.localeCompare(b.group_name, 'es')
+      : workRank(a) - workRank(b) || a.group_name.localeCompare(b.group_name, 'es')
+  ))
 
   const stats = {
     invitations: rows.length,
@@ -169,8 +238,21 @@ export default function Dashboard() {
     completa:    rows.filter(r => r.invitation_type === 'completa').length,
     recepcion:   rows.filter(r => r.invitation_type === 'recepcion').length,
     unopened:    rows.filter(r => !r.view_count).length,
+    // Seguimiento de llamadas
+    uncontacted: rows.filter(r => contactOf(r) === 'pendiente').length,
+    noanswer:    rows.filter(r => contactOf(r) === 'no_contesta').length,
+    talked:      rows.filter(r => contactOf(r) === 'contactado').length,
+    // Confirmadas que no aportan personas
+    review:      rows.filter(needsReview).length,
+    reviewCupos: rows.reduce((s, r) => s + (needsReview(r) ? (r.total_members || 0) : 0), 0),
+    noCupos:     rows.filter(r => !r.total_members).length,
   }
-  const counts = { all: stats.invitations, confirmed: stats.confirmed, pending: stats.pending, declined: stats.declined, unopened: stats.unopened }
+  const counts = {
+    all: stats.invitations, confirmed: stats.confirmed, pending: stats.pending,
+    declined: stats.declined, review: stats.review, unopened: stats.unopened,
+    uncontacted: stats.uncontacted, noanswer: stats.noanswer, talked: stats.talked,
+  }
+  const contactPct = stats.invitations ? Math.round(((stats.invitations - stats.uncontacted) / stats.invitations) * 100) : 0
   const daysLeft = Math.max(0, Math.ceil((WEDDING.getTime() - Date.now()) / 86400000))
 
   // ── Detalles del RSVP (alimentación / canciones) ──
@@ -199,6 +281,16 @@ export default function Dashboard() {
     flash(`${ids.length} cambiada(s) a ${type === 'completa' ? 'Completa' : 'Solo Recepción'}`)
     load()
   }
+  const bulkContact = async (status) => {
+    const ids = [...selected]
+    const patch = status === 'pendiente'
+      ? { contact_status: 'pendiente', contacted_at: null, contact_attempts: 0 }
+      : { contact_status: status, contacted_at: new Date().toISOString() }
+    const { error } = await supabase.from('guests').update(patch).in('id', ids)
+    if (error) return flash('Error al actualizar contacto')
+    flash(`${ids.length} marcada(s) como ${CONTACT[status].lbl}`)
+    load()
+  }
   const bulkDelete = async () => {
     if (!confirm(`¿Eliminar ${selected.size} invitación(es)? Esta acción no se puede deshacer.`)) return
     const { error } = await supabase.from('guests').delete().in('id', [...selected])
@@ -214,6 +306,20 @@ export default function Dashboard() {
   }
 
   // ── Acciones por fila ──
+  // Avanza el estado de contacto de una tarjeta. Se pinta optimista para que
+  // el clic responda al instante; si la escritura falla se recarga la verdad.
+  const cycleContact = async (row, next) => {
+    const patch = next === 'pendiente'
+      ? { contact_status: 'pendiente', contacted_at: null, contact_attempts: 0 }
+      : { contact_status: next, contacted_at: new Date().toISOString() }
+    if (next === 'no_contesta') patch.contact_attempts = (row.contact_attempts || 0) + 1
+
+    setRows(rs => rs.map(r => (r.id === row.id ? { ...r, ...patch } : r)))
+    const { error } = await supabase.from('guests').update(patch).eq('id', row.id)
+    if (error) { flash('Error al actualizar contacto'); return refresh() }
+    flash(`${row.group_name}: ${CONTACT[next].lbl}`)
+  }
+
   const handleEdit = async (row) => {
     const full = await loadWithMembers(row.id)
     if (full) { setEditing(full); setShowForm(true) }
@@ -256,6 +362,11 @@ export default function Dashboard() {
         <div className="adm-stat hl">
           <div className="adm-stat-n">{stats.people}<small> / {stats.capacity}</small></div>
           <div className="adm-stat-l">Personas confirmadas · de {stats.capacity} cupos</div>
+          {stats.review > 0 && (
+            <button className="adm-stat-hint" onClick={() => setStatusFilter('review')}>
+              ⚠ falta definir {stats.reviewCupos} cupo(s) de {stats.review} tarjeta(s) confirmada(s)
+            </button>
+          )}
         </div>
         <div className="adm-stat">
           <div className="adm-stat-n">{stats.confirmed}<small> / {stats.invitations}</small></div>
@@ -274,6 +385,15 @@ export default function Dashboard() {
           <div className="adm-stat-l">Sin abrir · posible no enviadas</div>
         </div>
         <div className="adm-stat">
+          <div className="adm-stat-l2">Seguimiento de llamadas · {contactPct}%</div>
+          <div className="adm-call-bar"><span style={{ width: contactPct + '%' }} /></div>
+          <div className="adm-stat-types" style={{ marginTop: '.55rem' }}>
+            <span className="badge badge-gray">Sin contactar · {stats.uncontacted}</span>
+            <span className="badge badge-amber">No contesta · {stats.noanswer}</span>
+            <span className="badge badge-blue">Contactado · {stats.talked}</span>
+          </div>
+        </div>
+        <div className="adm-stat">
           <div className="adm-stat-l2">Tipo de invitación</div>
           <div className="adm-stat-types">
             <span className="badge badge-gold">Completa · {stats.completa}</span>
@@ -281,6 +401,19 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Alerta de confirmadas que no aportan personas */}
+      {stats.review > 0 && statusFilter !== 'review' && (
+        <div className="adm-alert danger">
+          <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          <span>
+            <b>{stats.review}</b> tarjeta(s) dicen «Confirmado» pero no tienen ni un asistente
+            definido — <b>{stats.reviewCupos}</b> cupos que hoy <b>no</b> se están contando.
+            Resuélvelas en la llamada.
+          </span>
+          <button className="adm-btn adm-btn-ghost" onClick={() => setStatusFilter('review')}>Ver estas {stats.review}</button>
+        </div>
+      )}
 
       {/* Alerta de pendientes */}
       {stats.pending > 0 && statusFilter !== 'pending' && (
@@ -292,16 +425,35 @@ export default function Dashboard() {
       )}
 
       {/* Filtros */}
-      <div className="adm-chips">
-        {FILTERS.map(f => (
-          <button
-            key={f.key}
-            className={`adm-chip${statusFilter === f.key ? ' on' : ''}${f.key === 'pending' && counts.pending > 0 ? ' warn' : ''}`}
-            onClick={() => setStatusFilter(f.key)}
-          >
-            {f.lbl} <b>{counts[f.key]}</b>
-          </button>
-        ))}
+      <div className="adm-chip-groups">
+        <div className="adm-chip-group">
+          <span className="adm-chip-lbl">Respuesta</span>
+          <div className="adm-chips">
+            {FILTERS_RESP.map(f => (
+              <button
+                key={f.key}
+                className={`adm-chip${statusFilter === f.key ? ' on' : ''}${f.key === 'pending' && counts.pending > 0 ? ' warn' : ''}${f.key === 'review' && counts.review > 0 ? ' danger' : ''}`}
+                onClick={() => setStatusFilter(f.key)}
+              >
+                {f.lbl} <b>{counts[f.key]}</b>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="adm-chip-group">
+          <span className="adm-chip-lbl">Contacto</span>
+          <div className="adm-chips">
+            {FILTERS_CALL.map(f => (
+              <button
+                key={f.key}
+                className={`adm-chip${statusFilter === f.key ? ' on' : ''}${(f.key === 'uncontacted' || f.key === 'noanswer') && counts[f.key] > 0 ? ' warn' : ''}`}
+                onClick={() => setStatusFilter(f.key)}
+              >
+                {f.lbl} <b>{counts[f.key]}</b>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Header de acciones */}
@@ -314,6 +466,10 @@ export default function Dashboard() {
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
+          <select className="adm-search adm-sort" value={sortMode} onChange={e => setSortMode(e.target.value)}>
+            <option value="work">Orden: prioridad de llamada</option>
+            <option value="name">Orden: nombre</option>
+          </select>
           <button className="adm-btn adm-btn-gold" onClick={() => { setEditing(null); setShowForm(true) }}>
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Nuevo invitado
@@ -326,7 +482,10 @@ export default function Dashboard() {
         <div className="adm-bulk">
           <span>{selected.size} seleccionada(s)</span>
           <div className="adm-bulk-actions">
-            <span className="adm-bulk-lbl">Cambiar tipo:</span>
+            <span className="adm-bulk-lbl">Contacto:</span>
+            <button className="adm-btn adm-btn-ghost" onClick={() => bulkContact('contactado')}>→ Contactado</button>
+            <button className="adm-btn adm-btn-ghost" onClick={() => bulkContact('pendiente')}>→ Sin contactar</button>
+            <span className="adm-bulk-lbl">Tipo:</span>
             <button className="adm-btn adm-btn-ghost" onClick={() => bulkType('completa')}>→ Completa</button>
             <button className="adm-btn adm-btn-ghost" onClick={() => bulkType('recepcion')}>→ Solo Recepción</button>
             <button className="adm-btn adm-btn-ghost" onClick={bulkCopyMessages}>Copiar mensajes</button>
@@ -351,6 +510,7 @@ export default function Dashboard() {
                 <th>Tipo</th>
                 <th>Cupos</th>
                 <th>Estado</th>
+                <th>Contacto</th>
                 <th>Vistas</th>
                 <th>Asistirán</th>
                 <th>Acciones</th>
@@ -358,7 +518,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {filtered.map(row => (
-                <tr key={row.id} className={isPending(row) ? 'row-pending' : ''}>
+                <tr key={row.id} className={needsReview(row) ? 'row-review' : (isPending(row) ? 'row-pending' : '')}>
                   <td>
                     <input type="checkbox" className="adm-check" checked={selected.has(row.id)} onChange={() => toggleSel(row.id)} aria-label={`Seleccionar ${row.group_name}`} />
                   </td>
@@ -369,12 +529,26 @@ export default function Dashboard() {
                     )}
                   </td>
                   <td><TypeBadge type={row.invitation_type} /></td>
-                  <td><span style={{ color: '#94a3b8' }}>{row.total_members ?? 0}</span></td>
-                  <td><StatusBadge attending={row.attending} /></td>
+                  <td>
+                    {row.total_members
+                      ? <span style={{ color: '#94a3b8' }}>{row.total_members}</span>
+                      : <span className="adm-flag" title="Tarjeta sin miembros cargados: no suma cupos ni asistentes">sin cupos</span>}
+                  </td>
+                  <td><StatusBadge row={row} /></td>
+                  <td><ContactCell row={row} onCycle={cycleContact} /></td>
                   <td><ViewBadge count={row.view_count ?? 0} last={row.last_viewed_at} /></td>
-                  <td><span style={{ color: '#94a3b8' }}>{row.attending ? (row.attending_count ?? 0) : '—'}</span></td>
+                  <td>
+                    {row.attending === true
+                      ? (needsReview(row)
+                          ? <span className="adm-flag" title="Confirmada sin asistentes definidos — resuélvela en la llamada">⚠ definir</span>
+                          : <b style={{ color: '#48bb78' }}>{row.attending_count ?? 0}</b>)
+                      : <span style={{ color: '#475569' }}>—</span>}
+                  </td>
                   <td>
                     <div className="adm-actions">
+                      <button className="adm-ico gold" title="Registrar llamada de confirmación" onClick={() => setCalling(row)}>
+                        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      </button>
                       <button className="adm-ico" title="Editar" onClick={() => handleEdit(row)}>
                         <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
@@ -397,7 +571,7 @@ export default function Dashboard() {
                 </tr>
               ))}
               {filtered.length === 0 && !loading && (
-                <tr><td colSpan={8} style={{ textAlign: 'center', color: '#475569', padding: '2rem' }}>
+                <tr><td colSpan={9} style={{ textAlign: 'center', color: '#475569', padding: '2rem' }}>
                   {search || statusFilter !== 'all' ? 'No hay resultados para este filtro.' : 'Aún no hay invitados. Crea el primero.'}
                 </td></tr>
               )}
@@ -435,6 +609,14 @@ export default function Dashboard() {
               </ul>}
         </div>
       </div>
+
+      {calling && (
+        <CallModal
+          row={calling}
+          onClose={() => setCalling(null)}
+          onSaved={(msg) => { setCalling(null); flash(msg); refresh() }}
+        />
+      )}
 
       {showForm && (
         <GuestForm

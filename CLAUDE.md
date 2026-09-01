@@ -163,6 +163,40 @@ guests                    una fila por sobre/tarjeta (token único, nombre del g
 `guest_summary` es la vista que consume el panel: agrega cupos, estado, asistentes,
 número de vistas y última vista.
 
+### Confirmación telefónica
+
+La wedding llama al número de cada tarjeta y registra la respuesta desde el panel
+(`src/admin/CallModal.jsx`). Migración `004_confirmacion_manual.sql`:
+
+- `guests.contact_status` — `pendiente` · `no_contesta` · `contactado`, más
+  `contacted_at`, `contact_attempts` y `contact_notes`. Es un atributo de la tarjeta,
+  no de la respuesta: una tarjeta puede estar contactada y seguir sin confirmar.
+- `confirmations.source` — `guest` (entró por el link) o `admin` (la registró la
+  wedding en una llamada). La confirmación telefónica **no** es un contador aparte:
+  escribe una fila real en `confirmations`, así los conteos tienen una sola fuente de
+  verdad.
+- `confirmations.attending_total` — cabeza de conteo tecleada en la llamada. En
+  `guest_summary`, `attending_count` es
+  `COALESCE(attending_total, COUNT(DISTINCT confirmation_members))`, porque una
+  llamada puede reportar acompañantes que no están en `guest_members`.
+
+> **Ojo:** si `attending = true` y no hay ni `attending_total` ni miembros marcados,
+> `attending_count` da 0 **a propósito** — el panel marca esa tarjeta como «confirmada
+> sin asistentes» (`needsReview` en `Dashboard.jsx`) en vez de asumir todos sus cupos.
+> Las 24 confirmaciones anteriores al 4 de julio de 2026 están en ese estado: se
+> hicieron cuando las tarjetas todavía no tenían nombres en `guest_members`, así que
+> `submit-rsvp` recibió `member_ids: []`. Es dato perdido, se resuelve por teléfono.
+
+`guest_summary` se recrea con `DROP` + `CREATE` (no `CREATE OR REPLACE`, que solo
+admite añadir columnas al final) y fija sus permisos explícitamente: expone
+`g.token`, así que **`anon` no debe poder leerla nunca**.
+
+> **Regla:** todos los conteos de `guest_summary` usan `COUNT(DISTINCT …)` a
+> propósito. Unir `guest_members` (N filas) con `confirmation_members` (M filas) en la
+> misma consulta produce un producto cartesiano N×M y sin `DISTINCT` los cupos se
+> inflan (una familia de 4 aparecía como 16). Ver `002_fix_guest_summary_counts.sql`.
+> Si reescribes la vista, conserva los `DISTINCT`.
+
 Las migraciones en `supabase/migrations/` están numeradas y llevan un comentario de
 cabecera explicando el porqué. Mantén ese formato al añadir una nueva.
 
@@ -177,7 +211,11 @@ Deno + TypeScript, en `supabase/functions/`. Ambas usan `SERVICE_ROLE_KEY`, así
   visita en `invitation_views` dentro de un try/catch propio: **el tracking nunca
   debe romper la invitación**.
 - **`submit-rsvp`** — upsert de la confirmación por `guest_id` y reemplazo completo
-  de los miembros asistentes, así que re-confirmar es idempotente.
+  de los miembros asistentes, así que re-confirmar es idempotente. Manda
+  `source: 'guest'` y `attending_total: null` **explícitos**: si la wedding ya había
+  registrado la tarjeta por teléfono, la respuesta del propio invitado manda y tiene
+  que limpiar ese conteo manual — `ON CONFLICT DO UPDATE` solo toca las columnas que
+  van en el payload.
 
 Desplegar: `npx supabase functions deploy <nombre>`.
 
