@@ -9,8 +9,11 @@ import { logoWedding } from '../assets/images'
 // un bloqueo, es un cierre amable — con la puerta abierta por si cambian de
 // planes, que es lo único que puede reabrirla.
 
-// WhatsApp de los novios para el camino de vuelta. Solo dígitos, con indicativo
-// (ej: '573001234567'). Vacío = se muestra el texto sin enlace.
+// Vacío A PROPÓSITO: todo el que recibió invitación tiene el teléfono de Angely
+// o de Kevin, así que no hace falta publicar un número acá. Sin valor, la
+// pantalla muestra el texto sin enlace, que es el comportamiento definitivo.
+// Si algún día se quiere el botón de WhatsApp: solo dígitos, con indicativo
+// (ej: '573001234567').
 const CONTACTO_WA = ''
 
 const MENSAJE = 'Hola! Les escribo por la invitación de la boda: mis planes cambiaron y sí podría acompañarlos. ✨'

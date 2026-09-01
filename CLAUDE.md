@@ -207,8 +207,10 @@ el slide-deck y renderiza `src/components/InvitacionCerrada.jsx`.
 - Aplica a los «no» de cualquier origen, link o llamada. Un «no» por error se resuelve
   por el camino de vuelta de la pantalla, que es lo que la hace segura: sin ese enlace,
   un clic equivocado dejaría al invitado sin invitación y sin salida.
-- **`CONTACTO_WA` en `InvitacionCerrada.jsx` está vacío.** Sin número, la pantalla
-  muestra el texto sin enlace. Es el único dato pendiente de la funcionalidad.
+- **`CONTACTO_WA` en `InvitacionCerrada.jsx` está vacío a propósito, no es un TODO.**
+  Todo el que recibió invitación tiene el teléfono de Angely o de Kevin, así que no se
+  publica un número: la pantalla muestra el texto sin enlace y eso es lo definitivo.
+  El constante queda por si algún día se quiere el botón de WhatsApp.
 - La visita se registra igual en `invitation_views`: que alguien con la invitación
   cerrada intente abrirla es justamente la señal de que quizá cambió de planes.
 - El deck alcanza a montarse durante el ida y vuelta de `get-invitation` (el payload
