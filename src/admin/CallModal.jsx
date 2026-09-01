@@ -239,6 +239,15 @@ export default function CallModal({ row, onClose, onSaved }) {
               </div>
             </div>
 
+            {attending === false && (
+              <p className="adm-call-closed">
+                Al guardar «No asiste», <b>su link queda cerrado</b>: si vuelve a abrirlo verá
+                un mensaje de agradecimiento en vez de la invitación, sin la fecha ni los
+                lugares. Si más adelante te dicen que sí pueden ir, cambias a
+                «Sí asiste» acá mismo y la invitación se reabre sola.
+              </p>
+            )}
+
             {attending === true && (
               <>
                 {/* Quiénes asisten */}

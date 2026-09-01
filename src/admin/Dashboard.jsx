@@ -50,7 +50,7 @@ function waUrl(row) {
 const ESTADOS = {
   confirmado:    { lbl: 'Confirmado',    cls: 'badge-green', desc: 'La wedding habló con ellos y confirmaron' },
   preconfirmado: { lbl: 'Preconfirmado', cls: 'badge-blue',  desc: 'Respondió que sí desde su link · falta validar por teléfono' },
-  no_asiste:     { lbl: 'No asiste',     cls: 'badge-red',   desc: 'Avisó que no puede acompañarnos' },
+  no_asiste:     { lbl: 'No asiste',     cls: 'badge-red',   desc: 'Avisó que no puede acompañarnos · su link quedó cerrado' },
   no_contesta:   { lbl: 'No contesta',   cls: 'badge-amber', desc: 'Se intentó llamar y no hubo respuesta' },
   sin_respuesta: { lbl: 'Sin respuesta', cls: 'badge-gray',  desc: 'Nadie ha respondido ni contestado el teléfono' },
 }

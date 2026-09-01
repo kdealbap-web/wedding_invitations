@@ -229,6 +229,9 @@ body.admin-body {
 .adm-call-pre { font-size: .78rem; color: #a8c9e4; line-height: 1.55; background: rgba(99,179,237,.09); border: 1px solid rgba(99,179,237,.28); border-radius: 8px; padding: .6rem .75rem; margin-bottom: 1.25rem }
 .adm-call-pre b { color: #63b3ed }
 
+.adm-call-closed { font-size: .78rem; color: #e8b9a6; line-height: 1.55; background: rgba(252,129,74,.09); border: 1px solid rgba(252,129,74,.28); border-radius: 8px; padding: .6rem .75rem; margin-bottom: 1rem }
+.adm-call-closed b { color: #fc814a }
+
 .adm-call-hint { font-size: .78rem; color: #64748b; line-height: 1.5; background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.22); border-radius: 8px; padding: .6rem .75rem; margin-bottom: 1rem }
 .adm-call-hint b { color: #fbbf24 }
 

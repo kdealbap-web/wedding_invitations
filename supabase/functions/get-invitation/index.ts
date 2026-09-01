@@ -51,8 +51,18 @@ serve(async (req) => {
       attending_member_ids: (confRow.confirmation_members ?? []).map((cm) => cm.member_id),
     } : null
 
-    // Registrar la visita (nunca debe romper la invitación si falla)
+    // Registrar la visita (nunca debe romper la invitación si falla).
+    // Se registra también en las invitaciones cerradas: saber que intentaron
+    // abrirla es justamente la señal de que quizá cambiaron de planes.
     try { await supabase.from('invitation_views').insert({ guest_id: data.id }) } catch { /* ignore */ }
+
+    // Invitación cerrada: quien avisó que no asiste deja de recibir los datos
+    // del evento. No es solo cosa de la interfaz — acá no se devuelven los
+    // miembros, ni el tipo, ni la confirmación, así que la información deja de
+    // viajar por la red. Se reabre sola si la respuesta vuelve a ser "sí".
+    if (confirmation && confirmation.attending === false) {
+      return json({ id: data.id, name: data.name, revoked: true })
+    }
 
     return json({ id: data.id, name: data.name, invitation_type: data.invitation_type, members, confirmation })
   } catch (e) {

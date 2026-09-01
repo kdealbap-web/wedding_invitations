@@ -8,6 +8,7 @@ import NavDots     from './components/NavDots'
 import NavArrows   from './components/NavArrows'
 import PetalRain   from './components/PetalRain'
 import Toast       from './components/Toast'
+import InvitacionCerrada from './components/InvitacionCerrada'
 import AutoPlayBtn from './components/AutoPlayBtn'
 import S1Hero      from './sections/S1Hero'
 import S2Gallery   from './sections/S2Gallery'
@@ -82,7 +83,7 @@ const NAV_ICONS = {
 }
 
 function AppInner() {
-  const { tipo, loading, guestId, nombre } = useGuest()
+  const { tipo, loading, guestId, nombre, revoked } = useGuest()
   const navigate        = useNavigate()
   // Acceso directo (sin link de invitación) → al login del panel
   const noInvite        = !loading && !guestId && !nombre
@@ -183,6 +184,10 @@ function AppInner() {
 
   // Mientras redirige al login no mostramos la invitación en blanco
   if (noInvite) return null
+
+  // Avisaron que no asisten: la invitación queda cerrada y el deck no se monta.
+  // get-invitation ya dejó de devolver los datos del evento en este caso.
+  if (revoked) return <InvitacionCerrada nombre={nombre} />
 
   return (
     <div id="app">

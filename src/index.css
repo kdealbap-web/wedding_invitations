@@ -417,3 +417,19 @@ button,input,select,textarea{font-family:inherit}
   .btn-shimmer::after{animation:none!important}
   .audio-hint,.audio-hint-dot{animation:none!important}
 }
+
+/* ─── Invitación cerrada (avisaron que no asisten) ─── */
+.cerrada{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:2rem 1.5rem;background:radial-gradient(120% 90% at 50% 0%,oklch(24% 0.04 44) 0%,oklch(14% 0.02 44) 60%,oklch(10% 0.01 40) 100%);overflow-y:auto}
+.cerrada-c{max-width:34rem;text-align:center;color:rgba(255,255,255,.86)}
+.cerrada-logo{width:clamp(88px,18vw,124px);height:auto;opacity:.9;margin-bottom:1.6rem}
+.cerrada-eyebrow{font-family:var(--fb);font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);opacity:.85;margin-bottom:.9rem}
+.cerrada-title{font-family:var(--fd);font-weight:300;font-size:clamp(1.8rem,6vw,2.7rem);line-height:1.15;margin-bottom:1.3rem;color:#fff}
+.cerrada-title em{font-family:var(--fs);font-style:normal;color:var(--gold);font-size:1.15em}
+.cerrada-text{font-family:var(--fb);font-size:.95rem;line-height:1.85;color:rgba(255,255,255,.66);margin-bottom:2.2rem}
+.cerrada-back{border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:1.4rem 1.3rem;background:rgba(255,255,255,.035)}
+.cerrada-back-t{font-family:var(--fd);font-size:1.15rem;color:#fff;margin-bottom:.45rem}
+.cerrada-back-s{font-family:var(--fb);font-size:.85rem;line-height:1.7;color:rgba(255,255,255,.6)}
+.cerrada-btn{display:inline-flex;align-items:center;gap:.5rem;margin-top:1.1rem;padding:.7rem 1.4rem;border-radius:999px;background:var(--acc);color:#fff;font-family:var(--fb);font-size:.85rem;letter-spacing:.03em;text-decoration:none;transition:background .25s var(--sp),transform .18s var(--sp)}
+.cerrada-btn:hover{background:var(--acc-dk);transform:translateY(-2px)}
+.cerrada-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cerrada-hash{font-family:var(--fs);font-size:1.5rem;color:var(--gold);opacity:.55;margin-top:2rem}

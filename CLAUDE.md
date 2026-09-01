@@ -194,6 +194,27 @@ no va. Un «sí» por el link, en cambio, siempre espera la llamada.
   `confirmation_members` dejen de ser un agujero: valen sus cupos hasta que la
   llamada los precise.
 
+### Invitación cerrada
+
+Cuando la respuesta registrada es `attending = false`, **la invitación deja de estar
+vigente**. `get-invitation` devuelve solo `{ id, name, revoked: true }` y **omite los
+miembros, el tipo y la confirmación**: la información del evento deja de viajar por la
+red, no es solo que la interfaz la esconda. `src/App.jsx` cortocircuita antes de montar
+el slide-deck y renderiza `src/components/InvitacionCerrada.jsx`.
+
+- Se reabre **sola** en cuanto la respuesta vuelve a ser «sí» — la wedding lo cambia en
+  el modal de llamada. No hay bandera aparte que sincronizar.
+- Aplica a los «no» de cualquier origen, link o llamada. Un «no» por error se resuelve
+  por el camino de vuelta de la pantalla, que es lo que la hace segura: sin ese enlace,
+  un clic equivocado dejaría al invitado sin invitación y sin salida.
+- **`CONTACTO_WA` en `InvitacionCerrada.jsx` está vacío.** Sin número, la pantalla
+  muestra el texto sin enlace. Es el único dato pendiente de la funcionalidad.
+- La visita se registra igual en `invitation_views`: que alguien con la invitación
+  cerrada intente abrirla es justamente la señal de que quizá cambió de planes.
+- El deck alcanza a montarse durante el ida y vuelta de `get-invitation` (el payload
+  Base64 pinta el nombre al instante, a propósito), así que hay una fracción de segundo
+  en que se ve la primera slide antes del corte.
+
 Migración `004_confirmacion_manual.sql`:
 
 - `guests.contact_status` — `pendiente` · `no_contesta` · `contactado`, más
@@ -238,7 +259,8 @@ Deno + TypeScript, en `supabase/functions/`. Ambas usan `SERVICE_ROLE_KEY`, así
   confirmación existente. Normaliza `confirmations` (PostgREST la devuelve como
   objeto por el UNIQUE en `guest_id`, pero podría venir como arreglo). Registra la
   visita en `invitation_views` dentro de un try/catch propio: **el tracking nunca
-  debe romper la invitación**.
+  debe romper la invitación**. Si la confirmación dice `attending = false`, corta y
+  devuelve `{ id, name, revoked: true }` — ver «Invitación cerrada».
 - **`submit-rsvp`** — upsert de la confirmación por `guest_id` y reemplazo completo
   de los miembros asistentes, así que re-confirmar es idempotente. Manda
   `source: 'guest'` y `attending_total: null` **explícitos**: si la wedding ya había
@@ -293,8 +315,9 @@ Estos archivos son del diseño anterior (scroll vertical de página larga) y **n
 importan en ningún lado**. Se conservan como referencia. No los edites al hacer
 cambios y no asumas que un componente con nombre parecido es el que está en uso.
 
-- `src/components/` — de los 26 archivos, solo **7 están vivos**: `AudioBtn`,
-  `AutoPlayBtn`, `NavArrows`, `NavDots`, `PetalRain`, `ProgBar`, `Toast`.
+- `src/components/` — de los 27 archivos, solo **8 están vivos**: `AudioBtn`,
+  `AutoPlayBtn`, `InvitacionCerrada`, `NavArrows`, `NavDots`, `PetalRain`, `ProgBar`,
+  `Toast`.
   Los otros 19 son muertos: `Hero`, `Historia`, `RsvpSection`, `EnvelopeIntro`,
   `Countdown`, `CtaFinal`, `DressCode`, `Galeria`, `HashtagBlock`, `Hoteles`,
   `InfoImportante`, `Itinerario`, `Lightbox`, `MapaSection`, `Musica`, `PageFooter`,
