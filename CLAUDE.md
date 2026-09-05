@@ -330,6 +330,23 @@ lo dice en vez de reventar.
 - Funciona con arrastrar y soltar **y** con clic (seleccionar persona → tocar
   mesa), porque en tableta el arrastre es incómodo.
 
+Las mesas se dibujan **redondas de verdad** (`src/admin/MesaRedonda.jsx`): un
+tablero central con el nombre y los puestos repartidos por la circunferencia.
+
+- `medidas()` calcula el radio a partir de la capacidad para que los puestos no
+  se encimen, pero **el mínimo de 96 px no es por los puestos**: es para que el
+  nombre de la mesa quepa dentro del tablero.
+- Cada tarjeta tiene un **color estable** sacado de su id (`colorDe()`). Sirve
+  para ver de un vistazo si una familia quedó partida entre dos mesas.
+- Debajo del círculo va la lista de nombres: las iniciales solas no se leen.
+- Al crear una mesa, el nombre se abre seleccionado. «Mesa 3» es un marcador de
+  posición, no el nombre que va a llevar.
+- `onDragLeave` comprueba `currentTarget.contains(relatedTarget)`: sin eso el
+  evento salta al pasar por encima de cualquier hijo y la mesa parpadea.
+
+**Las mesas no se generan solas.** «Sugerir reparto» existe, pero es opt-in y
+solo toca a quien está sin mesa; el reparto lo arma la pareja.
+
 ### Nombres por completar — `src/admin/nombres.js`
 
 La base arrastra nombres que no sirven para sentar a nadie ni para imprimir una

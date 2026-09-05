@@ -4,6 +4,7 @@ import { estadoOf, personasOf, ESTADOS } from './cupos'
 import { nombreIncompleto, MOTIVO, normalizarNombre } from './nombres'
 import { exportarExcel } from './descargar'
 import { exportarImagenes } from './imagenes'
+import MesaRedonda from './MesaRedonda'
 
 // ─── Quién se sienta ───
 // Se siembra a la PERSONA, no a la tarjeta: una familia puede repartirse entre
@@ -114,6 +115,8 @@ export default function MesasBoard() {
   const [exportando, setExportando] = useState('')
   const [editando, setEditando]     = useState(null)   // key de la ficha en edición
   const [imagenes, setImagenes]     = useState('')
+  const [sobre, setSobre]           = useState(null)  // mesa bajo el puntero al arrastrar
+  const [nueva, setNueva]           = useState(null)  // mesa recién creada, para nombrarla
 
   const flash = m => { setAviso(m); setTimeout(() => setAviso(''), 2200) }
 
@@ -253,9 +256,15 @@ export default function MesasBoard() {
 
   async function nuevaMesa() {
     const n = mesas.length + 1
-    const { error: e } = await supabase.from('mesas').insert({ nombre: `Mesa ${n}`, capacidad: 8, orden: n })
+    const { data, error: e } = await supabase.from('mesas')
+      .insert({ nombre: `Mesa ${n}`, capacidad: 8, orden: n })
+      .select('id').single()
     if (e) return flash(e.message)
     await cargar()
+    // Se abre el nombre seleccionado para escribir encima: el «Mesa 3» es solo
+    // un marcador de posición, no el nombre que va a llevar.
+    setNueva(data.id)
+    setTimeout(() => setNueva(null), 1500)
   }
 
   async function editarMesa(m, campos) {
@@ -480,58 +489,43 @@ export default function MesasBoard() {
         {/* ── Mesas ── */}
         <div className="mb-mesas">
           {mesas.length === 0 && (
-            <p className="mb-vacio">Todavía no hay mesas. Crea la primera con «+ Mesa».</p>
+            <div className="mb-sin-mesas">
+              <svg viewBox="0 0 64 64" aria-hidden="true">
+                <circle cx="32" cy="32" r="17" />
+                <circle cx="32" cy="9"  r="4" /><circle cx="48" cy="16" r="4" />
+                <circle cx="55" cy="32" r="4" /><circle cx="48" cy="48" r="4" />
+                <circle cx="32" cy="55" r="4" /><circle cx="16" cy="48" r="4" />
+                <circle cx="9"  cy="32" r="4" /><circle cx="16" cy="16" r="4" />
+              </svg>
+              <h3>El salón está vacío</h3>
+              <p>
+                Crea las mesas como las quieras: ponles el nombre que van a llevar
+                («Los abuelos», «Amigos del colegio») y los puestos que tenga cada una.
+              </p>
+              <button className="adm-btn adm-btn-gold" onClick={nuevaMesa}>Crear la primera mesa</button>
+            </div>
           )}
-          {mesas.map(m => {
-            const dentro = fichasDeMesa(m.id)
-            const lleno = dentro.length >= m.capacidad
-            const pasada = dentro.length > m.capacidad
-            return (
-              <section
-                key={m.id}
-                className={`mb-mesa${pasada ? ' pasada' : lleno ? ' llena' : ''}`}
-                onDragOver={e => e.preventDefault()}
-                onDrop={e => {
-                  e.preventDefault()
-                  const f = todasLasFichas.find(x => x.key === e.dataTransfer.getData('text/plain'))
-                  if (f) sentar(f, m.id)
-                }}
-                onClick={() => { if (sel) sentar(sel, m.id) }}
-              >
-                <header>
-                  <input
-                    className="mb-mesa-nombre" defaultValue={m.nombre}
-                    onBlur={e => e.target.value.trim() && e.target.value !== m.nombre && editarMesa(m, { nombre: e.target.value.trim() })}
-                  />
-                  <span className="mb-cuenta">{dentro.length}/{m.capacidad}</span>
-                  <input
-                    className="mb-mesa-cap" type="number" min="1" max="30" defaultValue={m.capacidad}
-                    title="Capacidad"
-                    onBlur={e => {
-                      const n = parseInt(e.target.value, 10)
-                      if (n >= 1 && n <= 30 && n !== m.capacidad) editarMesa(m, { capacidad: n })
-                    }}
-                  />
-                  <button className="mb-mesa-x" onClick={() => borrarMesa(m)} title="Borrar mesa">×</button>
-                </header>
-                <div className="mb-mesa-body">
-                  {dentro.length === 0 && <p className="mb-vacio-mesa">Arrastra personas aquí</p>}
-                  {dentro.map(f => (
-                    <Ficha
-                      key={f.key} ficha={f} compacta
-                      seleccionada={sel?.key === f.key}
-                      onSeleccionar={setSel}
-                      onQuitar={levantar}
-                      editando={editando === f.key}
-                      onEditar={x => setEditando(x.key)}
-                      onGuardar={guardarNombre}
-                      onCancelar={() => setEditando(null)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )
-          })}
+          {mesas.map(m => (
+            <MesaRedonda
+              key={m.id}
+              mesa={m}
+              gente={fichasDeMesa(m.id)}
+              sel={sel}
+              sobre={sobre}
+              onSentar={sentar}
+              onLevantar={levantar}
+              onSeleccionar={setSel}
+              editando={editando}
+              onEditar={x => setEditando(x.key)}
+              onGuardar={guardarNombre}
+              onCancelar={() => setEditando(null)}
+              onEditarMesa={editarMesa}
+              onBorrar={borrarMesa}
+              buscarFicha={k => todasLasFichas.find(x => x.key === k)}
+              onSobre={setSobre}
+              nueva={nueva === m.id}
+            />
+          ))}
         </div>
       </div>
 
