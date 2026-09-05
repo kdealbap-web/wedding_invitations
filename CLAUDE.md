@@ -20,6 +20,10 @@ npm run preview          # sirve dist/ localmente
 
 npm run optimize-images  # recomprime src/assets/img/*.jpg (respalda en _originals/)
 npm run favicons         # regenera public/favicon* desde el logo de la boda
+
+npm run usb              # arma entrega/USB_BODA_AyK/ para el proveedor de las LED
+npm run export           # invitados + cupos + mesas a Excel con fórmulas vivas
+npm run export -- --demo # el mismo Excel con datos de ejemplo, sin tocar la base
 ```
 
 **No hay tests.** No los inventes ni asumas que existe una suite.
@@ -140,6 +144,115 @@ usa una paleta marfil derivada de los mismos tokens, porque va a papel.
 - En pantallas estrechas la tarjeta se escala con `transform`, y `.tp-stage` reserva
   el alto escalado. La impresión resetea ese transform.
 
+### Las cartelas de las pantallas LED
+
+`src/pantalla/` — las láminas que se proyectan en las pantallas del salón el día
+de la fiesta, en su propia ruta y con su propia hoja de estilos (`pantalla.css`).
+No se publican en el sitio: son un taller para **generar archivos** que se copian
+a una USB y se le entregan al proveedor de las LED, que los reproduce.
+
+- Cada cartela mide exactamente `1920 × 1080` px y las medidas van en **px** (no
+  rem) porque el destino es un raster de tamaño fijo — el mismo criterio por el
+  que la tarjeta de participación usa pt.
+- `ALL_CARTELAS` define orden, id, fondo y contenido. El componente publica los
+  ids en `window.__CARTELAS`; el script de exportación los lee de ahí, así que el
+  orden tiene **una sola fuente de verdad**. Añadir una cartela = añadirla al
+  arreglo, nada más.
+- **Zona segura de 96 px** por lado: los paneles LED recortan el borde. Todo el
+  contenido vive dentro de `.pl-inner`, y `npm run pantallas` **avisa por consola
+  si una cartela se desborda**. No ignores ese aviso.
+- `.pl-inner>*{flex-shrink:0}` no es decorativo: sin él los hijos se comprimen
+  cuando el bloque no cabe, el desborde se reparte hacia los dos bordes y algún
+  elemento llega a alto 0 en vez de avisar.
+- Las fotos de fondo llevan `blur(5px)` a propósito: sin él los títulos caen
+  encima de las caras. Son ambiente, no sujeto.
+- Fondo oscuro deliberado: el LED es emisivo, el negro se ve elegante y el blanco
+  encandila a los invitados.
+
+En el navegador (`/pantalla`) las flechas navegan, **G** dibuja la zona segura y
+**F** va a pantalla completa. `?export=1&c=<id>` aísla una cartela sin controles;
+es lo que usa el script.
+
+```bash
+npm run pantallas   # → entrega/pantallas-led/NN_id.png + LEEME.txt
+```
+
+Levanta Vite en memoria y captura con el Chrome (o Edge) ya instalado — por eso
+la dependencia es `puppeteer-core` y no `puppeteer`, que se traería un navegador
+de 150 MB. El flag `--disable-lcd-text` es obligatorio: sin él el antialiasing
+subpíxel hornea franjas rojas y azules en los bordes de las letras, que en un
+panel LED se ven como suciedad de color. `entrega/` está gitignoreado.
+
+#### Los MP4
+
+```bash
+npm run videos                      # todas
+npm run videos -- bienvenida        # sólo algunas
+```
+
+Salen a `entrega/pantallas-led/video/`: H.264, 1920 × 1080, `yuv420p`, CRF 16,
+16 s en bucle. Requiere **ffmpeg** (instalado con `winget install Gyan.FFmpeg`;
+el script lo busca en el PATH y, si no, en la ruta de winget, porque winget sólo
+actualiza el PATH de las shells nuevas).
+
+- Los fotogramas **no** se capturan en tiempo real: se recorre la línea de tiempo
+  con la Web Animations API fijando `currentTime`. Es determinista y no depende
+  de lo cargada que esté la máquina.
+- Las animaciones viven en el bloque final de `pantalla.css` y sólo se activan
+  con `?anim=1` (clase `.pl-anim`), así que **tocarlas no altera los PNG**.
+- **La duración del video debe ser múltiplo de TODOS los ciclos** de esos
+  keyframes, o el bucle da un salto al reiniciar. Hoy son 16 s y 8 s, y por eso
+  `CICLO = 16`. Si añades un keyframe con otro periodo, ajusta esa constante al
+  mínimo común múltiplo.
+- `yuv420p` no es opcional: sin él muchos reproductores de LED no abren el
+  archivo.
+- Tarda entre 3 y 8 minutos por video. Es normal — son 480 capturas.
+
+### `cine/` — la producción de video (segunda entrega)
+
+Alternativa a las cartelas estáticas de `/pantalla`, **no un reemplazo**: las dos
+propuestas conviven para comparar. `cine/` no forma parte del bundle de la SPA;
+es un módulo de producción que se ejecuta por línea de comandos. Ver `cine/README.md`.
+
+```bash
+npm run cine                          # loop de 74 s + 5 segmentos de 15 s
+npm run cine -- --paleta=invitacion   # la otra paleta
+npm run cine -- --contacto            # sólo la hoja de contactos (~40 s)
+npm run cine -- --fotos="D:/fotos"    # otra fuente de fotos
+```
+
+- **`guion.mjs` es la única fuente creativa.** Escenas, duraciones, fotos,
+  movimiento de cámara y textos. El resto sólo ejecuta.
+- **Todo se mide en fotogramas, no en segundos.** A 29.97 fps (`30000/1001`) los
+  segundos redondos no caen en cuadro entero: 15 s serían 449,55. Trabajando en
+  fotogramas el bucle cierra exacto.
+- El navegador sólo compone **las capas de texto** (PNG con alfa, una vez por
+  escena). Todo el movimiento —Ken Burns, grano, viñeta, light leak, crossfades—
+  lo hace ffmpeg. Por eso rinde ~2 min por segmento en vez de los ~3 min por cada
+  16 s de `scripts/export-videos.mjs`.
+- `yuv420p` es obligatorio o muchos reproductores de LED no abren el archivo.
+- **`npm run fiesta`** (`cine/fiesta.mjs`) genera las piezas dinámicas de corte
+  rápido — mosaico y ráfaga — con otra técnica: `sharp` compone cada estado como
+  imagen completa y ffmpeg sólo las secuencia. Sin `zoompan`, así que las dos
+  salen en menos de 2 min.
+
+> **Vigila el bitrate.** El grano es ruido aleatorio y x264 no lo comprime: con
+> CRF 14 los segmentos salían a 86–104 Mbps y el loop a 452 MB — 1,37 GB por
+> paleta, y muchos reproductores de LED no pasan de 20–40 Mbps. Los parámetros
+> están centralizados en `guion.mjs` (`X264_FINAL`, `GRANO`). **Si subes `GRANO`,
+> vuelve a medir el peso.**
+
+> **Las fotos llevan orientación EXIF 8** (17 de 20). El navegador la aplica;
+> `sharp` y `ffmpeg` **no**. Sin normalizar, el video sale con la gente acostada.
+> `fotos.mjs` escribe copias ya rotadas antes de que ffmpeg toque nada. **No
+> alimentes ffmpeg con los originales.**
+
+> Al aplicar el EXIF esas 17 fotos resultan **verticales** (1467 × 2200). A sangre
+> en 16:9 habría que recortar el 63 % del alto. Por eso hay dos disposiciones que
+> `fotos.mjs` elige sola: `pleno` (apaisada, a sangre, texto centrado) y
+> `editorial` (vertical entera en un panel a la derecha, fondo desenfocado de ella
+> misma, texto a bandera a la izquierda).
+
 ### Tipos de invitación
 
 `invitation_type` tiene exactamente dos valores, con un CHECK en la base de datos:
@@ -193,6 +306,57 @@ no va. Un «sí» por el link, en cambio, siempre espera la llamada.
   entero en vez de descartarlo. Esto es lo que hace que las confirmaciones viejas sin
   `confirmation_members` dejen de ser un agujero: valen sus cupos hasta que la
   llamada los precise.
+
+### Mesas del salón
+
+`/admin/mesas` — `src/admin/MesasBoard.jsx`. Angely arma las mesas arrastrando
+personas. Requiere la migración `005_mesas.sql`; si no está aplicada, la pantalla
+lo dice en vez de reventar.
+
+- **Se sienta a la PERSONA, no a la tarjeta.** Una familia puede repartirse entre
+  dos mesas, y eso pasa siempre con los niños.
+- Las tarjetas **sin `guest_members` cargados** aportan «plazas sin nombre»
+  (`asientos.member_id IS NULL` + `etiqueta`): ocupan sitio aunque no sepamos a
+  quién. Es la única forma de que esas tarjetas no desaparezcan del reparto.
+- Un índice único parcial sobre `member_id` impide que una persona con nombre
+  quede sentada en dos mesas. Las plazas sin nombre quedan fuera de ese índice
+  porque una misma tarjeta puede aportar varias.
+- **La capacidad no se valida en la base.** Pasarse de una mesa mientras se
+  reacomoda es normal; el panel la marca en rojo y ya.
+- «Sugerir reparto» mantiene junta cada tarjeta y la mete en la mesa donde quepa
+  más ajustada. Es una ayuda, no una decisión: solo toca a quien está sin mesa.
+- Funciona con arrastrar y soltar **y** con clic (seleccionar persona → tocar
+  mesa), porque en tableta el arrastre es incómodo.
+
+### Los cupos viven en `src/admin/cupos.js`
+
+`estadoOf`, `personasOf`, `cuposAbiertosOf` y `ESTADOS` estaban dentro de
+`Dashboard.jsx`. Se extrajeron cuando el tablero de mesas y el export a Excel
+necesitaron los mismos números: **si esto se duplica, el panel y el Excel acaban
+diciendo cosas distintas y nadie sabe cuál creer.** Cualquier cosa que cuente
+gente importa de ahí.
+
+### El Excel
+
+Se genera desde **dos sitios que comparten el mismo constructor**,
+`src/admin/excel.js`:
+
+- **Botón «Exportar Excel»** en el panel (Invitados y Mesas). `src/admin/descargar.js`
+  trae los datos, arma el libro y lo descarga.
+- **`npm run export`** desde consola, para lo mismo sin abrir el navegador.
+
+`ExcelJS` **no se importa arriba**: pesa ~900 kB y entra por `import()` dinámico
+al pulsar el botón, así queda en su propio chunk y el panel no lo carga hasta que
+hace falta. Por eso `construirLibro()` lo recibe por parámetro en vez de
+importarlo — es lo que permite que el mismo módulo sirva al navegador y a Node.
+
+`src/admin/excel.js` importa `'./cupos.js'` **con extensión**: Vite la resuelve
+sin ella, pero Node no, y este módulo lo carga también el script.
+
+> El libro **reimplementa las reglas de cupos como fórmulas de Excel**, porque
+> tiene que recalcular solo cuando Angely edita una celda. Es la única
+> duplicación aceptada, y va marcada en el código: si cambias `personasOf()`,
+> cambia también la fórmula de la columna «Personas».
 
 ### Invitación cerrada
 
@@ -248,6 +412,10 @@ admite añadir columnas al final) y fija sus permisos explícitamente: expone
 > misma consulta produce un producto cartesiano N×M y sin `DISTINCT` los cupos se
 > inflan (una familia de 4 aparecía como 16). Ver `002_fix_guest_summary_counts.sql`.
 > Si reescribes la vista, conserva los `DISTINCT`.
+
+Migración `005_mesas.sql`: tablas `mesas` y `asientos` + vista `mesa_summary`.
+Ver «Mesas del salón» más arriba. **Está sin aplicar** hasta que alguien la pegue
+en el SQL Editor de Supabase.
 
 Las migraciones en `supabase/migrations/` están numeradas y llevan un comentario de
 cabecera explicando el porqué. Mantén ese formato al añadir una nueva.

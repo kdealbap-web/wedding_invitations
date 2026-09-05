@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { ESTADOS, estadoOf, personasOf, cuposAbiertosOf } from './cupos'
+import { exportarExcel } from './descargar'
 import GuestForm from './GuestForm'
 import CallModal from './CallModal'
 
@@ -41,38 +43,6 @@ Comienza la cuenta regresiva...`
 
 function waUrl(row) {
   return `https://wa.me/${(row.whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent(buildMessage(row))}`
-}
-
-// ─── Un solo eje de estado ───
-// Solo la llamada confirma. Lo que el invitado responde desde su link es una
-// PRECONFIRMACIÓN: sirve para saber a quién llamar primero, pero no entra en el
-// número que se le pasa al catering.
-const ESTADOS = {
-  confirmado:    { lbl: 'Confirmado',    cls: 'badge-green', desc: 'La wedding habló con ellos y confirmaron' },
-  preconfirmado: { lbl: 'Preconfirmado', cls: 'badge-blue',  desc: 'Respondió que sí desde su link · falta validar por teléfono' },
-  no_asiste:     { lbl: 'No asiste',     cls: 'badge-red',   desc: 'Avisó que no puede acompañarnos · su link quedó cerrado' },
-  no_contesta:   { lbl: 'No contesta',   cls: 'badge-amber', desc: 'Se intentó llamar y no hubo respuesta' },
-  sin_respuesta: { lbl: 'Sin respuesta', cls: 'badge-gray',  desc: 'Nadie ha respondido ni contestado el teléfono' },
-}
-
-// Excluyentes y en este orden: la respuesta pesa más que el intento de llamada.
-const estadoOf = (r) => {
-  if (r.attending === false)                        return 'no_asiste'
-  if (r.attending === true)
-    return r.confirmation_source === 'admin' ? 'confirmado' : 'preconfirmado'
-  if (r.contact_status === 'no_contesta')           return 'no_contesta'
-  return 'sin_respuesta'
-}
-
-// Personas que aporta una tarjeta.
-// Confirmada  → el dato exacto de la llamada.
-// Preconfirmada → lo que el invitado marcó y, si no marcó a nadie, los cupos de
-//   la tarjeta: es un número provisional, así que se cuenta el sobre completo.
-const personasOf = (r) => {
-  const e = estadoOf(r)
-  if (e === 'confirmado')    return r.attending_count || 0
-  if (e === 'preconfirmado') return (r.attending_count || 0) || (r.total_members || 0)
-  return 0
 }
 
 function StatusBadge({ row }) {
@@ -128,6 +98,7 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortMode, setSortMode] = useState('work')
   const [showForm, setShowForm] = useState(false)
+  const [exportando, setExportando] = useState('')
   const [editing, setEditing]   = useState(null)
   const [calling, setCalling]   = useState(null)
   const [selected, setSelected] = useState(() => new Set())
@@ -210,7 +181,7 @@ export default function Dashboard() {
     const e = estadoOf(r)
     por[e]++
     if (e === 'confirmado' || e === 'preconfirmado') gente[e] += personasOf(r)
-    else if (e !== 'no_asiste') gente[e] += r.total_members || 0
+    else if (e !== 'no_asiste') gente[e] += cuposAbiertosOf(r)
   }
 
   const stats = {
@@ -380,6 +351,29 @@ export default function Dashboard() {
             <option value="work">Orden: prioridad de llamada</option>
             <option value="name">Orden: nombre</option>
           </select>
+          <button
+            className="adm-btn adm-btn-ghost"
+            disabled={!!exportando}
+            onClick={async () => {
+              try {
+                const r = await exportarExcel(setExportando)
+                flash(r.conMesas
+                  ? `Excel listo · ${r.tarjetas} tarjetas · ${r.mesas} mesas`
+                  : `Excel listo · ${r.tarjetas} tarjetas (sin mesas: falta aplicar 005_mesas.sql)`)
+              } catch (e) {
+                flash(`No se pudo exportar: ${e.message}`)
+              } finally {
+                setExportando('')
+              }
+            }}
+            title="Descarga un .xlsx con fórmulas vivas: al editar una celda, los totales se recalculan solos"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            {exportando || 'Exportar Excel'}
+          </button>
           <button className="adm-btn adm-btn-gold" onClick={() => { setEditing(null); setShowForm(true) }}>
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Nuevo invitado

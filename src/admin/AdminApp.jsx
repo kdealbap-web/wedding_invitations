@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import LoginPage from './LoginPage'
 import Dashboard from './Dashboard'
+import MesasBoard from './MesasBoard'
 import './admin.css'
 
 function Sidebar({ onSignOut }) {
+  const { pathname } = useLocation()
+  const enMesas = pathname.startsWith('/admin/mesas')
   return (
     <aside className="adm-sidebar">
       <div className="adm-logo">Angely &amp; Kevin · 2026</div>
       <nav className="adm-nav">
-        <a href="/admin" className="active">
+        <a href="/admin" className={enMesas ? '' : 'active'}>
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           Invitados
+        </a>
+        <a href="/admin/mesas" className={enMesas ? 'active' : ''}>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="1.6"/><circle cx="20" cy="12" r="1.6"/><circle cx="12" cy="20" r="1.6"/><circle cx="4" cy="12" r="1.6"/></svg>
+          Mesas
         </a>
       </nav>
       <div className="adm-spacer" />
@@ -43,6 +50,7 @@ function ProtectedLayout({ session }) {
       <main style={{ flex: 1, overflowY: 'auto' }}>
         <Routes>
           <Route index element={<Dashboard />} />
+          <Route path="mesas" element={<MesasBoard />} />
         </Routes>
       </main>
     </div>
