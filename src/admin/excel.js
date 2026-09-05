@@ -7,7 +7,9 @@
 // ExcelJS entra por parámetro y no por import: en el navegador se carga con
 // import() dinámico al pulsar el botón, para no meter ~900 kB en el bundle del
 // panel que casi nunca se usan.
-import { ESTADOS, estadoOf } from './cupos.js'   // con extensión: este módulo también lo carga Node
+// Los dos con extensión: Node también carga este módulo, y allí no hay resolución de Vite
+import { ESTADOS, estadoOf } from './cupos.js'
+import { nombreIncompleto } from './nombres.js'
 
 const LBL = Object.fromEntries(Object.entries(ESTADOS).map(([k, v]) => [k, v.lbl]))
 
@@ -95,7 +97,14 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
       filasPersona.push(['(sin nombres cargados)', r.group_name, LBL[estadoOf(r)], ''])
     }
   }
-  filasPersona.forEach(f => p.addRow(f))
+  filasPersona.forEach(f => {
+    const fila = p.addRow(f)
+    // Rojo = nombre que no sirve para una tarjeta de mesa
+    if (nombreIncompleto(f[0])) {
+      fila.getCell(1).font = { color: { argb: 'FFB00020' } }
+      fila.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } }
+    }
+  })
   const ultP = Math.max(filasPersona.length + 1, 2)
   if (filasPersona.length) {
     if (mesas.length) {
@@ -130,6 +139,43 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
         style: { font: { bold: true, color: { argb: 'FFB00020' } } } }],
     })
   }
+
+  // ══ REPARTO ══
+  // El listado que se imprime y se lleva al salón: cada mesa con sus nombres
+  // completos, en bloques. Es la vista que de verdad se usa el día de la boda.
+  const rep = wb.addWorksheet('Reparto', { views: [{ state: 'frozen', ySplit: 1 }] })
+  rep.addRow(['Mesa', '#', 'Persona', 'Tarjeta'])
+  cabecera(rep.getRow(1))
+  anchos(rep, [22, 5, 32, 34])
+
+  const nombreDeMiembro = new Map(miembros.map(m => [m.id, m.name]))
+  const grupoDeTarjeta = new Map(rows.map(r => [r.id, r.group_name]))
+
+  for (const m of mesas) {
+    const suyos = asientos.filter(a => a.mesa_id === m.id)
+    if (!suyos.length) {
+      const f = rep.addRow([m.nombre, '', '(mesa vacía)', ''])
+      f.getCell(3).font = { italic: true, color: { argb: 'FF999999' } }
+      continue
+    }
+    suyos
+      .map(a => ({
+        persona: a.member_id ? (nombreDeMiembro.get(a.member_id) || '') : (a.etiqueta || 'Sin nombre'),
+        tarjeta: grupoDeTarjeta.get(a.guest_id) || '',
+        anon: !a.member_id,
+      }))
+      .sort((a, b) => a.tarjeta.localeCompare(b.tarjeta, 'es') || a.persona.localeCompare(b.persona, 'es'))
+      .forEach((x, i) => {
+        const f = rep.addRow([i === 0 ? m.nombre : '', i + 1, x.persona, x.tarjeta])
+        if (i === 0) f.getCell(1).font = { bold: true }
+        // Lo que hay que arreglar antes de imprimir tarjetas de mesa
+        if (x.anon || nombreIncompleto(x.persona)) {
+          f.getCell(3).font = { color: { argb: 'FFB00020' } }
+          f.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } }
+        }
+      })
+  }
+  if (rep.rowCount > 1) rep.autoFilter = { from: 'A1', to: `D${rep.rowCount}` }
 
   // ══ RESUMEN ══
   const res = wb.addWorksheet('Resumen')

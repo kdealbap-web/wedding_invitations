@@ -339,3 +339,23 @@ body.admin-body {
 .adm-btn:disabled:active { transform: none }
 .mb-ficha.parcial { border-color: rgba(200,169,110,.5) }
 .mb-ficha.parcial::before { content: '!'; color: #c8a96e; font-weight: 700; font-size: .7rem; flex-shrink: 0 }
+
+/* Nombres por completar */
+.mb-faltan    { background: #161b26; border: 1px solid rgba(200,169,110,.35); border-radius: 12px; padding: .8rem 1rem }
+.mb-faltan summary { cursor: pointer; font-size: .82rem; color: #94a3b8; list-style: none }
+.mb-faltan summary::-webkit-details-marker { display: none }
+.mb-faltan summary b { color: #c8a96e; font-size: 1rem }
+.mb-faltan summary span { color: #64748b; font-size: .78rem }
+.mb-faltan-list { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .8rem }
+.mb-faltan-list .mb-ficha { width: auto; min-width: 190px }
+.mb-faltan-pie { font-size: .75rem; color: #64748b; line-height: 1.7; margin-top: .7rem }
+.mb-faltan-pie b { color: #94a3b8 }
+
+/* Ficha: nombre por completar y edición en el sitio */
+.mb-ficha.falta   { border-color: rgba(200,169,110,.5) }
+.mb-ficha.falta .mb-ficha-n { text-decoration: underline dotted rgba(200,169,110,.7); text-underline-offset: 3px }
+.mb-ficha-e   { background: none; border: none; color: #475569; cursor: pointer; font-size: .8rem; line-height: 1; padding: 0 .15rem; opacity: 0; transition: opacity .12s }
+.mb-ficha:hover .mb-ficha-e { opacity: 1 }
+.mb-ficha.falta .mb-ficha-e { opacity: .8; color: #c8a96e }
+.mb-ficha.editando { padding: .2rem .25rem; border-color: #c8a96e }
+.mb-ficha.editando input { width: 100%; background: #0f1117; border: none; outline: none; color: #e2e8f0; font-size: .8rem; padding: .2rem .35rem; border-radius: 5px; font-family: inherit }

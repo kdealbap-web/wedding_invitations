@@ -14,11 +14,14 @@
     "cine": "node cine/render.mjs",
     "fiesta": "node cine/fiesta.mjs",
     "usb": "node scripts/armar-usb.mjs",
-    "export": "node scripts/export-invitados.mjs"
+    "export": "node scripts/export-invitados.mjs",
+    "mesas-img": "node scripts/export-mesas-img.mjs",
+    "export-todo": "npm run export && npm run mesas-img"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
     "exceljs": "^4.4.0",
+    "jszip": "^3.10.1",
     "nanoid": "^5.1.11",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

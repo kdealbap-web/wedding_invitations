@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { estadoOf, personasOf, ESTADOS } from './cupos'
+import { nombreIncompleto, MOTIVO, normalizarNombre } from './nombres'
 import { exportarExcel } from './descargar'
+import { exportarImagenes } from './imagenes'
 
 // ─── Quién se sienta ───
 // Se siembra a la PERSONA, no a la tarjeta: una familia puede repartirse entre
@@ -38,26 +40,54 @@ function armarGrupos(rows, miembrosPorTarjeta, incluir) {
 
 const idAnon = (guestId, i) => `anon:${guestId}:${i}`
 
-// ─── Ficha arrastrable ───
-function Ficha({ ficha, seleccionada, onSeleccionar, onQuitar, compacta }) {
+// ─── Ficha arrastrable y editable ───
+// Doble clic sobre el nombre lo edita en el sitio. Es la forma más directa de
+// arreglar los «Invitado 3» sin salir del tablero, que es justo donde se ven.
+function Ficha({ ficha, seleccionada, onSeleccionar, onQuitar, compacta, editando, onEditar, onGuardar, onCancelar }) {
+  const falta = ficha.anon ? null : nombreIncompleto(ficha.nombre)
+
+  if (editando) {
+    return (
+      <form
+        className="mb-ficha editando"
+        onSubmit={e => { e.preventDefault(); onGuardar(ficha, e.target.elements.n.value) }}
+      >
+        <input
+          name="n" autoFocus defaultValue={ficha.anon ? '' : ficha.nombre}
+          placeholder={ficha.anon ? `Nombre para esta plaza de ${ficha.grupo}` : 'Nombre y apellido'}
+          onKeyDown={e => { if (e.key === 'Escape') onCancelar() }}
+          onBlur={e => onGuardar(ficha, e.target.value)}
+        />
+      </form>
+    )
+  }
+
+  const titulo = [
+    ficha.anon ? `Plaza sin nombre de ${ficha.grupo}` : `${ficha.nombre} · ${ficha.grupo}`,
+    falta ? MOTIVO[falta] : null,
+    ficha.parcial ? `OJO: esta tarjeta confirmó ${ficha.cupos} de ${ficha.total} personas.` : null,
+    'Doble clic para editar el nombre',
+  ].filter(Boolean).join('\n')
+
   return (
     <div
-      className={`mb-ficha${seleccionada ? ' on' : ''}${ficha.anon ? ' anon' : ''}${ficha.parcial ? ' parcial' : ''}${compacta ? ' mini' : ''}`}
+      className={`mb-ficha${seleccionada ? ' on' : ''}${ficha.anon ? ' anon' : ''}${ficha.parcial ? ' parcial' : ''}${falta || ficha.anon ? ' falta' : ''}${compacta ? ' mini' : ''}`}
       draggable
       onDragStart={e => {
         e.dataTransfer.setData('text/plain', ficha.key)
         e.dataTransfer.effectAllowed = 'move'
       }}
       onClick={() => onSeleccionar(ficha)}
-      title={ficha.anon
-        ? `Plaza sin nombre de ${ficha.grupo}`
-        : ficha.parcial
-          ? `${ficha.nombre} · ${ficha.grupo}
-OJO: esta tarjeta confirmó ${ficha.cupos} de ${ficha.total} personas. Sienta solo a quienes vienen.`
-          : `${ficha.nombre} · ${ficha.grupo}`}
+      onDoubleClick={e => { e.stopPropagation(); onEditar(ficha) }}
+      title={titulo}
     >
       <span className="mb-ficha-n">{ficha.nombre}</span>
       {!compacta && <span className="mb-ficha-g">{ficha.grupo}</span>}
+      <button
+        className="mb-ficha-e"
+        onClick={e => { e.stopPropagation(); onEditar(ficha) }}
+        title="Editar el nombre" aria-label="Editar el nombre"
+      >✎</button>
       {onQuitar && (
         <button
           className="mb-ficha-x"
@@ -82,6 +112,8 @@ export default function MesasBoard() {
   const [incluir, setIncluir]   = useState(['confirmado', 'preconfirmado'])
   const [aviso, setAviso]       = useState('')
   const [exportando, setExportando] = useState('')
+  const [editando, setEditando]     = useState(null)   // key de la ficha en edición
+  const [imagenes, setImagenes]     = useState('')
 
   const flash = m => { setAviso(m); setTimeout(() => setAviso(''), 2200) }
 
@@ -144,6 +176,14 @@ export default function MesasBoard() {
   }, [asientos])
 
   const sinMesa = todasLasFichas.filter(f => !asientoDe.has(f.key))
+
+  // Fichas cuyo nombre no sirve para imprimir una tarjeta de mesa, estén
+  // sentadas o no. Es la lista que hay que dejar vacía antes de la boda: en el
+  // pool no bastaría, porque a la gente ya sentada no se la vería.
+  const porCompletar = useMemo(
+    () => todasLasFichas.filter(f => f.anon || nombreIncompleto(f.nombre)),
+    [todasLasFichas],
+  )
   const q = busca.trim().toLowerCase()
   const sinMesaFiltrada = q
     ? sinMesa.filter(f => f.nombre.toLowerCase().includes(q) || f.grupo.toLowerCase().includes(q))
@@ -175,6 +215,32 @@ export default function MesasBoard() {
     if (e) return flash(`No se pudo sentar: ${e.message}`)
     await cargar()
     setSel(null)
+  }
+
+  // ─── Editar el nombre ───
+  // Para una persona ya cargada es un UPDATE. Para una «plaza sin nombre» hay
+  // que CREARLA: se inserta en guest_members y, si estaba sentada, el asiento
+  // pasa a apuntar a la persona real en vez de a la etiqueta.
+  async function guardarNombre(ficha, valor) {
+    const nombre = normalizarNombre(valor)
+    setEditando(null)
+    if (!nombre || (!ficha.anon && nombre === ficha.nombre)) return
+
+    if (ficha.member_id) {
+      const { error: e } = await supabase.from('guest_members').update({ name: nombre }).eq('id', ficha.member_id)
+      if (e) return flash(`No se pudo guardar: ${e.message}`)
+    } else {
+      const orden = (miembros[ficha.guest_id] || []).reduce((m, x) => Math.max(m, x.order_num || 0), 0) + 1
+      const { data, error: e } = await supabase.from('guest_members')
+        .insert({ guest_id: ficha.guest_id, name: nombre, order_num: orden })
+        .select('id').single()
+      if (e) return flash(`No se pudo crear la persona: ${e.message}`)
+      const a = asientoDe.get(ficha.key)
+      if (a) await supabase.from('asientos')
+        .update({ member_id: data.id, etiqueta: null, orden: 0 }).eq('id', a.id)
+    }
+    await cargar()
+    flash(`Guardado: ${nombre}`)
   }
 
   async function levantar(ficha) {
@@ -293,6 +359,19 @@ export default function MesasBoard() {
               finally { setExportando('') }
             }}
           >{exportando || 'Exportar Excel'}</button>
+          <button
+            className="adm-btn adm-btn-gold" disabled={!!imagenes}
+            title="Descarga un ZIP con el plano del salón y una hoja por mesa, listas para imprimir"
+            onClick={async () => {
+              try {
+                const r = await exportarImagenes(setImagenes)
+                flash(r.faltan
+                  ? `Imágenes listas · ${r.mesas} mesas · ojo: ${r.faltan} nombres por completar`
+                  : `Imágenes listas · ${r.mesas} mesas`)
+              } catch (e) { flash(`No se pudo exportar: ${e.message}`) }
+              finally { setImagenes('') }
+            }}
+          >{imagenes || 'Exportar imágenes'}</button>
           <button className="adm-btn adm-btn-gold" onClick={nuevaMesa}>+ Mesa</button>
         </div>
       </div>
@@ -335,6 +414,31 @@ export default function MesasBoard() {
         </p>
       )}
 
+      {porCompletar.length > 0 && (
+        <details className="mb-faltan" open>
+          <summary>
+            <b>{porCompletar.length}</b> nombres por completar
+            <span> — doble clic o ✎ para editarlos aquí mismo</span>
+          </summary>
+          <div className="mb-faltan-list">
+            {porCompletar.map(f => (
+              <Ficha
+                key={f.key} ficha={f}
+                seleccionada={sel?.key === f.key} onSeleccionar={setSel}
+                editando={editando === f.key}
+                onEditar={x => setEditando(x.key)}
+                onGuardar={guardarNombre}
+                onCancelar={() => setEditando(null)}
+              />
+            ))}
+          </div>
+          <p className="mb-faltan-pie">
+            Al ponerle nombre a una <b>plaza sin nombre</b> se crea la persona de verdad
+            en su tarjeta, y si ya estaba sentada conserva la mesa.
+          </p>
+        </details>
+      )}
+
       <div className="mb-filtros">
         <span>Sentar a:</span>
         {['confirmado', 'preconfirmado', 'sin_respuesta', 'no_contesta'].map(k => (
@@ -361,7 +465,14 @@ export default function MesasBoard() {
           {sinMesaFiltrada.length === 0 && <p className="mb-vacio">Todos ubicados.</p>}
           <div className="mb-pool-list">
             {sinMesaFiltrada.map(f => (
-              <Ficha key={f.key} ficha={f} seleccionada={sel?.key === f.key} onSeleccionar={setSel} />
+              <Ficha
+                key={f.key} ficha={f}
+                seleccionada={sel?.key === f.key} onSeleccionar={setSel}
+                editando={editando === f.key}
+                onEditar={x => setEditando(x.key)}
+                onGuardar={guardarNombre}
+                onCancelar={() => setEditando(null)}
+              />
             ))}
           </div>
         </aside>
@@ -411,6 +522,10 @@ export default function MesasBoard() {
                       seleccionada={sel?.key === f.key}
                       onSeleccionar={setSel}
                       onQuitar={levantar}
+                      editando={editando === f.key}
+                      onEditar={x => setEditando(x.key)}
+                      onGuardar={guardarNombre}
+                      onCancelar={() => setEditando(null)}
                     />
                   ))}
                 </div>

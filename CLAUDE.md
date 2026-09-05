@@ -24,6 +24,8 @@ npm run favicons         # regenera public/favicon* desde el logo de la boda
 npm run usb              # arma entrega/USB_BODA_AyK/ para el proveedor de las LED
 npm run export           # invitados + cupos + mesas a Excel con fórmulas vivas
 npm run export -- --demo # el mismo Excel con datos de ejemplo, sin tocar la base
+npm run mesas-img        # plano del salón + una hoja por mesa, en PNG
+npm run export-todo      # el Excel y las imágenes de una vez
 ```
 
 **No hay tests.** No los inventes ni asumas que existe una suite.
@@ -327,6 +329,39 @@ lo dice en vez de reventar.
   más ajustada. Es una ayuda, no una decisión: solo toca a quien está sin mesa.
 - Funciona con arrastrar y soltar **y** con clic (seleccionar persona → tocar
   mesa), porque en tableta el arrastre es incómodo.
+
+### Nombres por completar — `src/admin/nombres.js`
+
+La base arrastra nombres que no sirven para sentar a nadie ni para imprimir una
+tarjeta de mesa: **22 «Invitado N»**, «Acompañante», «Esposa», «Novia», y unos
+16 que son solo el nombre de pila. `nombreIncompleto()` los detecta y devuelve
+el motivo (`vacio` · `generico` · `incompleto`).
+
+No corrige nada solo, **solo señala**: quién es «Invitado 3» lo sabe la pareja,
+no el código. Se marcan en el tablero, en el Excel y en las imágenes, siempre en
+rojo, para que se puedan arreglar de una pasada.
+
+En `/admin/mesas` se editan **con doble clic sobre la ficha** o con el ✎. Al
+ponerle nombre a una «plaza sin nombre» se **crea la persona de verdad** en
+`guest_members` y, si estaba sentada, el asiento pasa a apuntar a ella en vez de
+a la etiqueta. Al guardar, `normalizarNombre()` arregla las mayúsculas
+(«JOrge» → «Jorge») respetando las partículas en minúscula.
+
+### Export del reparto de mesas
+
+Dos formatos, y cada uno se genera desde el panel y desde consola:
+
+| | Botón | Consola |
+|---|---|---|
+| Excel (5 hojas, con **Reparto**) | «Exportar Excel» | `npm run export` |
+| Imágenes (plano + hoja por mesa) | «Exportar imágenes» | `npm run mesas-img` |
+| Ambos | — | `npm run export-todo` |
+
+Las imágenes van a 2x para que impresas no se vean pixeladas. El **script**
+dibuja en HTML y captura con Chrome headless; el **botón** dibuja en `<canvas>` y
+empaqueta en ZIP con `jszip` — el navegador no deja descargar doce archivos
+sueltos sin aprobar cada uno. Son dos herramientas distintas a propósito, pero
+comparten paleta, tipografías y el criterio de qué nombre está incompleto.
 
 ### Los cupos viven en `src/admin/cupos.js`
 
