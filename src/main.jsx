@@ -10,6 +10,7 @@ import App from './App.jsx'
 // un fallo de configuración solo afecta a /admin. De paso divide el bundle.
 const AdminApp             = lazy(() => import('./admin/AdminApp.jsx'))
 const TarjetaParticipacion = lazy(() => import('./participacion/TarjetaParticipacion.jsx'))
+const PantallaLed          = lazy(() => import('./pantalla/PantallaLed.jsx'))
 
 const centrado = {
   display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -51,6 +52,7 @@ createRoot(document.getElementById('root')).render(
           <Routes>
             <Route path="/admin/*"       element={<AdminApp />} />
             <Route path="/participacion" element={<TarjetaParticipacion />} />
+            <Route path="/pantalla"      element={<PantallaLed />} />
             <Route path="/*"             element={<App />} />
           </Routes>
         </Suspense>
