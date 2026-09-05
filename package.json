@@ -8,10 +8,17 @@
     "build": "vite build",
     "preview": "vite preview",
     "optimize-images": "node scripts/optimize-images.mjs",
-    "favicons": "node scripts/generate-favicons.mjs"
+    "favicons": "node scripts/generate-favicons.mjs",
+    "pantallas": "node scripts/export-pantallas.mjs",
+    "videos": "node scripts/export-videos.mjs",
+    "cine": "node cine/render.mjs",
+    "fiesta": "node cine/fiesta.mjs",
+    "usb": "node scripts/armar-usb.mjs",
+    "export": "node scripts/export-invitados.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
+    "exceljs": "^4.4.0",
     "nanoid": "^5.1.11",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -22,6 +29,7 @@
     "@vitejs/plugin-react": "^4.5.2",
     "pg": "^8.21.0",
     "png-to-ico": "^3.0.1",
+    "puppeteer-core": "^25.10.0",
     "sharp": "^0.35.1",
     "vite": "^7.0.0"
   }

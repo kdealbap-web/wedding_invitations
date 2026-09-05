@@ -37,3 +37,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Cartelas LED exportadas: binarios pesados, se regeneran con npm run pantallas
+entrega/
