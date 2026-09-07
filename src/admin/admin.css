@@ -399,7 +399,12 @@ body.admin-body {
    de dónde está sentado, no del nombre. */
 .mbn          { background: #161b26; border: 1px solid rgba(200,169,110,.3); border-radius: 12px;
                 padding: 1rem 1.1rem; max-width: 54rem }
-.mbn-hdr      { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap }
+.mbn-hdr      { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+                flex-wrap: wrap; cursor: pointer; list-style: none }
+.mbn-hdr::-webkit-details-marker    { display: none }
+.mbn[open] .mbn-hdr h3::after       { content: " ▾"; color: #475569; font-size: .8em }
+.mbn:not([open]) .mbn-hdr h3::after { content: " ▸"; color: #475569; font-size: .8em }
+.mbn:not([open]) .mbn-hdr           { align-items: center }
 .mbn-hdr h3   { font-size: .95rem; font-weight: 600; color: #e2e8f0 }
 .mbn-hdr p    { font-size: .78rem; color: #64748b; line-height: 1.6; margin-top: .25rem; max-width: 46rem }
 .mbn-hdr-r    { display: flex; align-items: center; gap: .85rem }
@@ -511,6 +516,11 @@ body.admin-body {
 .mr.destino { border-color: #263144; cursor: pointer }
 .mr.destino:hover { border-color: #c8a96e; background: rgba(200,169,110,.06) }
 .mr.destino .mr-vacia { color: #c8a96e !important; font-style: normal }
+/* En el plano no hay lista donde escribir «sentar aquí», así que lo dicen los
+   puestos libres: se marcan en dorado. */
+.mr.mini.destino                  { border-color: rgba(200,169,110,.5) }
+.mr.mini.destino .mr-puesto.vacio { border-color: rgba(200,169,110,.65) }
+.mr.mini.destino:hover            { border-color: #c8a96e; background: rgba(200,169,110,.09) }
 .mr.activa .mr-tablero { box-shadow: 0 0 0 2px rgba(200,169,110,.35), 0 10px 30px rgba(0,0,0,.45) }
 .mr.activa .mr-puesto.vacio { border-color: rgba(200,169,110,.7); animation: mr-late 1.1s ease-in-out infinite }
 @keyframes mr-late { 50% { transform: scale(1.13) } }
@@ -606,6 +616,74 @@ body.admin-body {
 .mr-borrar:hover { color: #f87171; background: rgba(127,29,29,.15) }
 
 /* Salón vacío */
+/* ═══════════════════════════════════════════════════════════
+   PLANO DEL SALÓN  ·  las mesas donde están de verdad
+   ═══════════════════════════════════════════════════════════
+   Dos hileras enfrentadas de cinco, el frente a la izquierda: la 1 queda
+   frente a la 6, la 2 frente a la 7. En flujo automático las diez mesas se
+   apilaban en cuatro filas y la 10 quedaba a mil píxeles del pool. */
+.mb-salon      { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 1rem }
+.mb-salon-cab  { display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem }
+.mb-salon-cab.otras { border-top: 1px dashed #263144; padding-top: 1rem }
+
+/* Los novios a la izquierda; el salón se lee de ahí hacia el fondo */
+.mb-salon-plano { display: flex; align-items: center; gap: .9rem }
+.mb-cabecera   { display: flex; flex-direction: column; gap: .6rem; flex-shrink: 0 }
+.mb-hileras    { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .5rem }
+/* La línea del frente: dice por qué extremo se lee el salón */
+.mb-frente     { align-self: stretch; flex-shrink: 0; width: 1.1rem;
+                 display: flex; align-items: center; justify-content: center;
+                 writing-mode: vertical-rl; transform: rotate(180deg);
+                 font-size: .62rem; text-transform: uppercase; letter-spacing: .22em;
+                 color: #475569; border-left: 2px solid rgba(200,169,110,.35) }
+
+.mb-hilera     { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .6rem;
+                 align-items: start }
+.mb-pasillo    { display: flex; align-items: center; gap: .6rem; color: #334155;
+                 font-size: .62rem; text-transform: uppercase; letter-spacing: .18em;
+                 padding: .1rem 0 }
+.mb-pasillo::before, .mb-pasillo::after {
+                 content: ''; flex: 1; border-top: 1px dashed #263144 }
+/* Un número sin mesa: el salón enseña el hueco en vez de cerrar filas */
+.mb-hueco      { border: 1px dashed #1e293b; border-radius: 14px; min-height: 120px;
+                 display: flex; align-items: center; justify-content: center;
+                 color: #334155; font-size: .72rem }
+
+/* La mesa en el plano */
+.mr.mini       { padding: .6rem .4rem .5rem; gap: .45rem; border-radius: 14px }
+.mr.mini .mr-nombre.est { display: block; width: 100%; text-align: center; color: #e2e8f0;
+                 font-size: .68rem; font-weight: 600; line-height: 1.2; overflow: hidden }
+.mr.mini .mr-cuenta { display: none }
+.mr.mini .mr-puesto { font-size: .58rem }
+.mr.mini .mr-quitar { display: none }
+.mr.mini .mr-galon  { width: 13px; height: 13px; font-size: .45rem; line-height: 13px; top: -4px; left: -4px }
+
+.mr-mini-pie   { display: flex; align-items: center; gap: .35rem; width: 100%;
+                 border-top: 1px solid #1e293b; padding-top: .4rem;
+                 font-size: .66rem; color: #64748b; min-width: 0 }
+.mr-mini-pie span    { font-variant-numeric: tabular-nums; flex-shrink: 0 }
+.mr-mini-pie span i  { font-style: normal; opacity: .5; margin: 0 .1em }
+.mr-mini-pie span.ok { color: #48bb78 }
+.mr-mini-pie span.mal{ color: #fc814a; font-weight: 600 }
+.mr-mini-pie b       { flex: 1; min-width: 0; color: #c8a96e; font-weight: 500;
+                 overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mr-mini-pie b.pend  { color: #475569; font-weight: 400 }
+.mr-ver        { flex-shrink: 0; background: none; border: none; color: #475569;
+                 font: inherit; font-size: .66rem; cursor: pointer; padding: .1rem .25rem;
+                 border-radius: 4px; text-decoration: underline dotted }
+.mr-ver:hover  { color: #c8a96e }
+.mr-ver:focus-visible { outline: 2px solid #c8a96e; outline-offset: 1px }
+
+.mb-filtros-sep { width: 1px; height: 1rem; background: #263144; margin: 0 .35rem }
+
+/* En pantallas estrechas el salón deja de caber en dos hileras de cinco. Se
+   conserva la forma del salón y se desplaza el plano dentro de sí mismo: la
+   página nunca se mueve en horizontal. */
+@media (max-width: 1100px) {
+  .mb-salon       { overflow-x: auto; padding-bottom: .4rem }
+  .mb-salon-plano { min-width: 940px }
+}
+
 .mb-sin-mesas { grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem;
   border: 1px dashed #263144; border-radius: 16px; display: flex; flex-direction: column;
   align-items: center; gap: .6rem }

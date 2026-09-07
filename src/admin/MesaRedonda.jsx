@@ -28,11 +28,14 @@ function iniciales(nombre) {
  * Geometría de la mesa. Los puestos se reparten por la circunferencia, así que
  * el radio crece con la capacidad para que no se encimen.
  */
-function medidas(capacidad) {
-  const s = capacidad <= 10 ? 44 : capacidad <= 16 ? 37 : 31
-  // El mínimo de 96 no es por los puestos, es para que quepa el nombre de la
-  // mesa dentro del tablero: «Amigos del colegio» necesita sitio.
-  const R = Math.max(96, (s * 1.2 * capacidad) / (2 * Math.PI))
+function medidas(capacidad, mini, nombre = '') {
+  const s = mini ? 30 : capacidad <= 10 ? 44 : capacidad <= 16 ? 37 : 31
+  // El mínimo no es por los puestos, es para que quepa el nombre de la mesa
+  // dentro del tablero: «Amigos del colegio» necesita sitio. En el plano las
+  // mesas se llaman «Mesa 7», así que ahí el mínimo depende del nombre — y por
+  // eso una mesa con nombre largo sale más grande también en el plano.
+  const min = mini ? (nombre.length > 12 ? 74 : 58) : 96
+  const R = Math.max(min, (s * 1.2 * capacidad) / (2 * Math.PI))
   return { s, R, caja: 2 * R + s + 14, tablero: R - s / 2 - 8 }
 }
 
@@ -41,9 +44,9 @@ export default function MesaRedonda({
   onSentar, onLevantar, onSeleccionar,
   zona, editando, onEditar, onGuardar, onCancelar,
   onEditarMesa, onBorrar, buscarFicha, onSobre, nueva,
-  onCapitan, nombreDe,
+  onCapitan, nombreDe, mini, onAbrir,
 }) {
-  const { s, R, caja, tablero } = medidas(mesa.capacidad)
+  const { s, R, caja, tablero } = medidas(mesa.capacidad, mini, mesa.nombre || '')
   const lleno = gente.length >= mesa.capacidad
   const pasada = gente.length > mesa.capacidad
   const activa = sobre === mesa.id
@@ -81,7 +84,8 @@ export default function MesaRedonda({
 
   return (
     <section
-      className={`mr${pasada ? ' pasada' : lleno ? ' llena' : ''}${activa ? ' activa' : ''}${eligiendo ? ' destino' : ''}`}
+      id={`mesa-${mesa.id}`}
+      className={`mr${mini ? ' mini' : ''}${pasada ? ' pasada' : lleno ? ' llena' : ''}${activa ? ' activa' : ''}${eligiendo ? ' destino' : ''}`}
       onDragOver={e => { e.preventDefault(); if (!activa) onSobre(mesa.id) }}
       // dragleave salta también al pasar por encima de un hijo; sin comprobar
       // el destino, la mesa parpadearía todo el rato
@@ -95,18 +99,22 @@ export default function MesaRedonda({
           className="mr-tablero"
           style={{ width: tablero * 2, height: tablero * 2, left: caja / 2 - tablero, top: caja / 2 - tablero }}
         >
-          <input
-            className="mr-nombre" defaultValue={mesa.nombre}
-            // Recién creada: se abre lista para escribir, así no se queda en «Mesa 3»
-            autoFocus={nueva}
-            onFocus={e => nueva && e.target.select()}
-            onClick={e => e.stopPropagation()}
-            onBlur={e => {
-              const v = e.target.value.trim()
-              if (v && v !== mesa.nombre) onEditarMesa(mesa, { nombre: v })
-              else e.target.value = mesa.nombre
-            }}
-          />
+          {mini ? (
+            <span className="mr-nombre est">{mesa.nombre}</span>
+          ) : (
+            <input
+              className="mr-nombre" defaultValue={mesa.nombre}
+              // Recién creada: se abre lista para escribir, así no se queda en «Mesa 3»
+              autoFocus={nueva}
+              onFocus={e => nueva && e.target.select()}
+              onClick={e => e.stopPropagation()}
+              onBlur={e => {
+                const v = e.target.value.trim()
+                if (v && v !== mesa.nombre) onEditarMesa(mesa, { nombre: v })
+                else e.target.value = mesa.nombre
+              }}
+            />
+          )}
           <span className="mr-cuenta">{gente.length}<i>/</i>{mesa.capacidad}</span>
         </div>
 
@@ -153,8 +161,22 @@ export default function MesaRedonda({
         })}
       </div>
 
+      {/* En el plano el detalle sobra: lo que importa es dónde queda cada mesa
+          y cuánto le falta. Un clic abre la vista de detalle de esa mesa. */}
+      {mini && (
+        <footer className="mr-mini-pie">
+          <span className={pasada ? 'mal' : lleno ? 'ok' : ''}>{gente.length}<i>/</i>{mesa.capacidad}</span>
+          {capitan && <b title={`Capitán: ${nombreDe(capitan)}`}>★ {nombreDe(capitan).split(' ')[0]}</b>}
+          {!capitan && gente.length > 0 && <b className="pend" title="Esta mesa aún no tiene capitán">sin capitán</b>}
+          <button
+            className="mr-ver" onClick={e => { e.stopPropagation(); onAbrir(mesa) }}
+            title={`Ver el detalle de ${mesa.nombre}`}
+          >ver</button>
+        </footer>
+      )}
+
       {/* Quién está sentado: las iniciales solas no se leen */}
-      <ol className="mr-lista">
+      {!mini && <ol className="mr-lista">
         {gente.length === 0 && (
           <li className="mr-vacia">
             {/* Corto a propósito: el cuántos ya lo dice la barra de abajo, que
@@ -196,12 +218,12 @@ export default function MesaRedonda({
             </li>
           )
         })}
-      </ol>
+      </ol>}
 
       {/* El control del capitán. Un <select> y no un menú inventado: dice
           quién manda hoy sin desplegarlo, se maneja con el teclado y la lista
           de candidatos se rehace sola con quien esté sentado. */}
-      {hayCapitanes && (candidatos.length > 0 || capitan) && (
+      {!mini && hayCapitanes && (candidatos.length > 0 || capitan) && (
         <div className={`mr-capitan${aBordo ? ' puesto' : ''}${capitan && !aBordo ? ' fuera' : ''}`}>
           <label htmlFor={`cap-${mesa.id}`}>Capitán</label>
           <select
@@ -222,7 +244,7 @@ export default function MesaRedonda({
         </div>
       )}
 
-      <footer className="mr-pie">
+      {!mini && <footer className="mr-pie">
         <input
           className="mr-cap" type="number" min="1" max="30" defaultValue={mesa.capacidad}
           title="Puestos de esta mesa"
@@ -237,7 +259,7 @@ export default function MesaRedonda({
         <button className="mr-borrar" onClick={e => { e.stopPropagation(); onBorrar(mesa) }} title="Borrar esta mesa">
           Borrar
         </button>
-      </footer>
+      </footer>}
     </section>
   )
 }

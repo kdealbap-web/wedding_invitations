@@ -372,6 +372,36 @@ al revés: **la mesa viene a la selección**, no la persona a la mesa.
 - `sel` es un **arreglo de claves de ficha**, no una ficha. Si lo vuelves a
   convertir en una sola, vuelve el reparto de a uno.
 
+#### El plano del salón
+
+Hay dos vistas, y el conmutador está junto a los filtros:
+
+- **Plano del salón** (la de arranque) — las mesas **donde están de verdad**:
+  los novios al frente, y desde ahí dos hileras enfrentadas de cinco.
+  La 1 queda frente a la 6, la 2 frente a la 7, y así hasta la 5 con la 10.
+- **Detalle** — cada mesa entera, con sus nombres, su capitán y sus puestos.
+
+En flujo automático las once mesas se apilaban en cuatro filas y la 10 quedaba
+a dos mil píxeles del pool: no había forma de arrastrar a nadie hasta ella. En
+plano el salón entero mide unos **450 px** y cabe en pantalla.
+
+- La posición sale del **nombre**: `Mesa 7` → hilera 2, columna 2. Cualquier otro
+  nombre («Mesa principal», «Los abuelos») no tiene sitio fijo y va al frente,
+  con los novios; los números por encima de 10 van en una fila aparte al final.
+  **Renombrar una mesa la mueve de sitio en el plano**, y eso es lo correcto.
+- Si falta un número, el plano **enseña el hueco** en vez de cerrar filas: un
+  salón con la 9 vacía no es un salón de nueve mesas.
+- `POR_HILERA` es 5. Si el salón cambia de forma, es la única constante que tocar.
+- En el plano la mesa va **compacta**: sin lista de nombres, sin selector de
+  capitán, sin pie. Lo que se ve es dónde está, cuánto le falta y quién manda.
+  El botón «ver» salta al detalle de esa mesa. Por eso `medidas()` recibe `mini`
+  y el nombre: el mínimo del radio existe para que quepa el nombre dentro del
+  tablero, y «Mesa 7» necesita mucho menos sitio que «Amigos del colegio».
+- `mesaMini` es **una función que devuelve JSX, no un componente**. Definido como
+  componente dentro del render, React ve un tipo nuevo en cada pasada y desmonta
+  y vuelve a montar las once mesas —perdiendo el foco y relanzando la animación
+  de cada puesto—. No lo conviertas en `<MesaMini/>`.
+
 #### La mesa principal y la numeración
 
 La mesa de los novios se llama **«Mesa principal»** y no lleva número: la

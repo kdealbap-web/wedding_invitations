@@ -42,6 +42,34 @@ function armarGrupos(rows, miembrosPorTarjeta, incluir) {
 
 const idAnon = (guestId, i) => `anon:${guestId}:${i}`
 
+// ─── El plano del salón ───
+// Las mesas no van en un flujo automático que las apila en cuatro filas: van
+// donde están de verdad en el salón. Dos hileras enfrentadas de cinco, con el
+// frente —el lado de los novios— a la izquierda: la 1 queda frente a la 6, la 2
+// frente a la 7, y así. Puesto así el salón entero cabe en pantalla, que es lo
+// que hacía imposible arrastrar a alguien hasta la Mesa 10.
+const POR_HILERA = 5
+
+/** «Mesa 7» → 7. Cualquier otro nombre no tiene sitio fijo en el plano. */
+const numeroDe = m => {
+  const x = (m.nombre || '').match(/^\s*Mesa\s+(\d+)\s*$/i)
+  return x ? Number(x[1]) : null
+}
+
+function armarPlano(mesas) {
+  const cabecera = [], sueltas = []
+  const hileras = [Array(POR_HILERA).fill(null), Array(POR_HILERA).fill(null)]
+  for (const m of mesas) {
+    const n = numeroDe(m)
+    // Sin número no tiene sitio en la cuadrícula: la principal y las que se
+    // hayan renombrado («Los abuelos») van arriba, no se pierden.
+    if (n === null) { cabecera.push(m); continue }
+    if (n >= 1 && n <= POR_HILERA * 2) hileras[n <= POR_HILERA ? 0 : 1][(n - 1) % POR_HILERA] = m
+    else sueltas.push(m)
+  }
+  return { cabecera, hileras, sueltas }
+}
+
 /** El motivo por el que una ficha está marcada, ya sea plaza anónima o nombre flojo. */
 const motivoDe = ficha => ficha.anon ? 'vacio' : nombreIncompleto(ficha.nombre)
 
@@ -116,19 +144,22 @@ function Ficha({ ficha, seleccionada, onSeleccionar, onQuitar, compacta, editand
 // hecha para esta tarea.
 function ColaNombres({ cola, total, editando, onEditar, onGuardar, onCancelar, mesaDe }) {
   return (
-    <section className="mbn">
-      <header className="mbn-hdr">
+    <details className="mbn" open>
+      <summary className="mbn-hdr">
         <div>
           <h3>Nombres por completar</h3>
           <p>Así están hoy en la base, y así saldrían impresos en las tarjetas de mesa y en el Excel.</p>
         </div>
         <div className="mbn-hdr-r">
           <b>{total}</b>
-          <button className="adm-btn adm-btn-gold" onClick={() => onEditar(cola[0].fichas[0])}>
+          <button
+            className="adm-btn adm-btn-gold"
+            onClick={e => { e.preventDefault(); e.stopPropagation(); onEditar(cola[0].fichas[0]) }}
+          >
             Completar uno por uno
           </button>
         </div>
-      </header>
+      </summary>
 
       <div className="mbn-lista">
         {cola.map(g => (
@@ -169,7 +200,7 @@ function ColaNombres({ cola, total, editando, onEditar, onGuardar, onCancelar, m
         Al ponerle nombre a una <b>plaza sin nombre</b> se crea la persona de verdad
         en su tarjeta, y si ya estaba sentada conserva la mesa.
       </p>
-    </section>
+    </details>
   )
 }
 
@@ -195,6 +226,9 @@ export default function MesasBoard() {
   const [imagenes, setImagenes]     = useState('')
   const [sobre, setSobre]           = useState(null)  // mesa bajo el puntero al arrastrar
   const [nueva, setNueva]           = useState(null)  // mesa recién creada, para nombrarla
+  // «plano» reparte; «detalle» revisa. Se arranca en plano porque mientras
+  // queda gente por sentar lo que importa es alcanzar todas las mesas.
+  const [vista, setVista]           = useState('plano')
 
   const flash = m => { setAviso(m); setTimeout(() => setAviso(''), 3200) }
 
@@ -224,6 +258,8 @@ export default function MesasBoard() {
   }, [])
 
   useEffect(() => { cargar() }, [cargar])
+
+  const plano = useMemo(() => armarPlano(mesas), [mesas])
 
   const grupos = useMemo(
     () => armarGrupos(rows, miembros, incluir),
@@ -617,6 +653,27 @@ export default function MesasBoard() {
       faltan: totalCupos - sentadas, hayCapitanes, conGente, sinCapitan, capitanFuera }
   }, [rows, miembros, asientos, mesas, incluir, grupos])
 
+  // Una mesa del plano. Comparte MesaRedonda para que el círculo se dibuje en
+  // un solo sitio; `mini` le quita la lista, el capitán y el pie.
+  const mesaMini = m => (
+    <MesaRedonda
+      key={m.id}
+      mini mesa={m} gente={fichasDeMesa(m.id)}
+      sel={sel} elegidas={elegidas} sobre={sobre}
+      onSentar={sentar} onLevantar={levantar} onSeleccionar={alternar}
+      zona={`mesa:${m.id}`} editando={editando}
+      onEditar={x => abrirEditor(x, `mesa:${m.id}`)}
+      onGuardar={(x, v, o) => guardarNombre(x, v, { ...o, zona: `mesa:${m.id}` })}
+      onCancelar={cerrarEditor}
+      onEditarMesa={editarMesa} onBorrar={borrarMesa}
+      buscarFicha={k => todasLasFichas.find(x => x.key === k)}
+      onSobre={setSobre} onCapitan={asignarCapitan} nombreDe={nombreDe}
+      onAbrir={() => { setVista('detalle'); setTimeout(() => {
+        document.getElementById(`mesa-${m.id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }, 40) }}
+    />
+  )
+
   if (cargando) return <div className="adm-main"><p style={{ color: '#64748b' }}>Cargando…</p></div>
 
   if (error) return (
@@ -726,6 +783,12 @@ export default function MesasBoard() {
       )}
 
       <div className="mb-filtros">
+        <span>Vista:</span>
+        <button className={`mb-chip${vista === 'plano' ? ' on' : ''}`} onClick={() => setVista('plano')}
+                title="Las mesas donde están en el salón, todas en pantalla">Plano del salón</button>
+        <button className={`mb-chip${vista === 'detalle' ? ' on' : ''}`} onClick={() => setVista('detalle')}
+                title="Cada mesa con sus nombres, su capitán y sus puestos">Detalle</button>
+        <span className="mb-filtros-sep" />
         <span>Sentar a:</span>
         {['confirmado', 'preconfirmado', 'sin_respuesta', 'no_contesta'].map(k => (
           <button
@@ -803,7 +866,7 @@ export default function MesasBoard() {
               <button className="adm-btn adm-btn-gold" onClick={nuevaMesa}>Crear la primera mesa</button>
             </div>
           )}
-          {mesas.map(m => (
+          {vista === 'detalle' && mesas.map(m => (
             <MesaRedonda
               key={m.id}
               mesa={m}
@@ -828,6 +891,43 @@ export default function MesasBoard() {
               nombreDe={nombreDe}
             />
           ))}
+
+          {/* ── El plano ──
+              Dos hileras enfrentadas, el frente a la izquierda. La 1 queda
+              frente a la 6, la 2 frente a la 7. Es el salón, no una lista. */}
+          {vista === 'plano' && mesas.length > 0 && (
+            <div className="mb-salon">
+              <div className="mb-salon-plano">
+                {/* Los novios al frente: la 1 y la 6 son las que quedan junto
+                    a ellos, y de ahi el salon se lee hacia el fondo. */}
+                {plano.cabecera.length > 0 && (
+                  <div className="mb-cabecera">
+                    {plano.cabecera.map(mesaMini)}
+                  </div>
+                )}
+                <span className="mb-frente" aria-hidden="true">frente</span>
+                <div className="mb-hileras">
+                  <div className="mb-hilera">
+                    {plano.hileras[0].map((m, i) => m
+                      ? mesaMini(m)
+                      : <div key={`h0${i}`} className="mb-hueco">Mesa {i + 1}</div>)}
+                  </div>
+                  <div className="mb-pasillo"><span>pasillo</span></div>
+                  <div className="mb-hilera">
+                    {plano.hileras[1].map((m, i) => m
+                      ? mesaMini(m)
+                      : <div key={`h1${i}`} className="mb-hueco">Mesa {i + POR_HILERA + 1}</div>)}
+                  </div>
+                </div>
+              </div>
+
+              {plano.sueltas.length > 0 && (
+                <div className="mb-salon-cab otras">
+                  {plano.sueltas.map(mesaMini)}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
