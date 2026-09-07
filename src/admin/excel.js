@@ -38,6 +38,8 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
   const porTarjeta = miembros.reduce((a, m) => { (a[m.guest_id] ||= []).push(m); return a }, {})
   const mesaDe = new Map(mesas.map(m => [m.id, m.nombre]))
   const mesaDeMiembro = new Map(asientos.filter(a => a.member_id).map(a => [a.member_id, mesaDe.get(a.mesa_id) || '']))
+  const nombreDeMiembro = new Map(miembros.map(m => [m.id, m.name]))
+  const grupoDeTarjeta = new Map(rows.map(r => [r.id, r.group_name]))
 
   // ══ TARJETAS ══
   const t = wb.addWorksheet('Tarjetas', { views: [{ state: 'frozen', ySplit: 1 }] })
@@ -118,9 +120,9 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
 
   // ══ MESAS ══
   const ms = wb.addWorksheet('Mesas')
-  ms.addRow(['Mesa', 'Capacidad', 'Sentados', 'Libres', 'Estado'])
+  ms.addRow(['Mesa', 'Capacidad', 'Sentados', 'Libres', 'Estado', 'Capitán'])
   cabecera(ms.getRow(1))
-  anchos(ms, [24, 12, 11, 10, 16])
+  anchos(ms, [24, 12, 11, 10, 16, 26])
 
   mesas.forEach((m, i) => {
     const f = i + 2
@@ -130,7 +132,15 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
       { formula: `COUNTIF(Personas!$D$2:$D$${ultP},A${f})` },
       { formula: `B${f}-C${f}` },
       { formula: `IF(D${f}<0,"PASADA",IF(D${f}=0,"Llena","Libre"))` },
+      // El capitán es un dato, no una fórmula: sale de la base, no de esta hoja.
+      // Si lo movieron de mesa se dice, o la hoja que se lleva al salón mentiría.
+      m.capitan_id
+        ? (nombreDeMiembro.get(m.capitan_id) || '') +
+          (asientos.some(a => a.mesa_id === m.id && a.member_id === m.capitan_id) ? '' : ' (no está sentado aquí)')
+        : '',
     ])
+    if (!m.capitan_id) ms.getRow(f).getCell(6).fill =
+      { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF6E5' } }
   })
   if (mesas.length) {
     ms.addConditionalFormatting({
@@ -144,17 +154,14 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
   // El listado que se imprime y se lleva al salón: cada mesa con sus nombres
   // completos, en bloques. Es la vista que de verdad se usa el día de la boda.
   const rep = wb.addWorksheet('Reparto', { views: [{ state: 'frozen', ySplit: 1 }] })
-  rep.addRow(['Mesa', '#', 'Persona', 'Tarjeta'])
+  rep.addRow(['Mesa', '#', 'Persona', 'Tarjeta', 'Rol'])
   cabecera(rep.getRow(1))
-  anchos(rep, [22, 5, 32, 34])
-
-  const nombreDeMiembro = new Map(miembros.map(m => [m.id, m.name]))
-  const grupoDeTarjeta = new Map(rows.map(r => [r.id, r.group_name]))
+  anchos(rep, [22, 5, 32, 34, 12])
 
   for (const m of mesas) {
     const suyos = asientos.filter(a => a.mesa_id === m.id)
     if (!suyos.length) {
-      const f = rep.addRow([m.nombre, '', '(mesa vacía)', ''])
+      const f = rep.addRow([m.nombre, '', '(mesa vacía)', '', ''])
       f.getCell(3).font = { italic: true, color: { argb: 'FF999999' } }
       continue
     }
@@ -163,11 +170,14 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
         persona: a.member_id ? (nombreDeMiembro.get(a.member_id) || '') : (a.etiqueta || 'Sin nombre'),
         tarjeta: grupoDeTarjeta.get(a.guest_id) || '',
         anon: !a.member_id,
+        manda: !!a.member_id && a.member_id === m.capitan_id,
       }))
       .sort((a, b) => a.tarjeta.localeCompare(b.tarjeta, 'es') || a.persona.localeCompare(b.persona, 'es'))
       .forEach((x, i) => {
-        const f = rep.addRow([i === 0 ? m.nombre : '', i + 1, x.persona, x.tarjeta])
+        const f = rep.addRow([i === 0 ? m.nombre : '', i + 1, x.persona, x.tarjeta, x.manda ? 'Capitán' : ''])
         if (i === 0) f.getCell(1).font = { bold: true }
+        // El capitán es a quien busca el salón el día de la fiesta: va marcado
+        if (x.manda) f.getCell(5).font = { bold: true, color: { argb: 'FF8A6D1F' } }
         // Lo que hay que arreglar antes de imprimir tarjetas de mesa
         if (x.anon || nombreIncompleto(x.persona)) {
           f.getCell(3).font = { color: { argb: 'FFB00020' } }
@@ -175,7 +185,7 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
         }
       })
   }
-  if (rep.rowCount > 1) rep.autoFilter = { from: 'A1', to: `D${rep.rowCount}` }
+  if (rep.rowCount > 1) rep.autoFilter = { from: 'A1', to: `E${rep.rowCount}` }
 
   // ══ RESUMEN ══
   const res = wb.addWorksheet('Resumen')
@@ -207,6 +217,9 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
     { c: 'Puestos sobrantes', usa: r => `${r.puestos}-${r.total}`,  n: 'Negativo = faltan mesas' },
     {},
     { c: 'Tarjetas sin cupos cargados', f: 'COUNTIF(Tarjetas!D:D,0)', n: 'No suman capacidad ni se pueden sentar por nombre — hay que completarlas' },
+    ...(mesas.length
+      ? [{ c: 'Mesas sin capitán', f: `COUNTBLANK(Mesas!F2:F${mesas.length + 1})`, n: 'Cada mesa necesita a quién le habla el salón esa noche' }]
+      : []),
   ]
 
   const ref = {}

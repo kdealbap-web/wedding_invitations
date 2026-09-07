@@ -347,6 +347,44 @@ tablero central con el nombre y los puestos repartidos por la circunferencia.
 **Las mesas no se generan solas.** «Sugerir reparto» existe, pero es opt-in y
 solo toca a quien está sin mesa; el reparto lo arma la pareja.
 
+#### La mesa principal y la numeración
+
+La mesa de los novios se llama **«Mesa principal»** y no lleva número: la
+numeración corriente empieza en **«Mesa 1»** después de ella. `nuevaMesa()` saca
+el número del más alto que ya exista entre las que casan con `/^Mesa \d+$/`, y
+no de `mesas.length`, por dos razones: así la principal no consume el 1, y así
+borrar una del medio no genera un nombre repetido.
+
+#### Capitán de mesa
+
+Cada mesa tiene un capitán: la persona a la que el salón y la wedding le hablan
+esa noche. Se elige con el `<select>` del pie de cada mesa, y los candidatos son
+**quienes están sentados ahí en ese momento** — la lista se rehace sola.
+
+- Se guarda la **persona** (`mesas.capitan_id → guest_members`), no el asiento.
+  Mover a alguien de mesa borra su asiento y crea otro, así que un capitán atado
+  al asiento se perdería en cada arrastre.
+- Una **plaza sin nombre no puede ser capitana**: no hay a quién avisarle. Sale
+  gratis, porque la referencia es a `guest_members`.
+- Si al reacomodar el capitán acaba en otra mesa, **no se borra**: el `<select>`
+  lo sigue mostrando con «ya no está en esta mesa» y el tablero lo cuenta aparte.
+  Borrarlo solo perdería una decisión que costó tomar.
+- Una mesa cuenta como «con capitán» **solo si el capitán está sentado en ella**.
+  Si contara la sola asignación, la ficha diría «todas con capitán» mientras otra
+  avisa de que uno está fuera, y las dos se contradirían.
+- Las mesas **vacías no cuentan** como pendientes: todavía no pueden tener capitán.
+- Va a los dos exports: columna **Capítán** en la hoja `Mesas`, columna **Rol** en
+  `Reparto`, y en las imágenes en la cabecera de cada hoja de mesa — que es el
+  papel que de verdad se lleva al salón— y con ★ en el plano general.
+
+#### Los novios son una tarjeta más
+
+Angely y Kevin están en `guests` como cualquier invitado (tarjeta «Familia De
+Alba Acosta», confirmada, 2 personas) y sentados en la Mesa principal. **Es a
+propósito:** el catering los cobra, así que tienen que entrar en `personasOf()` y
+por tanto en el total del Excel y en el reparto. No los saques del listado para
+«que no estorben»; el número que se le pasa al salón dejaría de cuadrar.
+
 ### Nombres por completar — `src/admin/nombres.js`
 
 La base arrastra nombres que no sirven para sentar a nadie ni para imprimir una
@@ -507,8 +545,12 @@ admite añadir columnas al final) y fija sus permisos explícitamente: expone
 > Si reescribes la vista, conserva los `DISTINCT`.
 
 Migración `005_mesas.sql`: tablas `mesas` y `asientos` + vista `mesa_summary`.
-Ver «Mesas del salón» más arriba. **Está sin aplicar** hasta que alguien la pegue
-en el SQL Editor de Supabase.
+Ver «Mesas del salón» más arriba. **Aplicada.**
+
+Migración `006_capitan_mesa.sql`: `mesas.capitan_id` → `guest_members`, más la
+vista `mesa_summary` rehecha para exponer el nombre ya resuelto. Ver «Capitán de
+mesa». El panel comprueba si la columna existe y esconde el control si no, así
+que se puede desplegar el código antes de aplicarla sin romper nada.
 
 Las migraciones en `supabase/migrations/` están numeradas y llevan un comentario de
 cabecera explicando el porqué. Mantén ese formato al añadir una nueva.

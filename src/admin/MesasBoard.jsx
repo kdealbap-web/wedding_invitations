@@ -279,6 +279,11 @@ export default function MesasBoard() {
     return a && mesas.find(m => m.id === a.mesa_id)
   }
 
+  const nombreDe = useCallback(
+    memberId => Object.values(miembros).flat().find(x => x.id === memberId)?.name || '',
+    [miembros],
+  )
+
   const q = busca.trim().toLowerCase()
   const sinMesaFiltrada = q
     ? sinMesa.filter(f => f.nombre.toLowerCase().includes(q) || f.grupo.toLowerCase().includes(q))
@@ -401,6 +406,22 @@ export default function MesasBoard() {
     avisarGuardado(nombre, ficha)
   }
 
+  // ─── Capitán de la mesa ───
+  // Se guarda la PERSONA, no el asiento: mover a alguien de mesa borra su
+  // asiento y crea otro, así que un capitán atado al asiento se perdería en
+  // cada arrastre. Ver 006_capitan_mesa.sql.
+  async function asignarCapitan(mesa, memberId) {
+    const { error: e } = await supabase.from('mesas')
+      .update({ capitan_id: memberId || null }).eq('id', mesa.id)
+    if (e) return flash(e.message.includes('capitan_id')
+      ? 'Falta aplicar supabase/migrations/006_capitan_mesa.sql en el SQL Editor de Supabase.'
+      : `No se pudo asignar: ${e.message}`)
+    await cargar()
+    flash(memberId
+      ? `${nombreDe(memberId)} es capitán de «${mesa.nombre}»`
+      : `«${mesa.nombre}» se quedó sin capitán`)
+  }
+
   async function levantar(ficha) {
     const a = asientoDe.get(ficha.key)
     if (!a) return
@@ -409,10 +430,19 @@ export default function MesasBoard() {
     await cargar()
   }
 
+  // La mesa de los novios va aparte y no lleva número: la numeración corriente
+  // empieza en «Mesa 1» después de ella. Se toma del número más alto que ya
+  // exista y no de cuántas mesas hay, para no repetir si se borró una del medio.
+  function siguienteNumero() {
+    const usados = mesas
+      .map(m => (m.nombre || '').match(/^\s*Mesa\s+(\d+)\s*$/i))
+      .filter(Boolean).map(x => Number(x[1]))
+    return usados.length ? Math.max(...usados) + 1 : 1
+  }
+
   async function nuevaMesa() {
-    const n = mesas.length + 1
     const { data, error: e } = await supabase.from('mesas')
-      .insert({ nombre: `Mesa ${n}`, capacidad: 8, orden: n })
+      .insert({ nombre: `Mesa ${siguienteNumero()}`, capacidad: 8, orden: mesas.length + 1 })
       .select('id').single()
     if (e) return flash(e.message)
     await cargar()
@@ -486,7 +516,18 @@ export default function MesasBoard() {
     // Fichas con nombre que sobran: tarjetas que confirmaron menos gente de la
     // que tienen cargada. Se pueden sentar por error.
     const deMas = grupos.reduce((s, g) => s + (g.deMas || 0), 0)
-    return { sinNombres, sentadas, totalCupos, sobrepasadas, capacidadMesas, deMas, faltan: totalCupos - sentadas }
+    // Capitanes. Sólo cuentan las mesas que tienen a alguien sentado: una mesa
+    // vacía todavía no puede tener capitán y no debería salir como pendiente.
+    const hayCapitanes = mesas.some(m => 'capitan_id' in m)
+    const conGente = mesas.filter(m => asientos.some(a => a.mesa_id === m.id))
+    // Vale como capitán quien está sentado EN ESA mesa. Un capitán al que se
+    // movió de sitio no cuenta: si contara, el tablero diría «todas con capitán»
+    // mientras avisa de que uno está fuera, y las dos fichas se contradirían.
+    const mandaAqui = m => m.capitan_id && asientos.some(a => a.mesa_id === m.id && a.member_id === m.capitan_id)
+    const sinCapitan = conGente.filter(m => !mandaAqui(m))
+    const capitanFuera = mesas.filter(m => m.capitan_id && !mandaAqui(m))
+    return { sinNombres, sentadas, totalCupos, sobrepasadas, capacidadMesas, deMas,
+      faltan: totalCupos - sentadas, hayCapitanes, conGente, sinCapitan, capitanFuera }
   }, [rows, miembros, asientos, mesas, incluir, grupos])
 
   if (cargando) return <div className="adm-main"><p style={{ color: '#64748b' }}>Cargando…</p></div>
@@ -562,6 +603,21 @@ export default function MesasBoard() {
         {revision.deMas > 0 && (
           <div className="mb-rev-item warn" title="Hay tarjetas que confirmaron menos personas de las que tienen cargadas. Sus fichas van marcadas: sienta solo a quienes vienen.">
             <b>{revision.deMas}</b><span>fichas de más</span>
+          </div>
+        )}
+        {revision.hayCapitanes && revision.conGente.length > 0 && (
+          <div className={`mb-rev-item${revision.sinCapitan.length ? ' warn' : ''}`}
+               title={revision.sinCapitan.length
+                 ? `Sin capitán:\n${revision.sinCapitan.map(m => m.nombre).join('\n')}`
+                 : 'Todas las mesas con gente tienen capitán'}>
+            <b>{revision.conGente.length - revision.sinCapitan.length}<i>/</i>{revision.conGente.length}</b>
+            <span>mesas con capitán</span>
+          </div>
+        )}
+        {revision.capitanFuera.length > 0 && (
+          <div className="mb-rev-item warn"
+               title={`El capitán ya no está sentado en su mesa:\n${revision.capitanFuera.map(m => m.nombre).join('\n')}`}>
+            <b>{revision.capitanFuera.length}</b><span>capitanes fuera de su mesa</span>
           </div>
         )}
         {revision.sobrepasadas.length > 0 && (
@@ -659,6 +715,8 @@ export default function MesasBoard() {
               buscarFicha={k => todasLasFichas.find(x => x.key === k)}
               onSobre={setSobre}
               nueva={nueva === m.id}
+              onCapitan={asignarCapitan}
+              nombreDe={nombreDe}
             />
           ))}
         </div>

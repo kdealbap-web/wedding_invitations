@@ -41,11 +41,24 @@ export default function MesaRedonda({
   onSentar, onLevantar, onSeleccionar,
   zona, editando, onEditar, onGuardar, onCancelar,
   onEditarMesa, onBorrar, buscarFicha, onSobre, nueva,
+  onCapitan, nombreDe,
 }) {
   const { s, R, caja, tablero } = medidas(mesa.capacidad)
   const lleno = gente.length >= mesa.capacidad
   const pasada = gente.length > mesa.capacidad
   const activa = sobre === mesa.id
+
+  // ─── Capitán ───
+  // Sólo puede serlo alguien con nombre: a una «plaza sin nombre» no hay a
+  // quién avisarle. La lista de candidatos sale de quién está sentado AHORA,
+  // así que se rehace sola cada vez que alguien entra o sale de la mesa.
+  //
+  // `capitan_id in mesa` distingue «la columna no existe» (006 sin aplicar,
+  // PostgREST ni siquiera devuelve la clave) de «existe y está vacía».
+  const hayCapitanes = 'capitan_id' in mesa
+  const capitan   = mesa.capitan_id || ''
+  const candidatos = gente.filter(f => f.member_id)
+  const aBordo    = candidatos.some(f => f.member_id === capitan)
 
   // Un puesto por plaza de la mesa; los que sobran quedan vacíos.
   // Si se pasa de capacidad, los de más se pintan igual pero en rojo.
@@ -101,10 +114,11 @@ export default function MesaRedonda({
             return <div key={`v${i}`} className="mr-puesto vacio" style={est} title="Puesto libre" />
           }
           const falta = f.anon || nombreIncompleto(f.nombre)
+          const manda = !!capitan && f.member_id === capitan
           return (
             <div
               key={f.key}
-              className={`mr-puesto${sel?.key === f.key ? ' on' : ''}${falta ? ' falta' : ''}${i >= mesa.capacidad ? ' sobra' : ''}`}
+              className={`mr-puesto${sel?.key === f.key ? ' on' : ''}${falta ? ' falta' : ''}${i >= mesa.capacidad ? ' sobra' : ''}${manda ? ' capitan' : ''}`}
               style={{ ...est, '--fam': colorDe(f.guest_id) }}
               draggable
               tabIndex={0}
@@ -117,9 +131,10 @@ export default function MesaRedonda({
               onKeyDown={e => {
                 if (e.key === 'F2' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); onEditar(f) }
               }}
-              title={`${f.nombre}\n${f.grupo}${falta ? '\nNombre por completar' : ''}\nDoble clic o F2 para editar · arrastra para mover`}
+              title={`${f.nombre}\n${f.grupo}${manda ? '\nCapitán de esta mesa' : ''}${falta ? '\nNombre por completar' : ''}\nDoble clic o F2 para editar · arrastra para mover`}
             >
               <span>{iniciales(f.nombre)}</span>
+              {manda && <i className="mr-galon" aria-hidden="true">★</i>}
               <button
                 className="mr-quitar"
                 onClick={e => { e.stopPropagation(); onLevantar(f) }}
@@ -135,6 +150,7 @@ export default function MesaRedonda({
         {gente.length === 0 && <li className="mr-vacia">Arrastra personas al círculo</li>}
         {gente.map(f => {
           const falta = f.anon || nombreIncompleto(f.nombre)
+          const manda = !!capitan && f.member_id === capitan
           // La zona en la comparación no es de adorno: la misma persona se
           // pinta también en la cola de «por completar» y en «Sin mesa», y dos
           // editores abiertos a la vez se cierran solos. Ver EditarNombre.jsx.
@@ -149,14 +165,14 @@ export default function MesaRedonda({
           ) : (
             <li
               key={f.key}
-              className={falta ? 'falta' : ''}
+              className={`${falta ? 'falta' : ''}${manda ? ' manda' : ''}`}
               style={{ '--fam': colorDe(f.guest_id) }}
               onClick={e => { e.stopPropagation(); onSeleccionar(f) }}
               onDoubleClick={e => { e.stopPropagation(); onEditar(f) }}
-              title={`${f.grupo}${falta ? ' · nombre por completar' : ''}
-Doble clic para editar`}
+              title={`${f.grupo}${manda ? ' · capitán de la mesa' : ''}${falta ? ' · nombre por completar' : ''}\nDoble clic para editar`}
             >
               <i className="mr-punto" />
+              {manda && <i className="mr-estrella" aria-label="Capitán de la mesa">★</i>}
               {f.nombre}
               <button
                 className="mr-editar"
@@ -167,6 +183,31 @@ Doble clic para editar`}
           )
         })}
       </ol>
+
+      {/* El control del capitán. Un <select> y no un menú inventado: dice
+          quién manda hoy sin desplegarlo, se maneja con el teclado y la lista
+          de candidatos se rehace sola con quien esté sentado. */}
+      {hayCapitanes && (
+        <div className={`mr-capitan${aBordo ? ' puesto' : ''}${capitan && !aBordo ? ' fuera' : ''}`}>
+          <label htmlFor={`cap-${mesa.id}`}>Capitán</label>
+          <select
+            id={`cap-${mesa.id}`} value={capitan}
+            disabled={!candidatos.length}
+            onClick={e => e.stopPropagation()}
+            onChange={e => onCapitan(mesa, e.target.value)}
+          >
+            <option value="">{candidatos.length ? 'Sin asignar' : 'Sienta a alguien primero'}</option>
+            {/* El capitán que ya no está sentado aquí: se muestra igual, o el
+                <select> se quedaría en blanco y parecería que no hay ninguno. */}
+            {capitan && !aBordo && (
+              <option value={capitan}>{nombreDe(capitan) || 'Capitán'} — ya no está en esta mesa</option>
+            )}
+            {candidatos.map(f => (
+              <option key={f.member_id} value={f.member_id}>{f.nombre}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <footer className="mr-pie">
         <input

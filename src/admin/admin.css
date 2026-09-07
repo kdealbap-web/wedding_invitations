@@ -278,7 +278,8 @@ body.admin-body {
 /* Revisión de cupos */
 .mb-revision  { display: flex; flex-wrap: wrap; gap: .6rem }
 .mb-rev-item  { background: #161b26; border: 1px solid #1e293b; border-radius: 10px; padding: .6rem .9rem; display: flex; align-items: baseline; gap: .5rem }
-.mb-rev-item b{ font-size: 1.3rem; color: #c8a96e; font-weight: 600; line-height: 1 }
+.mb-rev-item b{ font-size: 1.3rem; color: #c8a96e; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums }
+.mb-rev-item b i { font-style: normal; opacity: .45; margin: 0 .05em; font-size: .8em }
 .mb-rev-item span { font-size: .72rem; color: #64748b; text-transform: uppercase; letter-spacing: .05em }
 .mb-rev-item.warn { border-color: rgba(200,169,110,.45) }
 .mb-rev-item.bad  { border-color: #7f1d1d }
@@ -508,6 +509,34 @@ body.admin-body {
 .mr-editar { background: none; border: none; color: #c8a96e; font-size: .72rem;
   cursor: pointer; padding: 0 .2rem; opacity: 0; transition: opacity .12s; flex-shrink: 0 }
 .mr-lista li:hover .mr-editar, .mr-editar:focus-visible { opacity: 1 }
+
+/* ─── Capitán de la mesa ───
+   Un <select> de verdad: dice quién manda sin desplegarlo, se maneja con el
+   teclado y la lista se rehace sola con quien esté sentado. */
+.mr-capitan   { display: flex; align-items: center; gap: .45rem; width: 100%;
+                border-top: 1px solid #1e293b; padding-top: .5rem;
+                font-size: .7rem; color: #64748b }
+.mr-capitan label  { flex-shrink: 0; text-transform: uppercase; letter-spacing: .06em }
+.mr-capitan select { flex: 1; min-width: 0; background: #0f1117; border: 1px solid #1e293b;
+                border-radius: 6px; color: #94a3b8; font: inherit; font-size: .72rem;
+                padding: .22rem .3rem; outline: none; cursor: pointer }
+.mr-capitan select:focus-visible { outline: 2px solid #c8a96e; outline-offset: 1px }
+.mr-capitan select:disabled { cursor: default; color: #475569 }
+/* Con capitán puesto el control deja de ser un pendiente y se lee como un dato */
+.mr-capitan.puesto        { color: #c8a96e }
+.mr-capitan.puesto select { color: #e2e8f0; border-color: rgba(200,169,110,.45) }
+/* El capitán quedó en otra mesa al reacomodar: hay que volver a elegirlo */
+.mr-capitan.fuera select  { border-color: #fc814a; color: #fc814a }
+
+/* El galón sobre el puesto y la estrella en la lista. Es el mismo símbolo en
+   los dos sitios a propósito: se busca en el círculo y se confirma en la lista. */
+.mr-puesto.capitan { border-width: 2px }
+.mr-galon     { position: absolute; top: -6px; left: -6px; width: 16px; height: 16px;
+                border-radius: 50%; background: #c8a96e; color: #0f1117;
+                font-size: .55rem; font-style: normal; line-height: 16px; text-align: center;
+                box-shadow: 0 0 0 2px #161b26 }
+.mr-estrella  { color: #c8a96e; font-size: .62rem; font-style: normal; flex-shrink: 0; margin-left: -.15rem }
+.mr-lista li.manda { color: #e2e8f0 }
 
 .mr-pie { display: flex; align-items: center; gap: .35rem; width: 100%;
   border-top: 1px solid #1e293b; padding-top: .5rem; font-size: .7rem; color: #64748b }

@@ -75,8 +75,17 @@ async function hojaMesa(mesa, gente, cuando) {
   x.font = fb(13)
   x.fillText(`${gente.length} de ${mesa.capacidad} puestos`, CARTA.w / 2, 200)
 
+  // El capitán, debajo del conteo: es a quien busca el salón esa noche, así que
+  // va en la cabecera de la hoja y no perdido entre los nombres.
+  const capitan = gente.find(p => p.manda)
+  if (capitan) {
+    x.fillStyle = ORO
+    x.font = fb(12, 400)
+    x.fillText(`CAPITÁN DE MESA · ${capitan.nombre.toUpperCase()}`, CARTA.w / 2, 222)
+  }
+
   // Filete ornamental
-  const y0 = 236
+  const y0 = capitan ? 252 : 236
   x.strokeStyle = BORDE
   x.lineWidth = 1
   x.beginPath(); x.moveTo(M, y0); x.lineTo(CARTA.w / 2 - 16, y0); x.stroke()
@@ -101,6 +110,12 @@ async function hojaMesa(mesa, gente, cuando) {
     x.fillStyle = p.falta ? ROJO : TINTA
     x.font = fd(26)
     x.fillText(recorta(x, p.nombre, ancho * 0.56), M + 30, y + 2)
+    if (p.manda) {
+      const w = Math.min(x.measureText(p.nombre).width, ancho * 0.56)
+      x.fillStyle = ORO
+      x.font = fb(10)
+      x.fillText('CAPITÁN', M + 30 + w + (p.falta ? 22 : 12), y - 2)
+    }
     if (p.falta) {
       const w = Math.min(x.measureText(p.nombre).width, ancho * 0.56)
       x.beginPath(); x.arc(M + 30 + w + 10, y - 5, 3.5, 0, Math.PI * 2); x.fill()
@@ -150,6 +165,8 @@ async function plano(mesas, porMesa, cuando) {
 
   const sentados = [...porMesa.values()].reduce((s, g) => s + g.length, 0)
   const faltan = [...porMesa.values()].flat().filter(p => p.falta).length
+  // Sólo cuentan las mesas con gente: una mesa vacía todavía no puede tenerlo
+  const sinCap = mesas.filter(m => (porMesa.get(m.id) || []).length && !(porMesa.get(m.id) || []).some(p => p.manda)).length
   x.textAlign = 'right'; x.fillStyle = SUAVE; x.font = fb(13)
   x.fillText(`${mesas.length} mesas · ${sentados} personas sentadas`, 1600 - M, 62)
   x.fillText('12 de septiembre de 2026 · Casona del Prado', 1600 - M, 84)
@@ -186,6 +203,7 @@ async function plano(mesas, porMesa, cuando) {
       x.fillText(String(n + 1), cx + 18, y)
       x.fillStyle = p.falta ? ROJO : TINTA; x.font = fb(14.5)
       x.fillText(recorta(x, p.nombre, cw - 60), cx + 40, y)
+      if (p.manda) { x.fillStyle = ORO; x.font = fb(11); x.fillText('★', cx + 28, y) }
       y += 28
     }
   })
@@ -196,6 +214,10 @@ async function plano(mesas, porMesa, cuando) {
   x.textAlign = 'left'; x.font = fb(12)
   x.fillStyle = faltan ? ROJO : SUAVE
   x.fillText(faltan ? `● ${faltan} nombre(s) por completar` : 'Todos los nombres completos', M, yp + 24)
+  if (sinCap) {
+    x.fillStyle = ORO
+    x.fillText(`★ ${sinCap} mesa(s) sin capitán`, M + (faltan ? 240 : 210), yp + 24)
+  }
   x.textAlign = 'right'; x.fillStyle = SUAVE
   x.fillText('Angely & Kevin · #AyKBoda', 1600 - M, yp + 24)
 
@@ -224,7 +246,11 @@ export async function exportarImagenes(avisar = () => {}) {
     m.id,
     as.data.filter(a => a.mesa_id === m.id).map(a => {
       const nombre = a.member_id ? (nombreDe.get(a.member_id) || '') : (a.etiqueta || 'Sin nombre')
-      return { nombre, tarjeta: grupoDe.get(a.guest_id) || '', falta: !a.member_id || !!nombreIncompleto(nombre) }
+      return {
+        nombre, tarjeta: grupoDe.get(a.guest_id) || '',
+        falta: !a.member_id || !!nombreIncompleto(nombre),
+        manda: !!a.member_id && a.member_id === m.capitan_id,
+      }
     }).sort((p, q) => p.tarjeta.localeCompare(q.tarjeta, 'es') || p.nombre.localeCompare(q.nombre, 'es')),
   ]))
 
