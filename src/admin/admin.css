@@ -283,8 +283,6 @@ body.admin-body {
 .mb-rev-item.warn { border-color: rgba(200,169,110,.45) }
 .mb-rev-item.bad  { border-color: #7f1d1d }
 .mb-rev-item.bad b{ color: #fc814a }
-.mb-nota      { font-size: .8rem; color: #64748b; line-height: 1.7; max-width: 60rem }
-.mb-nota b    { color: #94a3b8 }
 
 /* Filtros de estado */
 .mb-filtros   { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: .78rem; color: #64748b }
@@ -340,25 +338,107 @@ body.admin-body {
 .mb-ficha.parcial { border-color: rgba(200,169,110,.5) }
 .mb-ficha.parcial::before { content: '!'; color: #c8a96e; font-weight: 700; font-size: .7rem; flex-shrink: 0 }
 
-/* Nombres por completar */
-.mb-faltan    { background: #161b26; border: 1px solid rgba(200,169,110,.35); border-radius: 12px; padding: .8rem 1rem }
-.mb-faltan summary { cursor: pointer; font-size: .82rem; color: #94a3b8; list-style: none }
-.mb-faltan summary::-webkit-details-marker { display: none }
-.mb-faltan summary b { color: #c8a96e; font-size: 1rem }
-.mb-faltan summary span { color: #64748b; font-size: .78rem }
-.mb-faltan-list { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .8rem }
-.mb-faltan-list .mb-ficha { width: auto; min-width: 190px }
-.mb-faltan-pie { font-size: .75rem; color: #64748b; line-height: 1.7; margin-top: .7rem }
-.mb-faltan-pie b { color: #94a3b8 }
+/* ─── Nombres por completar ─────────────────────────────────
+   La lista que hay que dejar vacía antes de mandar a imprimir.
+   Agrupada por sobre, porque quién es «Invitado 3» se deduce de la familia y
+   de dónde está sentado, no del nombre. */
+.mbn          { background: #161b26; border: 1px solid rgba(200,169,110,.3); border-radius: 12px;
+                padding: 1rem 1.1rem; max-width: 54rem }
+.mbn-hdr      { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap }
+.mbn-hdr h3   { font-size: .95rem; font-weight: 600; color: #e2e8f0 }
+.mbn-hdr p    { font-size: .78rem; color: #64748b; line-height: 1.6; margin-top: .25rem; max-width: 46rem }
+.mbn-hdr-r    { display: flex; align-items: center; gap: .85rem }
+.mbn-hdr-r b  { font-size: 1.6rem; font-weight: 600; color: #c8a96e; line-height: 1; font-variant-numeric: tabular-nums }
 
-/* Ficha: nombre por completar y edición en el sitio */
+/* Una sola columna, con alto propio. En rejilla las tarjetas se recolocaban al
+   guardar un nombre y el siguiente saltaba de columna: encadenando con Enter eso
+   marea. En columna sólo suben las filas de abajo, y el sitio no se mueve. */
+.mbn-lista    { margin-top: .9rem; max-height: 46vh; overflow-y: auto; overscroll-behavior: contain;
+                padding-right: .4rem; scrollbar-width: thin; scrollbar-color: #263144 transparent }
+.mbn-lista::-webkit-scrollbar       { width: 8px }
+.mbn-lista::-webkit-scrollbar-thumb { background: #263144; border-radius: 4px }
+.mbn-grupo h4 { display: flex; align-items: center; gap: .45rem; font-size: .71rem; font-weight: 500;
+                text-transform: uppercase; letter-spacing: .07em; color: #64748b;
+                padding: .55rem .1rem .3rem; border-bottom: 1px solid #1e293b }
+.mbn-grupo + .mbn-grupo h4 { margin-top: .55rem }
+.mbn-grupo h4 i    { width: 7px; height: 7px; border-radius: 50%; background: var(--fam); flex-shrink: 0 }
+.mbn-grupo h4 span { margin-left: auto; color: #475569; letter-spacing: 0 }
+.mbn-grupo ul { list-style: none }
+
+/* Una fila es una persona por arreglar, y el botón es la fila entera: un clic
+   la abre. El doble clic sigue vivo en el pool y en las mesas, pero aquí no —
+   nadie descubre un doble clic, y esta es la pantalla hecha para esta tarea. */
+.mbn-fila     { display: flex; align-items: baseline; gap: .5rem; width: 100%;
+                background: none; border: none; border-radius: 7px; padding: .4rem .35rem;
+                cursor: pointer; text-align: left; font: inherit; color: #e2e8f0; transition: background .12s }
+.mbn-fila:hover { background: #1e293b }
+.mbn-actual   { flex: 0 0 12rem; color: #c8a96e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                text-decoration: underline dotted rgba(200,169,110,.55); text-underline-offset: 3px }
+.mbn-motivo   { flex: 1 1 auto; min-width: 0; font-size: .72rem; color: #64748b;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.mbn-donde    { flex: 0 0 auto; margin-left: auto; font-size: .72rem; color: #475569; white-space: nowrap }
+@media (max-width: 620px) {
+  .mbn-fila   { flex-wrap: wrap; row-gap: .1rem }
+  .mbn-actual { flex: 0 1 auto }
+}
+.mbn-lapiz    { color: #475569; font-size: .8rem; opacity: 0; transition: opacity .12s; flex-shrink: 0 }
+.mbn-fila:hover .mbn-lapiz { opacity: 1; color: #c8a96e }
+.mbn-pie      { font-size: .75rem; color: #64748b; line-height: 1.7; margin-top: 1rem;
+                border-top: 1px solid #1e293b; padding-top: .7rem }
+.mbn-pie b    { color: #94a3b8 }
+
+/* ─── El editor: uno solo abierto en todo el tablero ───
+   La misma persona se pinta en la cola, en «Sin mesa» y en su mesa. Dos inputs
+   con autoFocus en el mismo commit se cierran solos. Ver EditarNombre.jsx. */
+.mbn-ed       { border-left: 2px solid #c8a96e; background: #0f1117; border-radius: 8px;
+                padding: .5rem .6rem .55rem; animation: mbn-abre .14s ease-out }
+.mbn-ed-fila  { display: flex; align-items: center; gap: .35rem }
+.mbn-ed input { flex: 1; min-width: 0; background: #161b26; border: 1px solid #334155; border-radius: 6px;
+                color: #e2e8f0; font: inherit; font-size: .85rem; padding: .35rem .5rem; outline: none }
+.mbn-ed input:focus { border-color: #c8a96e; box-shadow: 0 0 0 2px rgba(200,169,110,.16) }
+.mbn-ed input::placeholder { color: #475569 }
+.mbn-ok, .mbn-no { width: 26px; height: 26px; flex-shrink: 0; border-radius: 6px; border: 1px solid #334155;
+                background: #161b26; color: #94a3b8; cursor: pointer; font-size: .78rem; line-height: 1;
+                transition: color .12s, border-color .12s }
+.mbn-ok:hover { border-color: #c8a96e; color: #c8a96e }
+.mbn-no:hover { border-color: #7f1d1d; color: #f87171 }
+@keyframes mbn-abre { from { opacity: 0; transform: translateY(-3px) } }
+
+/* Cómo va a salir impreso. La tipografía es la misma con la que imagenes.js
+   dibuja la tarjeta de mesa: se ve el resultado, no el dato. */
+.mbn-vista    { margin-top: .5rem; padding-left: .1rem }
+.mbn-vista em { display: block; font-style: normal; font-size: .64rem; font-weight: 500;
+                text-transform: uppercase; letter-spacing: .12em; color: #475569; margin-bottom: .15rem }
+.mbn-vista > span { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.2rem;
+                line-height: 1.25; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.mbn-vista > span.floja { color: #c8a96e }
+.mbn-vista > span.mbn-hueco { font-family: 'Inter', -apple-system, sans-serif; font-size: .76rem;
+                color: #475569; font-style: italic }
+.mbn-pista    { font-size: .7rem; color: #475569; margin-top: .3rem; line-height: 1.55 }
+.mbn-pista b  { color: #c8a96e; font-weight: 500 }
+.mbn-ed.compacto { padding: .4rem .45rem .45rem }
+.mbn-ed.compacto input { font-size: .8rem; padding: .28rem .4rem }
+.mbn-ed.compacto .mbn-vista { margin-top: .4rem }
+.mbn-ed.compacto .mbn-vista > span { font-size: 1.04rem }
+
+/* Ficha: nombre por completar */
 .mb-ficha.falta   { border-color: rgba(200,169,110,.5) }
 .mb-ficha.falta .mb-ficha-n { text-decoration: underline dotted rgba(200,169,110,.7); text-underline-offset: 3px }
 .mb-ficha-e   { background: none; border: none; color: #475569; cursor: pointer; font-size: .8rem; line-height: 1; padding: 0 .15rem; opacity: 0; transition: opacity .12s }
 .mb-ficha:hover .mb-ficha-e { opacity: 1 }
 .mb-ficha.falta .mb-ficha-e { opacity: .8; color: #c8a96e }
-.mb-ficha.editando { padding: .2rem .25rem; border-color: #c8a96e }
-.mb-ficha.editando input { width: 100%; background: #0f1117; border: none; outline: none; color: #e2e8f0; font-size: .8rem; padding: .2rem .35rem; border-radius: 5px; font-family: inherit }
+
+/* Suelo de calidad: nada se maneja sólo con el ratón, y el foco se ve. */
+.mb-ficha:focus-visible, .mbn-fila:focus-visible, .mr-puesto:focus-visible,
+.mbn-ok:focus-visible, .mbn-no:focus-visible, .mr-editar:focus-visible,
+.mb-ficha-e:focus-visible, .mb-ficha-x:focus-visible {
+  outline: 2px solid #c8a96e; outline-offset: 2px }
+.mb-ficha:focus-visible .mb-ficha-e, .mbn-fila:focus-visible .mbn-lapiz { opacity: 1; color: #c8a96e }
+
+@media (prefers-reduced-motion: reduce) {
+  .mbn-ed, .mr-puesto, .mr.activa .mr-puesto.vacio { animation: none }
+  .mr.activa { transform: none }
+}
 
 /* ═══════════════════════════════════════════════════════════
    MESAS REDONDAS  ·  el salón, no una lista
@@ -424,8 +504,10 @@ body.admin-body {
 .mr-punto { width: 7px; height: 7px; border-radius: 50%; background: var(--fam); flex-shrink: 0 }
 .mr-vacia { color: #475569 !important; font-style: italic; justify-content: center; cursor: default !important }
 .mr-vacia:hover { background: none !important }
-.mr-editando input { width: 100%; background: #0f1117; border: 1px solid #c8a96e; border-radius: 5px;
-  color: #e2e8f0; font-size: .78rem; padding: .2rem .35rem; outline: none; font-family: inherit }
+.mr-lista li.mr-editando { padding: 0; background: none; cursor: default }
+.mr-editar { background: none; border: none; color: #c8a96e; font-size: .72rem;
+  cursor: pointer; padding: 0 .2rem; opacity: 0; transition: opacity .12s; flex-shrink: 0 }
+.mr-lista li:hover .mr-editar, .mr-editar:focus-visible { opacity: 1 }
 
 .mr-pie { display: flex; align-items: center; gap: .35rem; width: 100%;
   border-top: 1px solid #1e293b; padding-top: .5rem; font-size: .7rem; color: #64748b }

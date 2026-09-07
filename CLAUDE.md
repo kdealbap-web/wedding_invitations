@@ -358,11 +358,52 @@ No corrige nada solo, **solo señala**: quién es «Invitado 3» lo sabe la pare
 no el código. Se marcan en el tablero, en el Excel y en las imágenes, siempre en
 rojo, para que se puedan arreglar de una pasada.
 
-En `/admin/mesas` se editan **con doble clic sobre la ficha** o con el ✎. Al
-ponerle nombre a una «plaza sin nombre» se **crea la persona de verdad** en
+En `/admin/mesas` la lista **«Nombres por completar»** es la cola que hay que
+dejar vacía antes de mandar a imprimir. Va agrupada por sobre y cada fila dice
+el motivo y en qué mesa se sienta esa persona, porque quién es «Invitado 3» se
+deduce de la familia y del sitio, no del nombre. Un clic abre la fila; **Enter
+guarda y salta a la siguiente**, así que las 38 se arreglan de una pasada. En el
+pool y dentro de las mesas siguen valiendo el doble clic, el ✎ y F2.
+
+Al ponerle nombre a una «plaza sin nombre» se **crea la persona de verdad** en
 `guest_members` y, si estaba sentada, el asiento pasa a apuntar a ella en vez de
 a la etiqueta. Al guardar, `normalizarNombre()` arregla las mayúsculas
-(«JOrge» → «Jorge») respetando las partículas en minúscula.
+(«JOrge» → «Jorge») respetando las partículas en minúscula. Un nombre que sigue
+flojo se guarda igual — la pareja escribe lo que sabe—, pero el editor lo dice
+antes de guardar y la fila se queda en la cola.
+
+### El editor de nombres — `src/admin/EditarNombre.jsx`
+
+Un único componente para las tres superficies (la cola, el pool y la lista de
+cada mesa), y **sólo puede haber uno abierto a la vez**. Por eso `editando` en
+`MesasBoard` guarda `{ key, zona }` y no sólo la clave de la ficha:
+
+> La misma persona se pinta en la cola **y** otra vez en «Sin mesa» o en su mesa.
+> Con la clave sola se abrían dos editores en el mismo commit, y React aplica
+> `autoFocus` llamando `.focus()` **por cada uno**: el primero recibía `focusout`
+> en cuanto montaba el segundo, ese blur guardaba, y `guardarNombre` cerraba el
+> editor en el mismo frame en que se abría. Editar un nombre no funcionó nunca
+> desde ninguna superficie. **Si añades un cuarto sitio donde se pinte una ficha,
+> dale su propia zona.**
+
+El foco se pide en un `useEffect` y no con `autoFocus`, para poder seleccionar el
+texto de una vez. Enter y ✓ guardan, Esc y ✕ cancelan, y salir del recuadro
+guarda — el `onBlur` comprueba `relatedTarget` porque también salta al pasar el
+foco a los propios botones—. Los botones llevan `preventDefault` en `mousedown`
+o robarían el foco y se guardaría antes de saber a cuál se pulsó.
+
+Debajo del campo va el nombre en **Cormorant Garamond**, la misma tipografía con
+la que `imagenes.js` lo imprime en la tarjeta de mesa: no es adorno, es ver el
+resultado en vez del dato.
+
+Abrir el editor **cancela la selección pendiente** (`sel`). Sin eso, el clic con
+el que se cierra el editor sentaba a esa persona en la mesa que se hubiera tocado.
+
+> **Las plazas anónimas se renumeran.** Van indexadas `0…sinNombre-1` y el asiento
+> guarda ese índice en `orden`. Al convertir la plaza *k* en persona queda una
+> plaza menos, así que `guardarNombre` **corre un puesto las posteriores**. Sin
+> eso, el asiento de la plaza *k+1* deja de casar con ninguna ficha: aparece
+> huérfano en su mesa y su sitio reaparece a la vez en «Sin mesa».
 
 ### Export del reparto de mesas
 

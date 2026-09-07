@@ -1,4 +1,5 @@
 import { nombreIncompleto } from './nombres'
+import EditarNombre from './EditarNombre'
 
 // ─── Color por tarjeta ───
 // Cada familia recibe un color estable, sacado de su id. Sirve para ver de un
@@ -38,7 +39,7 @@ function medidas(capacidad) {
 export default function MesaRedonda({
   mesa, gente, sel, sobre,
   onSentar, onLevantar, onSeleccionar,
-  editando, onEditar, onGuardar, onCancelar,
+  zona, editando, onEditar, onGuardar, onCancelar,
   onEditarMesa, onBorrar, buscarFicha, onSobre, nueva,
 }) {
   const { s, R, caja, tablero } = medidas(mesa.capacidad)
@@ -106,13 +107,17 @@ export default function MesaRedonda({
               className={`mr-puesto${sel?.key === f.key ? ' on' : ''}${falta ? ' falta' : ''}${i >= mesa.capacidad ? ' sobra' : ''}`}
               style={{ ...est, '--fam': colorDe(f.guest_id) }}
               draggable
+              tabIndex={0}
               onDragStart={e => {
                 e.dataTransfer.setData('text/plain', f.key)
                 e.dataTransfer.effectAllowed = 'move'
               }}
               onClick={e => { e.stopPropagation(); onSeleccionar(f) }}
               onDoubleClick={e => { e.stopPropagation(); onEditar(f) }}
-              title={`${f.nombre}\n${f.grupo}${falta ? '\nNombre por completar' : ''}\nDoble clic para editar · arrastra para mover`}
+              onKeyDown={e => {
+                if (e.key === 'F2' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); onEditar(f) }
+              }}
+              title={`${f.nombre}\n${f.grupo}${falta ? '\nNombre por completar' : ''}\nDoble clic o F2 para editar · arrastra para mover`}
             >
               <span>{iniciales(f.nombre)}</span>
               <button
@@ -130,17 +135,16 @@ export default function MesaRedonda({
         {gente.length === 0 && <li className="mr-vacia">Arrastra personas al círculo</li>}
         {gente.map(f => {
           const falta = f.anon || nombreIncompleto(f.nombre)
-          return editando === f.key ? (
+          // La zona en la comparación no es de adorno: la misma persona se
+          // pinta también en la cola de «por completar» y en «Sin mesa», y dos
+          // editores abiertos a la vez se cierran solos. Ver EditarNombre.jsx.
+          return editando?.key === f.key && editando.zona === zona ? (
             <li key={f.key} className="mr-editando">
-              <form onSubmit={e => { e.preventDefault(); onGuardar(f, e.target.elements.n.value) }}>
-                <input
-                  name="n" autoFocus defaultValue={f.anon ? '' : f.nombre}
-                  placeholder="Nombre y apellido"
-                  onClick={e => e.stopPropagation()}
-                  onKeyDown={e => { if (e.key === 'Escape') onCancelar() }}
-                  onBlur={e => onGuardar(f, e.target.value)}
-                />
-              </form>
+              <EditarNombre
+                ficha={f} compacto
+                onGuardar={(v, o) => onGuardar(f, v, o)}
+                onCancelar={onCancelar}
+              />
             </li>
           ) : (
             <li
@@ -149,10 +153,16 @@ export default function MesaRedonda({
               style={{ '--fam': colorDe(f.guest_id) }}
               onClick={e => { e.stopPropagation(); onSeleccionar(f) }}
               onDoubleClick={e => { e.stopPropagation(); onEditar(f) }}
-              title={`${f.grupo}${falta ? ' · nombre por completar' : ''}`}
+              title={`${f.grupo}${falta ? ' · nombre por completar' : ''}
+Doble clic para editar`}
             >
               <i className="mr-punto" />
               {f.nombre}
+              <button
+                className="mr-editar"
+                onClick={e => { e.stopPropagation(); onEditar(f) }}
+                title="Editar el nombre" aria-label={`Editar el nombre de ${f.nombre}`}
+              >✎</button>
             </li>
           )
         })}

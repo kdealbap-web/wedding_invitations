@@ -4,7 +4,8 @@ import { estadoOf, personasOf, ESTADOS } from './cupos'
 import { nombreIncompleto, MOTIVO, normalizarNombre } from './nombres'
 import { exportarExcel } from './descargar'
 import { exportarImagenes } from './imagenes'
-import MesaRedonda from './MesaRedonda'
+import MesaRedonda, { colorDe } from './MesaRedonda'
+import EditarNombre from './EditarNombre'
 
 // ─── Quién se sienta ───
 // Se siembra a la PERSONA, no a la tarjeta: una familia puede repartirse entre
@@ -41,25 +42,23 @@ function armarGrupos(rows, miembrosPorTarjeta, incluir) {
 
 const idAnon = (guestId, i) => `anon:${guestId}:${i}`
 
-// ─── Ficha arrastrable y editable ───
-// Doble clic sobre el nombre lo edita en el sitio. Es la forma más directa de
-// arreglar los «Invitado 3» sin salir del tablero, que es justo donde se ven.
+/** El motivo por el que una ficha está marcada, ya sea plaza anónima o nombre flojo. */
+const motivoDe = ficha => ficha.anon ? 'vacio' : nombreIncompleto(ficha.nombre)
+
+// ─── Ficha arrastrable ───
+// En el pool la acción principal es sentar a alguien, así que el clic simple
+// selecciona. Para editar están el ✎ y el doble clic; la vía descubrible es el
+// ✎, que en las fichas marcadas se ve siempre.
 function Ficha({ ficha, seleccionada, onSeleccionar, onQuitar, compacta, editando, onEditar, onGuardar, onCancelar }) {
-  const falta = ficha.anon ? null : nombreIncompleto(ficha.nombre)
+  const falta = motivoDe(ficha)
 
   if (editando) {
     return (
-      <form
-        className="mb-ficha editando"
-        onSubmit={e => { e.preventDefault(); onGuardar(ficha, e.target.elements.n.value) }}
-      >
-        <input
-          name="n" autoFocus defaultValue={ficha.anon ? '' : ficha.nombre}
-          placeholder={ficha.anon ? `Nombre para esta plaza de ${ficha.grupo}` : 'Nombre y apellido'}
-          onKeyDown={e => { if (e.key === 'Escape') onCancelar() }}
-          onBlur={e => onGuardar(ficha, e.target.value)}
-        />
-      </form>
+      <EditarNombre
+        ficha={ficha} compacto
+        onGuardar={(v, o) => onGuardar(ficha, v, o)}
+        onCancelar={onCancelar}
+      />
     )
   }
 
@@ -67,19 +66,25 @@ function Ficha({ ficha, seleccionada, onSeleccionar, onQuitar, compacta, editand
     ficha.anon ? `Plaza sin nombre de ${ficha.grupo}` : `${ficha.nombre} · ${ficha.grupo}`,
     falta ? MOTIVO[falta] : null,
     ficha.parcial ? `OJO: esta tarjeta confirmó ${ficha.cupos} de ${ficha.total} personas.` : null,
-    'Doble clic para editar el nombre',
+    'Doble clic o ✎ para editar el nombre',
   ].filter(Boolean).join('\n')
 
   return (
     <div
-      className={`mb-ficha${seleccionada ? ' on' : ''}${ficha.anon ? ' anon' : ''}${ficha.parcial ? ' parcial' : ''}${falta || ficha.anon ? ' falta' : ''}${compacta ? ' mini' : ''}`}
+      className={`mb-ficha${seleccionada ? ' on' : ''}${ficha.anon ? ' anon' : ''}${ficha.parcial ? ' parcial' : ''}${falta ? ' falta' : ''}${compacta ? ' mini' : ''}`}
       draggable
+      tabIndex={0}
       onDragStart={e => {
         e.dataTransfer.setData('text/plain', ficha.key)
         e.dataTransfer.effectAllowed = 'move'
       }}
       onClick={() => onSeleccionar(ficha)}
       onDoubleClick={e => { e.stopPropagation(); onEditar(ficha) }}
+      // F2 es el atajo de «renombrar» de toda la vida; Enter también, porque
+      // desde el teclado no hay doble clic que valga.
+      onKeyDown={e => {
+        if (e.key === 'F2' || e.key === 'Enter') { e.preventDefault(); onEditar(ficha) }
+      }}
       title={titulo}
     >
       <span className="mb-ficha-n">{ficha.nombre}</span>
@@ -87,7 +92,7 @@ function Ficha({ ficha, seleccionada, onSeleccionar, onQuitar, compacta, editand
       <button
         className="mb-ficha-e"
         onClick={e => { e.stopPropagation(); onEditar(ficha) }}
-        title="Editar el nombre" aria-label="Editar el nombre"
+        title="Editar el nombre" aria-label={`Editar el nombre de ${ficha.nombre}`}
       >✎</button>
       {onQuitar && (
         <button
@@ -98,6 +103,73 @@ function Ficha({ ficha, seleccionada, onSeleccionar, onQuitar, compacta, editand
         >×</button>
       )}
     </div>
+  )
+}
+
+// ─── La cola de nombres por completar ───
+// Es la lista que hay que dejar vacía antes de mandar a imprimir. Se agrupa por
+// tarjeta porque quién es «Invitado 3» se deduce del sobre y de dónde está
+// sentado, no del nombre; por eso cada fila dice las dos cosas.
+//
+// Un clic abre la fila. El doble clic sigue existiendo en el pool y en las
+// mesas, pero aquí no: nadie descubre un doble clic, y esta es la pantalla
+// hecha para esta tarea.
+function ColaNombres({ cola, total, editando, onEditar, onGuardar, onCancelar, mesaDe }) {
+  return (
+    <section className="mbn">
+      <header className="mbn-hdr">
+        <div>
+          <h3>Nombres por completar</h3>
+          <p>Así están hoy en la base, y así saldrían impresos en las tarjetas de mesa y en el Excel.</p>
+        </div>
+        <div className="mbn-hdr-r">
+          <b>{total}</b>
+          <button className="adm-btn adm-btn-gold" onClick={() => onEditar(cola[0].fichas[0])}>
+            Completar uno por uno
+          </button>
+        </div>
+      </header>
+
+      <div className="mbn-lista">
+        {cola.map(g => (
+          <div className="mbn-grupo" key={g.guest_id}>
+            <h4>
+              <i style={{ '--fam': colorDe(g.guest_id) }} />
+              {g.grupo}
+              <span>{g.fichas.length}</span>
+            </h4>
+            <ul>
+              {g.fichas.map(f => {
+                const mesa = mesaDe(f.key)
+                return (
+                  <li key={f.key} className={editando?.key === f.key ? 'abierta' : ''}>
+                    {editando?.key === f.key ? (
+                      <EditarNombre
+                        ficha={f} haySiguiente={editando.haySiguiente}
+                        onGuardar={(v, o) => onGuardar(f, v, { ...o, zona: 'cola' })}
+                        onCancelar={onCancelar}
+                      />
+                    ) : (
+                      <button className="mbn-fila" onClick={() => onEditar(f)}>
+                        <span className="mbn-actual">{f.nombre}</span>
+                        <span className="mbn-motivo">{MOTIVO[motivoDe(f)]}</span>
+                        <span className="mbn-donde">{mesa ? mesa.nombre : 'sin mesa'}</span>
+                        <span className="mbn-lapiz" aria-hidden="true">✎</span>
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <p className="mbn-pie">
+        Al ponerle nombre a una <b>plaza sin nombre</b> se crea la persona de verdad
+        en su tarjeta, y si ya estaba sentada conserva la mesa.
+      </p>
+    </section>
   )
 }
 
@@ -113,12 +185,15 @@ export default function MesasBoard() {
   const [incluir, setIncluir]   = useState(['confirmado', 'preconfirmado'])
   const [aviso, setAviso]       = useState('')
   const [exportando, setExportando] = useState('')
-  const [editando, setEditando]     = useState(null)   // key de la ficha en edición
+  // Qué ficha se está editando Y EN QUÉ ZONA. La zona no es un adorno: la misma
+  // persona aparece en la cola y otra vez en el pool o en su mesa, y sin ella se
+  // abrirían dos editores a la vez. Ver el comentario de EditarNombre.jsx.
+  const [editando, setEditando]     = useState(null)   // { key, zona, haySiguiente }
   const [imagenes, setImagenes]     = useState('')
   const [sobre, setSobre]           = useState(null)  // mesa bajo el puntero al arrastrar
   const [nueva, setNueva]           = useState(null)  // mesa recién creada, para nombrarla
 
-  const flash = m => { setAviso(m); setTimeout(() => setAviso(''), 2200) }
+  const flash = m => { setAviso(m); setTimeout(() => setAviso(''), 3200) }
 
   const cargar = useCallback(async () => {
     setError('')
@@ -184,9 +259,26 @@ export default function MesasBoard() {
   // sentadas o no. Es la lista que hay que dejar vacía antes de la boda: en el
   // pool no bastaría, porque a la gente ya sentada no se la vería.
   const porCompletar = useMemo(
-    () => todasLasFichas.filter(f => f.anon || nombreIncompleto(f.nombre)),
+    () => todasLasFichas.filter(f => motivoDe(f)),
     [todasLasFichas],
   )
+
+  // La misma lista agrupada por sobre: quién es «Invitado 3» se deduce de la
+  // familia y de dónde está sentado.
+  const cola = useMemo(() => {
+    const porGrupo = new Map()
+    for (const f of porCompletar) {
+      if (!porGrupo.has(f.guest_id)) porGrupo.set(f.guest_id, { guest_id: f.guest_id, grupo: f.grupo, fichas: [] })
+      porGrupo.get(f.guest_id).fichas.push(f)
+    }
+    return [...porGrupo.values()]
+  }, [porCompletar])
+
+  const mesaDe = key => {
+    const a = asientoDe.get(key)
+    return a && mesas.find(m => m.id === a.mesa_id)
+  }
+
   const q = busca.trim().toLowerCase()
   const sinMesaFiltrada = q
     ? sinMesa.filter(f => f.nombre.toLowerCase().includes(q) || f.grupo.toLowerCase().includes(q))
@@ -221,29 +313,92 @@ export default function MesasBoard() {
   }
 
   // ─── Editar el nombre ───
-  // Para una persona ya cargada es un UPDATE. Para una «plaza sin nombre» hay
-  // que CREARLA: se inserta en guest_members y, si estaba sentada, el asiento
-  // pasa a apuntar a la persona real en vez de a la etiqueta.
-  async function guardarNombre(ficha, valor) {
+  // Abrir el editor cancela la selección: si no, la barra de «toca una mesa para
+  // sentarlo» se queda abajo y el clic con el que se cierra el editor sienta a
+  // esa persona en la mesa que se haya tocado.
+  const abrirEditor = useCallback((ficha, zona = 'cola') => {
+    setSel(null)
+    const i = porCompletar.findIndex(f => f.key === ficha.key)
+    setEditando({ key: ficha.key, zona, haySiguiente: zona === 'cola' && i >= 0 && i < porCompletar.length - 1 })
+  }, [porCompletar])
+
+  const cerrarEditor = useCallback(() => setEditando(null), [])
+  const editandoEs = (ficha, zona) => editando?.key === ficha.key && editando.zona === zona
+
+  /**
+   * La siguiente ficha de la cola, para que Enter avance sin volver a buscar.
+   *
+   * `corrio` avisa de que se acaba de crear una persona a partir de una plaza
+   * anónima: las plazas siguientes de ESA misma tarjeta bajan un índice —hay una
+   * plaza menos— y con él cambia su clave.
+   */
+  function siguienteDeLaCola(ficha, corrio) {
+    const i = porCompletar.findIndex(f => f.key === ficha.key)
+    const s = i >= 0 ? porCompletar[i + 1] : null
+    if (!s) return null
+    const key = (corrio && s.anon && s.guest_id === ficha.guest_id)
+      ? idAnon(s.guest_id, s.indice - 1)
+      : s.key
+    return { key, zona: 'cola', haySiguiente: i + 2 < porCompletar.length }
+  }
+
+  function avisarGuardado(nombre, ficha) {
+    const falta = nombreIncompleto(nombre)
+    const quedan = porCompletar.filter(f => f.key !== ficha.key).length + (falta ? 1 : 0)
+    if (falta)   return flash(`Guardado: ${nombre} · ${MOTIVO[falta].toLowerCase()}`)
+    if (!quedan) return flash('Listo: no queda ningún nombre por completar.')
+    flash(`Guardado: ${nombre} · quedan ${quedan}`)
+  }
+
+  /**
+   * Para una persona ya cargada es un UPDATE. Para una «plaza sin nombre» hay
+   * que CREARLA: se inserta en guest_members y, si estaba sentada, el asiento
+   * pasa a apuntar a la persona real en vez de a la etiqueta.
+   */
+  async function guardarNombre(ficha, valor, { zona = 'cola', seguir = false } = {}) {
     const nombre = normalizarNombre(valor)
-    setEditando(null)
-    if (!nombre || (!ficha.anon && nombre === ficha.nombre)) return
+    // Sin cambios: se cierra sin escribir nada y sin avisar de nada.
+    const nada = !nombre || (!ficha.anon && nombre === ficha.nombre)
+    const crea = !nada && !ficha.member_id
+    setEditando(seguir && zona === 'cola' ? siguienteDeLaCola(ficha, crea) : null)
+    if (nada) return
 
     if (ficha.member_id) {
+      // Optimista: el nombre cambia en el tablero antes del ida y vuelta, para
+      // que Enter encadene sin esperar a las cuatro consultas de cargar().
+      setMiembros(prev => ({
+        ...prev,
+        [ficha.guest_id]: (prev[ficha.guest_id] || [])
+          .map(x => x.id === ficha.member_id ? { ...x, name: nombre } : x),
+      }))
       const { error: e } = await supabase.from('guest_members').update({ name: nombre }).eq('id', ficha.member_id)
-      if (e) return flash(`No se pudo guardar: ${e.message}`)
+      if (e) { await cargar(); return flash(`No se pudo guardar: ${e.message}`) }
     } else {
       const orden = (miembros[ficha.guest_id] || []).reduce((m, x) => Math.max(m, x.order_num || 0), 0) + 1
       const { data, error: e } = await supabase.from('guest_members')
         .insert({ guest_id: ficha.guest_id, name: nombre, order_num: orden })
         .select('id').single()
       if (e) return flash(`No se pudo crear la persona: ${e.message}`)
+
       const a = asientoDe.get(ficha.key)
       if (a) await supabase.from('asientos')
         .update({ member_id: data.id, etiqueta: null, orden: 0 }).eq('id', a.id)
+
+      // Las plazas anónimas de esta tarjeta se numeran 0…n-1 y el asiento guarda
+      // ese índice en `orden`. Al convertir la plaza k en persona quedan n-1
+      // plazas, así que las posteriores hay que correrlas una posición: si no,
+      // el asiento de la plaza k+1 deja de casar con ninguna ficha, aparece como
+      // huérfano en su mesa y su sitio reaparece a la vez en «Sin mesa».
+      const posteriores = asientos.filter(x =>
+        x.guest_id === ficha.guest_id && !x.member_id && x.orden > (ficha.indice ?? 0))
+      for (const x of posteriores) {
+        await supabase.from('asientos')
+          .update({ orden: x.orden - 1, etiqueta: `${ficha.grupo} · plaza ${x.orden}` })
+          .eq('id', x.id)
+      }
+      await cargar()
     }
-    await cargar()
-    flash(`Guardado: ${nombre}`)
+    avisarGuardado(nombre, ficha)
   }
 
   async function levantar(ficha) {
@@ -416,36 +571,15 @@ export default function MesasBoard() {
         )}
       </div>
 
-      {revision.sinNombres.length > 0 && (
-        <p className="mb-nota">
-          Las tarjetas sin nombres cargados aparecen como <b>plazas sin nombre</b>: ocupan
-          sitio igual, pero conviene cargarles los nombres en Invitados para poder ubicarlas bien.
-        </p>
-      )}
-
       {porCompletar.length > 0 && (
-        <details className="mb-faltan" open>
-          <summary>
-            <b>{porCompletar.length}</b> nombres por completar
-            <span> — doble clic o ✎ para editarlos aquí mismo</span>
-          </summary>
-          <div className="mb-faltan-list">
-            {porCompletar.map(f => (
-              <Ficha
-                key={f.key} ficha={f}
-                seleccionada={sel?.key === f.key} onSeleccionar={setSel}
-                editando={editando === f.key}
-                onEditar={x => setEditando(x.key)}
-                onGuardar={guardarNombre}
-                onCancelar={() => setEditando(null)}
-              />
-            ))}
-          </div>
-          <p className="mb-faltan-pie">
-            Al ponerle nombre a una <b>plaza sin nombre</b> se crea la persona de verdad
-            en su tarjeta, y si ya estaba sentada conserva la mesa.
-          </p>
-        </details>
+        <ColaNombres
+          cola={cola} total={porCompletar.length}
+          editando={editando?.zona === 'cola' ? editando : null}
+          onEditar={f => abrirEditor(f, 'cola')}
+          onGuardar={guardarNombre}
+          onCancelar={cerrarEditor}
+          mesaDe={mesaDe}
+        />
       )}
 
       <div className="mb-filtros">
@@ -477,10 +611,10 @@ export default function MesasBoard() {
               <Ficha
                 key={f.key} ficha={f}
                 seleccionada={sel?.key === f.key} onSeleccionar={setSel}
-                editando={editando === f.key}
-                onEditar={x => setEditando(x.key)}
-                onGuardar={guardarNombre}
-                onCancelar={() => setEditando(null)}
+                editando={editandoEs(f, 'pool')}
+                onEditar={x => abrirEditor(x, 'pool')}
+                onGuardar={(x, v, o) => guardarNombre(x, v, { ...o, zona: 'pool' })}
+                onCancelar={cerrarEditor}
               />
             ))}
           </div>
@@ -515,10 +649,11 @@ export default function MesasBoard() {
               onSentar={sentar}
               onLevantar={levantar}
               onSeleccionar={setSel}
+              zona={`mesa:${m.id}`}
               editando={editando}
-              onEditar={x => setEditando(x.key)}
-              onGuardar={guardarNombre}
-              onCancelar={() => setEditando(null)}
+              onEditar={x => abrirEditor(x, `mesa:${m.id}`)}
+              onGuardar={(x, v, o) => guardarNombre(x, v, { ...o, zona: `mesa:${m.id}` })}
+              onCancelar={cerrarEditor}
               onEditarMesa={editarMesa}
               onBorrar={borrarMesa}
               buscarFicha={k => todasLasFichas.find(x => x.key === k)}
