@@ -281,7 +281,8 @@ Generado el ${cuando}
 
 Los nombres en rojo no sirven para una tarjeta de mesa: son genéricos
 («Invitado 3», «Acompañante») o les falta el apellido. Se arreglan en
-/admin/mesas, con doble clic sobre la ficha.
+/admin/mesas, en la lista «Nombres por completar»: un clic abre cada uno
+y Enter guarda y pasa al siguiente.
 `)
 
   avisar('Comprimiendo…')

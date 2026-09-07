@@ -180,7 +180,10 @@ export default function MesasBoard() {
   const [asientos, setAsientos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError]       = useState('')
-  const [sel, setSel]           = useState(null)   // ficha seleccionada (modo clic)
+  // Claves de las fichas seleccionadas. Es un conjunto y no una sola ficha
+  // porque la unidad de trabajo real es la FAMILIA: sentarlas de a una era el
+  // cuello de botella con 78 personas por ubicar.
+  const [sel, setSel]           = useState([])
   const [busca, setBusca]       = useState('')
   const [incluir, setIncluir]   = useState(['confirmado', 'preconfirmado'])
   const [aviso, setAviso]       = useState('')
@@ -279,6 +282,18 @@ export default function MesasBoard() {
     return a && mesas.find(m => m.id === a.mesa_id)
   }
 
+  const elegidas = useMemo(() => todasLasFichas.filter(f => sel.includes(f.key)), [todasLasFichas, sel])
+  const limpiarSel = useCallback(() => setSel([]), [])
+  const alternar = useCallback(ficha => setSel(v =>
+    v.includes(ficha.key) ? v.filter(k => k !== ficha.key) : [...v, ficha.key]), [])
+  // La cabecera de cada tarjeta selecciona o suelta a la familia entera
+  const alternarGrupo = useCallback(fichas => setSel(v => {
+    const claves = fichas.map(f => f.key)
+    return claves.every(k => v.includes(k))
+      ? v.filter(k => !claves.includes(k))
+      : [...new Set([...v, ...claves])]
+  }), [])
+
   const nombreDe = useCallback(
     memberId => Object.values(miembros).flat().find(x => x.id === memberId)?.name || '',
     [miembros],
@@ -288,6 +303,23 @@ export default function MesasBoard() {
   const sinMesaFiltrada = q
     ? sinMesa.filter(f => f.nombre.toLowerCase().includes(q) || f.grupo.toLowerCase().includes(q))
     : sinMesa
+
+  // Agrupado por sobre: así se ve de una que «los Pomarico son 4» y se pueden
+  // mandar juntos a una mesa, que es como se reparte de verdad.
+  const poolPorTarjeta = useMemo(() => {
+    const m = new Map()
+    for (const f of sinMesaFiltrada) {
+      if (!m.has(f.guest_id)) m.set(f.guest_id, { guest_id: f.guest_id, grupo: f.grupo, fichas: [] })
+      m.get(f.guest_id).fichas.push(f)
+    }
+    return [...m.values()]
+  }, [sinMesaFiltrada])
+
+  // Sitio libre por mesa, para la barra de destino
+  const libresDe = mesaId => {
+    const m = mesas.find(x => x.id === mesaId)
+    return m ? m.capacidad - asientos.filter(a => a.mesa_id === mesaId).length : 0
+  }
 
   const fichasDeMesa = mesaId => asientos
     .filter(a => a.mesa_id === mesaId)
@@ -299,22 +331,46 @@ export default function MesasBoard() {
     })
 
   // ─── Escribir ───
-  async function sentar(ficha, mesaId) {
-    const previo = asientoDe.get(ficha.key)
-    if (previo?.mesa_id === mesaId) return
-    const fila = {
-      mesa_id: mesaId,
-      guest_id: ficha.guest_id,
-      member_id: ficha.member_id,
-      etiqueta: ficha.anon ? `${ficha.grupo} · plaza ${(ficha.indice ?? 0) + 1}` : null,
-      orden: ficha.anon ? (ficha.indice ?? 0) : 0,
+  const filaAsiento = (ficha, mesaId) => ({
+    mesa_id: mesaId,
+    guest_id: ficha.guest_id,
+    member_id: ficha.member_id,
+    etiqueta: ficha.anon ? `${ficha.grupo} · plaza ${(ficha.indice ?? 0) + 1}` : null,
+    orden: ficha.anon ? (ficha.indice ?? 0) : 0,
+  })
+
+  /**
+   * Sienta a varias de un golpe. Las nuevas van en un solo INSERT; las que ya
+   * tenían mesa se actualizan una a una porque cada asiento es una fila distinta.
+   *
+   * NO se valida la capacidad, igual que en el resto del tablero: pasarse
+   * mientras se reacomoda es normal y la mesa se marca en rojo. Ver 005_mesas.sql.
+   */
+  async function sentar(fichas, mesaId) {
+    const lista = Array.isArray(fichas) ? fichas : [fichas]
+    const nuevas = [], mudanzas = []
+    for (const f of lista) {
+      const previo = asientoDe.get(f.key)
+      if (previo?.mesa_id === mesaId) continue
+      previo ? mudanzas.push({ id: previo.id, fila: filaAsiento(f, mesaId) }) : nuevas.push(filaAsiento(f, mesaId))
     }
-    const { error: e } = previo
-      ? await supabase.from('asientos').update(fila).eq('id', previo.id)
-      : await supabase.from('asientos').insert(fila)
-    if (e) return flash(`No se pudo sentar: ${e.message}`)
+    if (!nuevas.length && !mudanzas.length) return setSel([])
+
+    if (nuevas.length) {
+      const { error: e } = await supabase.from('asientos').insert(nuevas)
+      if (e) return flash(`No se pudo sentar: ${e.message}`)
+    }
+    for (const m of mudanzas) {
+      const { error: e } = await supabase.from('asientos').update(m.fila).eq('id', m.id)
+      if (e) return flash(`No se pudo mover: ${e.message}`)
+    }
     await cargar()
-    setSel(null)
+    setSel([])
+    const n = nuevas.length + mudanzas.length
+    const mesa = mesas.find(x => x.id === mesaId)
+    flash(n === 1
+      ? `${lista[0].nombre} → ${mesa?.nombre || 'la mesa'}`
+      : `${n} personas → ${mesa?.nombre || 'la mesa'}`)
   }
 
   // ─── Editar el nombre ───
@@ -322,7 +378,7 @@ export default function MesasBoard() {
   // sentarlo» se queda abajo y el clic con el que se cierra el editor sienta a
   // esa persona en la mesa que se haya tocado.
   const abrirEditor = useCallback((ficha, zona = 'cola') => {
-    setSel(null)
+    setSel([])
     const i = porCompletar.findIndex(f => f.key === ficha.key)
     setEditando({ key: ficha.key, zona, haySiguiente: zona === 'cola' && i >= 0 && i < porCompletar.length - 1 })
   }, [porCompletar])
@@ -429,6 +485,37 @@ export default function MesasBoard() {
     if (e) return flash(`No se pudo quitar: ${e.message}`)
     await cargar()
   }
+
+  // ─── Arrastrar hasta una mesa que está mil píxeles más abajo ───
+  // HTML5 drag no desplaza la página por su cuenta: al llegar al borde el
+  // arrastre se queda ahí y hay que soltar, bajar y volver a empezar. Esto
+  // acompaña el puntero mientras se arrastra cerca de los bordes.
+  useEffect(() => {
+    const ZONA = 120, PASO = 22
+    const alArrastrar = e => {
+      const alto = window.innerHeight
+      const y = e.clientY
+      let d = 0
+      if (y < ZONA) d = -PASO * (1 - y / ZONA)
+      else if (y > alto - ZONA) d = PASO * (1 - (alto - y) / ZONA)
+      if (!d) return
+      // El contenedor con scroll es .adm-main cuando tiene alto propio; si no,
+      // el que se mueve es el documento.
+      const main = document.querySelector('.adm-main')
+      const caja = main && main.scrollHeight > main.clientHeight ? main : document.scrollingElement
+      caja?.scrollBy(0, d)
+    }
+    document.addEventListener('dragover', alArrastrar)
+    return () => document.removeEventListener('dragover', alArrastrar)
+  }, [])
+
+  // Esc suelta la selección: es la salida esperada y evita sentar sin querer.
+  useEffect(() => {
+    if (!sel.length) return
+    const alPulsar = e => { if (e.key === 'Escape') setSel([]) }
+    document.addEventListener('keydown', alPulsar)
+    return () => document.removeEventListener('keydown', alPulsar)
+  }, [sel.length])
 
   // La mesa de los novios va aparte y no lleva número: la numeración corriente
   // empieza en «Mesa 1» después de ella. Se toma del número más alto que ya
@@ -542,7 +629,7 @@ export default function MesasBoard() {
   )
 
   return (
-    <div className="adm-main mb-root">
+    <div className={`adm-main mb-root${elegidas.length ? ' con-destino' : ''}`}>
       <div className="adm-hdr">
         <h2>Mesas del salón</h2>
         <div className="adm-hdr-r">
@@ -661,18 +748,39 @@ export default function MesasBoard() {
           }}
         >
           <h3>Sin mesa <span>{sinMesaFiltrada.length}</span></h3>
-          {sinMesaFiltrada.length === 0 && <p className="mb-vacio">Todos ubicados.</p>}
+          {sinMesaFiltrada.length === 0 && (
+            <p className="mb-vacio">{busca ? 'Nadie con ese nombre está sin mesa.' : 'Todos ubicados.'}</p>
+          )}
           <div className="mb-pool-list">
-            {sinMesaFiltrada.map(f => (
-              <Ficha
-                key={f.key} ficha={f}
-                seleccionada={sel?.key === f.key} onSeleccionar={setSel}
-                editando={editandoEs(f, 'pool')}
-                onEditar={x => abrirEditor(x, 'pool')}
-                onGuardar={(x, v, o) => guardarNombre(x, v, { ...o, zona: 'pool' })}
-                onCancelar={cerrarEditor}
-              />
-            ))}
+            {poolPorTarjeta.map(g => {
+              const todas = g.fichas.every(f => sel.includes(f.key))
+              return (
+                <div className="mb-sobre" key={g.guest_id}>
+                  {/* La cabecera manda a la familia entera: un clic la elige toda */}
+                  <button
+                    className={`mb-sobre-h${todas ? ' on' : ''}`}
+                    onClick={() => alternarGrupo(g.fichas)}
+                    title={todas
+                      ? `Soltar a las ${g.fichas.length} personas de esta tarjeta`
+                      : `Elegir a las ${g.fichas.length} personas de esta tarjeta`}
+                  >
+                    <i style={{ '--fam': colorDe(g.guest_id) }} />
+                    <span>{g.grupo}</span>
+                    <b>{g.fichas.length}</b>
+                  </button>
+                  {g.fichas.map(f => (
+                    <Ficha
+                      key={f.key} ficha={f} compacta
+                      seleccionada={sel.includes(f.key)} onSeleccionar={alternar}
+                      editando={editandoEs(f, 'pool')}
+                      onEditar={x => abrirEditor(x, 'pool')}
+                      onGuardar={(x, v, o) => guardarNombre(x, v, { ...o, zona: 'pool' })}
+                      onCancelar={cerrarEditor}
+                    />
+                  ))}
+                </div>
+              )
+            })}
           </div>
         </aside>
 
@@ -701,10 +809,11 @@ export default function MesasBoard() {
               mesa={m}
               gente={fichasDeMesa(m.id)}
               sel={sel}
+              elegidas={elegidas}
               sobre={sobre}
               onSentar={sentar}
               onLevantar={levantar}
-              onSeleccionar={setSel}
+              onSeleccionar={alternar}
               zona={`mesa:${m.id}`}
               editando={editando}
               onEditar={x => abrirEditor(x, `mesa:${m.id}`)}
@@ -722,10 +831,40 @@ export default function MesasBoard() {
         </div>
       </div>
 
-      {sel && (
-        <div className="mb-barra">
-          <span><b>{sel.nombre}</b> seleccionado · toca una mesa para sentarlo</span>
-          <button className="adm-btn adm-btn-ghost" onClick={() => setSel(null)}>Cancelar</button>
+      {/* ── A qué mesa ──
+          Las mesas vienen a la selección en vez de obligar a arrastrar mil
+          píxeles hacia abajo hasta una que ni se ve. Cada botón dice cuánto
+          sitio le queda, así se elige sin ir a mirar. */}
+      {elegidas.length > 0 && (
+        <div className="mb-destino">
+          <div className="mb-destino-t">
+            <b>{elegidas.length}</b>
+            <span>
+              {elegidas.length === 1 ? elegidas[0].nombre : 'personas elegidas'}
+              {' · '}¿a qué mesa?
+            </span>
+            <button className="mb-destino-x" onClick={limpiarSel} title="Soltar la selección (Esc)">
+              Cancelar
+            </button>
+          </div>
+          <div className="mb-destino-l">
+            {mesas.map(m => {
+              const libres = libresDe(m.id)
+              return (
+                <button
+                  key={m.id}
+                  className={`mb-destino-m${libres <= 0 ? ' llena' : libres < elegidas.length ? ' justa' : ''}`}
+                  onClick={() => sentar(elegidas, m.id)}
+                  title={libres >= elegidas.length
+                    ? `Sentar aquí · quedan ${libres} puestos`
+                    : `Aquí solo quedan ${libres} puestos para ${elegidas.length} personas — se puede, la mesa quedará marcada`}
+                >
+                  <span>{m.nombre}</span>
+                  <i>{libres > 0 ? `${libres} libre${libres === 1 ? '' : 's'}` : 'llena'}</i>
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
       {aviso && <div className="mb-toast">{aviso}</div>}

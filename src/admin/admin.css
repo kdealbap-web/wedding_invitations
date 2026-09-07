@@ -324,15 +324,69 @@ body.admin-body {
 .mb-ficha:active{ cursor: grabbing }
 .mb-ficha.on  { border-color: #c8a96e; background: rgba(200,169,110,.12) }
 .mb-ficha.anon{ border-style: dashed; color: #94a3b8 }
-.mb-ficha.mini{ padding: .28rem .45rem; font-size: .78rem }
+.mb-ficha.mini{ padding: .3rem .5rem; font-size: .78rem; margin-left: .55rem }
 .mb-ficha-n   { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .mb-ficha-g   { font-size: .68rem; color: #475569; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .mb-ficha-x   { background: none; border: none; color: #475569; cursor: pointer; font-size: .95rem; line-height: 1; padding: 0 .15rem }
 .mb-ficha-x:hover { color: #f87171 }
 
 /* Barra del modo clic y avisos */
-.mb-barra     { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: .6rem 1rem; display: flex; align-items: center; gap: 1rem; font-size: .82rem; color: #e2e8f0; z-index: 60; box-shadow: 0 8px 30px rgba(0,0,0,.5) }
-.mb-barra b   { color: #c8a96e }
+/* ─── Barra de destino ───
+   El problema que resuelve: las mesas vacías quedan mil píxeles más abajo y
+   arrastrar hasta allí es inviable. En vez de llevar la persona a la mesa, la
+   mesa viene a la persona. Fija abajo, con un botón por mesa y su sitio libre. */
+.mb-destino   { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+                background: #161b26; border-top: 1px solid rgba(200,169,110,.4);
+                box-shadow: 0 -10px 34px rgba(0,0,0,.55); padding: .7rem 1rem .8rem;
+                animation: mb-sube .16s ease-out }
+@keyframes mb-sube { from { transform: translateY(100%) } }
+.mb-destino-t { display: flex; align-items: baseline; gap: .5rem; margin-bottom: .55rem; font-size: .82rem; color: #94a3b8 }
+.mb-destino-t b { font-size: 1.15rem; color: #c8a96e; font-variant-numeric: tabular-nums }
+.mb-destino-x { margin-left: auto; background: none; border: 1px solid #334155; border-radius: 8px;
+                color: #94a3b8; font: inherit; font-size: .78rem; padding: .35rem .8rem; cursor: pointer }
+.mb-destino-x:hover { border-color: #f87171; color: #f87171 }
+
+/* Fila de mesas. Se desplaza dentro de sí misma; la página nunca lo hace. */
+.mb-destino-l { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .2rem;
+                scrollbar-width: thin; scrollbar-color: #263144 transparent }
+.mb-destino-l::-webkit-scrollbar       { height: 7px }
+.mb-destino-l::-webkit-scrollbar-thumb { background: #263144; border-radius: 4px }
+/* 44 px de alto: esto se usa en tableta y es la acción principal de la pantalla */
+.mb-destino-m { flex: 0 0 auto; min-height: 44px; min-width: 104px; display: flex; flex-direction: column;
+                align-items: flex-start; justify-content: center; gap: .1rem;
+                background: #0f1117; border: 1px solid #263144; border-radius: 9px;
+                padding: .35rem .75rem; cursor: pointer; font: inherit; color: #e2e8f0;
+                transition: border-color .12s, background .12s, transform .1s }
+.mb-destino-m span  { font-size: .82rem; white-space: nowrap }
+.mb-destino-m i     { font-style: normal; font-size: .68rem; color: #64748b }
+.mb-destino-m:hover { border-color: #c8a96e; background: rgba(200,169,110,.1) }
+.mb-destino-m:active{ transform: scale(.97) }
+.mb-destino-m:focus-visible { outline: 2px solid #c8a96e; outline-offset: 2px }
+/* No cabe la selección entera: se puede igual, pero se avisa antes de tocar */
+.mb-destino-m.justa   { border-color: rgba(252,129,74,.55) }
+.mb-destino-m.justa i { color: #fc814a }
+.mb-destino-m.llena   { opacity: .5 }
+.mb-destino-m.llena i { color: #64748b }
+/* La barra tapa el final de la página: se le devuelve el sitio */
+.mb-root.con-destino { padding-bottom: 8.5rem }
+
+/* ─── Sobres del pool ───
+   Agrupado por tarjeta porque el reparto se hace por familia, no por persona.
+   La cabecera elige a los cuatro de un clic. */
+.mb-sobre     { display: flex; flex-direction: column; gap: .2rem; margin-bottom: .55rem }
+.mb-sobre-h   { display: flex; align-items: center; gap: .4rem; width: 100%;
+                background: none; border: none; border-radius: 6px; padding: .3rem .25rem;
+                cursor: pointer; font: inherit; font-size: .7rem; text-align: left;
+                text-transform: uppercase; letter-spacing: .05em; color: #64748b;
+                transition: background .12s, color .12s }
+.mb-sobre-h i { width: 7px; height: 7px; border-radius: 50%; background: var(--fam); flex-shrink: 0 }
+.mb-sobre-h span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mb-sobre-h b { color: #475569; font-variant-numeric: tabular-nums; letter-spacing: 0 }
+.mb-sobre-h:hover { background: #1e293b; color: #e2e8f0 }
+.mb-sobre-h:focus-visible { outline: 2px solid #c8a96e; outline-offset: 1px }
+.mb-sobre-h.on      { color: #c8a96e }
+.mb-sobre-h.on b    { color: #c8a96e }
+.mb-sobre-h.on i    { box-shadow: 0 0 0 2px rgba(200,169,110,.35) }
 .mb-toast     { position: fixed; bottom: 1rem; right: 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: .6rem 1rem; font-size: .82rem; color: #e2e8f0; z-index: 60 }
 .adm-btn:disabled { opacity: .55; cursor: default }
 .adm-btn:disabled:active { transform: none }
@@ -437,7 +491,7 @@ body.admin-body {
 .mb-ficha:focus-visible .mb-ficha-e, .mbn-fila:focus-visible .mbn-lapiz { opacity: 1; color: #c8a96e }
 
 @media (prefers-reduced-motion: reduce) {
-  .mbn-ed, .mr-puesto, .mr.activa .mr-puesto.vacio { animation: none }
+  .mbn-ed, .mr-puesto, .mr.activa .mr-puesto.vacio, .mb-destino { animation: none }
   .mr.activa { transform: none }
 }
 
@@ -453,6 +507,10 @@ body.admin-body {
 .mr.pasada { border-color: #7f1d1d; background: rgba(127,29,29,.08) }
 /* Mesa bajo el puntero mientras se arrastra */
 .mr.activa { border-color: #c8a96e; background: rgba(200,169,110,.07); transform: translateY(-3px) }
+/* Hay gente elegida: cada mesa con sitio es un destino en el que se puede tocar */
+.mr.destino { border-color: #263144; cursor: pointer }
+.mr.destino:hover { border-color: #c8a96e; background: rgba(200,169,110,.06) }
+.mr.destino .mr-vacia { color: #c8a96e !important; font-style: normal }
 .mr.activa .mr-tablero { box-shadow: 0 0 0 2px rgba(200,169,110,.35), 0 10px 30px rgba(0,0,0,.45) }
 .mr.activa .mr-puesto.vacio { border-color: rgba(200,169,110,.7); animation: mr-late 1.1s ease-in-out infinite }
 @keyframes mr-late { 50% { transform: scale(1.13) } }
@@ -502,6 +560,7 @@ body.admin-body {
   padding: .18rem .3rem; border-radius: 5px; cursor: pointer; transition: background .12s }
 .mr-lista li:hover { background: #1e293b }
 .mr-lista li.falta { color: #c8a96e }
+.mr-lista li.on    { background: rgba(200,169,110,.14); box-shadow: inset 2px 0 0 #c8a96e }
 .mr-punto { width: 7px; height: 7px; border-radius: 50%; background: var(--fam); flex-shrink: 0 }
 .mr-vacia { color: #475569 !important; font-style: italic; justify-content: center; cursor: default !important }
 .mr-vacia:hover { background: none !important }

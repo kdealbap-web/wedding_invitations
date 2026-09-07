@@ -327,8 +327,8 @@ lo dice en vez de reventar.
   reacomoda es normal; el panel la marca en rojo y ya.
 - «Sugerir reparto» mantiene junta cada tarjeta y la mete en la mesa donde quepa
   más ajustada. Es una ayuda, no una decisión: solo toca a quien está sin mesa.
-- Funciona con arrastrar y soltar **y** con clic (seleccionar persona → tocar
-  mesa), porque en tableta el arrastre es incómodo.
+- Funciona con arrastrar y soltar **y** con clic, porque en tableta el arrastre
+  es incómodo. Ver «Cómo se reparte» aquí abajo.
 
 Las mesas se dibujan **redondas de verdad** (`src/admin/MesaRedonda.jsx`): un
 tablero central con el nombre y los puestos repartidos por la circunferencia.
@@ -346,6 +346,31 @@ tablero central con el nombre y los puestos repartidos por la circunferencia.
 
 **Las mesas no se generan solas.** «Sugerir reparto» existe, pero es opt-in y
 solo toca a quien está sin mesa; el reparto lo arma la pareja.
+
+#### Cómo se reparte
+
+Con 11 mesas, las vacías quedan a mil píxeles de un pool que está pegado arriba.
+Arrastrar hasta allí de a una persona era inviable, así que el reparto se hace
+al revés: **la mesa viene a la selección**, no la persona a la mesa.
+
+- El pool va **agrupado por tarjeta**, y la cabecera de cada sobre elige a la
+  familia entera de un clic. La unidad de trabajo es la familia, no la persona:
+  sentarlas de a una era el cuello de botella.
+- Con gente elegida aparece la **barra de destino** abajo, fija, con un botón por
+  mesa y su sitio libre. Un clic las sienta a todas. Nunca hay que buscar la mesa.
+  Los botones miden 44 px de alto: esto se usa en tableta.
+- Si la selección no cabe, la mesa se marca pero **se deja igual**: pasarse
+  mientras se reacomoda es normal, y ya se marca en rojo. Mismo criterio que
+  005_mesas.sql con la capacidad.
+- Tocar la mesa también sienta a la selección, y con gente elegida cada mesa se
+  resalta y lo dice. La barra es el atajo; la mesa es la manipulación directa.
+- Arrastrar sigue existiendo y ahora **la página acompaña** cerca de los bordes:
+  HTML5 drag no hace autoscroll por su cuenta y el arrastre moría en el borde.
+  Si se arrastra a alguien que está dentro de una selección, cae la selección
+  entera — que se quedara solo sorprendería.
+- **Esc suelta la selección.** Es la salida esperada y evita sentar sin querer.
+- `sel` es un **arreglo de claves de ficha**, no una ficha. Si lo vuelves a
+  convertir en una sola, vuelve el reparto de a uno.
 
 #### La mesa principal y la numeración
 

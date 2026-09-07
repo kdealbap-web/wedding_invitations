@@ -37,7 +37,7 @@ function medidas(capacidad) {
 }
 
 export default function MesaRedonda({
-  mesa, gente, sel, sobre,
+  mesa, gente, sel, elegidas, sobre,
   onSentar, onLevantar, onSeleccionar,
   zona, editando, onEditar, onGuardar, onCancelar,
   onEditarMesa, onBorrar, buscarFicha, onSobre, nueva,
@@ -55,6 +55,11 @@ export default function MesaRedonda({
   //
   // `capitan_id in mesa` distingue «la columna no existe» (006 sin aplicar,
   // PostgREST ni siquiera devuelve la clave) de «existe y está vacía».
+  // Con gente elegida, cada mesa es un destino: se resalta y lo dice. Es el
+  // camino directo; la barra de abajo es el atajo para las que no se ven.
+  const eligiendo = elegidas.length > 0
+  const cabe = mesa.capacidad - gente.length
+
   const hayCapitanes = 'capitan_id' in mesa
   const capitan   = mesa.capitan_id || ''
   const candidatos = gente.filter(f => f.member_id)
@@ -68,18 +73,21 @@ export default function MesaRedonda({
     e.preventDefault()
     onSobre(null)
     const f = buscarFicha(e.dataTransfer.getData('text/plain'))
-    if (f) onSentar(f, mesa.id)
+    // Si lo que se arrastra es parte de una selección, cae la selección entera:
+    // arrastrar a uno de los cuatro y que se quede solo sorprendería.
+    if (!f) return
+    onSentar(elegidas.some(x => x.key === f.key) ? elegidas : [f], mesa.id)
   }
 
   return (
     <section
-      className={`mr${pasada ? ' pasada' : lleno ? ' llena' : ''}${activa ? ' activa' : ''}`}
+      className={`mr${pasada ? ' pasada' : lleno ? ' llena' : ''}${activa ? ' activa' : ''}${eligiendo ? ' destino' : ''}`}
       onDragOver={e => { e.preventDefault(); if (!activa) onSobre(mesa.id) }}
       // dragleave salta también al pasar por encima de un hijo; sin comprobar
       // el destino, la mesa parpadearía todo el rato
       onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) onSobre(null) }}
       onDrop={soltar}
-      onClick={() => { if (sel) onSentar(sel, mesa.id) }}
+      onClick={() => { if (elegidas.length) onSentar(elegidas, mesa.id) }}
     >
       <div className="mr-circulo" style={{ width: caja, height: caja }}>
         {/* El tablero: el centro de la mesa */}
@@ -118,7 +126,7 @@ export default function MesaRedonda({
           return (
             <div
               key={f.key}
-              className={`mr-puesto${sel?.key === f.key ? ' on' : ''}${falta ? ' falta' : ''}${i >= mesa.capacidad ? ' sobra' : ''}${manda ? ' capitan' : ''}`}
+              className={`mr-puesto${sel.includes(f.key) ? ' on' : ''}${falta ? ' falta' : ''}${i >= mesa.capacidad ? ' sobra' : ''}${manda ? ' capitan' : ''}`}
               style={{ ...est, '--fam': colorDe(f.guest_id) }}
               draggable
               tabIndex={0}
@@ -147,7 +155,13 @@ export default function MesaRedonda({
 
       {/* Quién está sentado: las iniciales solas no se leen */}
       <ol className="mr-lista">
-        {gente.length === 0 && <li className="mr-vacia">Arrastra personas al círculo</li>}
+        {gente.length === 0 && (
+          <li className="mr-vacia">
+            {/* Corto a propósito: el cuántos ya lo dice la barra de abajo, que
+                está fija en pantalla, y aquí se repetiría en cada mesa vacía */}
+            {eligiendo ? 'Sentar aquí' : 'Sin nadie todavía'}
+          </li>
+        )}
         {gente.map(f => {
           const falta = f.anon || nombreIncompleto(f.nombre)
           const manda = !!capitan && f.member_id === capitan
@@ -165,7 +179,7 @@ export default function MesaRedonda({
           ) : (
             <li
               key={f.key}
-              className={`${falta ? 'falta' : ''}${manda ? ' manda' : ''}`}
+              className={`${falta ? 'falta' : ''}${manda ? ' manda' : ''}${sel.includes(f.key) ? ' on' : ''}`}
               style={{ '--fam': colorDe(f.guest_id) }}
               onClick={e => { e.stopPropagation(); onSeleccionar(f) }}
               onDoubleClick={e => { e.stopPropagation(); onEditar(f) }}
@@ -187,16 +201,15 @@ export default function MesaRedonda({
       {/* El control del capitán. Un <select> y no un menú inventado: dice
           quién manda hoy sin desplegarlo, se maneja con el teclado y la lista
           de candidatos se rehace sola con quien esté sentado. */}
-      {hayCapitanes && (
+      {hayCapitanes && (candidatos.length > 0 || capitan) && (
         <div className={`mr-capitan${aBordo ? ' puesto' : ''}${capitan && !aBordo ? ' fuera' : ''}`}>
           <label htmlFor={`cap-${mesa.id}`}>Capitán</label>
           <select
             id={`cap-${mesa.id}`} value={capitan}
-            disabled={!candidatos.length}
             onClick={e => e.stopPropagation()}
             onChange={e => onCapitan(mesa, e.target.value)}
           >
-            <option value="">{candidatos.length ? 'Sin asignar' : 'Sienta a alguien primero'}</option>
+            <option value="">Sin asignar</option>
             {/* El capitán que ya no está sentado aquí: se muestra igual, o el
                 <select> se quedaría en blanco y parecería que no hay ninguno. */}
             {capitan && !aBordo && (
