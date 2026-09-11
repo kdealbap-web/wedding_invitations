@@ -36,15 +36,18 @@ function iniciales(nombre) {
  * Geometría de la mesa. Los puestos se reparten por la circunferencia, así que
  * el radio crece con la capacidad para que no se encimen.
  */
-function medidas(capacidad, mini, nombre = '') {
-  const s = mini ? 30 : capacidad <= 10 ? 44 : capacidad <= 16 ? 37 : 31
+function medidas(capacidad, mini, nombre = '', escala = 1) {
+  const s = (mini ? 30 : capacidad <= 10 ? 44 : capacidad <= 16 ? 37 : 31) * escala
   // El mínimo no es por los puestos, es para que quepa el nombre de la mesa
   // dentro del tablero: «Amigos del colegio» necesita sitio. En el plano las
   // mesas se llaman «Mesa 7», así que ahí el mínimo depende del nombre — y por
   // eso una mesa con nombre largo sale más grande también en el plano.
-  const min = mini ? (nombre.length > 12 ? 74 : 58) : 96
+  const min = (mini ? (nombre.length > 12 ? 74 : 58) : 96) * escala
+  // `escala` la usa la mesa a pantalla completa. Multiplica la geometría en vez
+  // de aplicar un transform: así los puestos siguen cayendo donde se los toca y
+  // el texto no se reescala, que es lo que se ve borroso.
   const R = Math.max(min, (s * 1.2 * capacidad) / (2 * Math.PI))
-  return { s, R, caja: 2 * R + s + 14, tablero: R - s / 2 - 8 }
+  return { s, R, caja: 2 * R + s + 14 * escala, tablero: R - s / 2 - 8 * escala }
 }
 
 export default function MesaRedonda({
@@ -53,9 +56,9 @@ export default function MesaRedonda({
   zona, editando, onEditar, onGuardar, onCancelar,
   onEditarMesa, onBorrar, buscarFicha, onSobre, nueva,
   onCapitan, nombreDe, mini, onAbrir,
-  movible, moviendo, onMover,
+  movible, moviendo, onMover, escala = 1,
 }) {
-  const { s, R, caja, tablero } = medidas(mesa.capacidad, mini, mesa.nombre || '')
+  const { s, R, caja, tablero } = medidas(mesa.capacidad, mini, mesa.nombre || '', escala)
   const lleno = gente.length >= mesa.capacidad
   const pasada = gente.length > mesa.capacidad
   const activa = sobre === mesa.id
@@ -94,7 +97,7 @@ export default function MesaRedonda({
   return (
     <section
       id={`mesa-${mesa.id}`}
-      className={`mr${mini ? ' mini' : ''}${pasada ? ' pasada' : lleno ? ' llena' : ''}${activa ? ' activa' : ''}${eligiendo ? ' destino' : ''}${moviendo ? ' moviendo' : ''}`}
+      className={`mr${mini ? ' mini' : ''}${pasada ? ' pasada' : lleno ? ' llena' : ''}${activa ? ' activa' : ''}${eligiendo ? ' destino' : ''}${moviendo ? ' moviendo' : ''}${escala > 1 ? ' grande' : ''}`}
       onDragOver={e => { e.preventDefault(); if (!activa) onSobre(mesa.id) }}
       // dragleave salta también al pasar por encima de un hijo; sin comprobar
       // el destino, la mesa parpadearía todo el rato

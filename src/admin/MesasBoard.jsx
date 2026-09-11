@@ -313,6 +313,10 @@ export default function MesasBoard() {
   // incómodo en tableta y el salón entero se reacomoda desde ahí.
   const [moviendo, setMoviendo]     = useState(null)
   const [renumerar, setRenumerar]   = useState(false)
+  // Mesa abierta a pantalla completa. Con doce mesas, revisarlas de a una es el
+  // gesto de la víspera: se lee la lista, se corrige un nombre, se nombra al
+  // capitán y se pasa a la siguiente sin volver al tablero.
+  const [enfocada, setEnfocada]     = useState(null)
   // «plano» reparte; «detalle» revisa. Se arranca en plano porque mientras
   // queda gente por sentar lo que importa es alcanzar todas las mesas.
   const [vista, setVista]           = useState('plano')
@@ -635,11 +639,17 @@ export default function MesasBoard() {
   // Esc suelta lo que esté elegido —gente o mesa—: es la salida esperada y
   // evita sentar, o mover una mesa, sin querer.
   useEffect(() => {
-    if (!sel.length && !moviendo) return
-    const alPulsar = e => { if (e.key === 'Escape') { setSel([]); setMoviendo(null) } }
+    if (!sel.length && !moviendo && !enfocada) return
+    const alPulsar = e => {
+      if (e.key !== 'Escape') return
+      // Una cosa por Esc, de lo más chico a lo más grande: primero se suelta lo
+      // elegido y sólo después se cierra la mesa. Si no, cerrar la mesa perdería
+      // de paso la selección que se estaba por sentar.
+      if (sel.length || moviendo) { setSel([]); setMoviendo(null) } else setEnfocada(null)
+    }
     document.addEventListener('keydown', alPulsar)
     return () => document.removeEventListener('keydown', alPulsar)
-  }, [sel.length, moviendo])
+  }, [sel.length, moviendo, enfocada])
 
   // ─── Renumerar ───
   // Se escribe por `id`, nunca buscando por nombre, y por eso una permutación
@@ -799,9 +809,7 @@ export default function MesasBoard() {
       // vivas, un clic en una mesa querría decir dos cosas a la vez.
       movible={plano.movible} moviendo={moviendo === m.id}
       onMover={() => { setSel([]); setMoviendo(v => v === m.id ? null : m.id) }}
-      onAbrir={() => { setVista('detalle'); setTimeout(() => {
-        document.getElementById(`mesa-${m.id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-      }, 40) }}
+      onAbrir={() => setEnfocada(m.id)}
     />
   )
 
@@ -844,6 +852,101 @@ export default function MesasBoard() {
         {celda.mesa
           ? mesaMini(celda.mesa)
           : <span className="mb-celda-sitio" aria-hidden="true">{fila}·{col}</span>}
+      </div>
+    )
+  }
+
+  // ─── Una mesa a pantalla completa ───
+  // Si la mesa se borró desde aquí, `focal` queda en null y se cae solo al
+  // tablero: no hace falta limpiar el estado, y limpiarlo en el render sería
+  // un setState en mitad de una pasada.
+  const focal = enfocada ? mesas.find(m => m.id === enfocada) : null
+  if (focal) {
+    const orden = [...mesas].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+    const i = orden.findIndex(m => m.id === focal.id)
+    const ir = d => setEnfocada(orden[(i + d + orden.length) % orden.length].id)
+    const gente = fichasDeMesa(focal.id)
+    return (
+      <div className="adm-main mb-root mb-focal">
+        <div className="mb-focal-bar">
+          <button className="adm-btn adm-btn-ghost" onClick={() => setEnfocada(null)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+            Volver al salón
+          </button>
+          <div className="mb-focal-t">
+            <h2>{focal.nombre}</h2>
+            <span>
+              {gente.length} de {focal.capacidad} puestos
+              {focal.fila && focal.col ? ` · hilera ${focal.fila}, columna ${focal.col}` : ' · sin sitio en el plano'}
+            </span>
+          </div>
+          <div className="mb-focal-nav">
+            <button onClick={() => ir(-1)} title="Mesa anterior">‹</button>
+            <span>{i + 1}<i>/</i>{orden.length}</span>
+            <button onClick={() => ir(1)} title="Mesa siguiente">›</button>
+          </div>
+        </div>
+
+        <div className="mb-focal-cuerpo">
+          <MesaRedonda
+            escala={1.5} mesa={focal} gente={gente}
+            sel={sel} elegidas={elegidas} sobre={sobre}
+            onSentar={sentar} onLevantar={levantar} onSeleccionar={alternar}
+            zona={`focal:${focal.id}`} editando={editando?.zona === `focal:${focal.id}` ? editando : null}
+            onEditar={x => abrirEditor(x, `focal:${focal.id}`)}
+            onGuardar={(x, v, o) => guardarNombre(x, v, { ...o, zona: `focal:${focal.id}` })}
+            onCancelar={cerrarEditor}
+            onEditarMesa={editarMesa} onBorrar={borrarMesa}
+            buscarFicha={k => todasLasFichas.find(x => x.key === k)}
+            onSobre={setSobre} onCapitan={asignarCapitan} nombreDe={nombreDe}
+          />
+
+          {/* Los que faltan por sentar, al lado: es el único motivo para abrir
+              una mesa y no poder hacer nada. Si no hay nadie suelto, no ocupa. */}
+          {sinMesa.length > 0 && (
+            <aside className="mb-pool mb-focal-pool"
+                   onDragOver={e => e.preventDefault()}
+                   onDrop={e => {
+                     e.preventDefault()
+                     const f = todasLasFichas.find(x => x.key === e.dataTransfer.getData('text/plain'))
+                     if (f) levantar(f)
+                   }}>
+              <h3>Sin mesa <span>{sinMesa.length}</span></h3>
+              <div className="mb-pool-list">
+                {poolPorTarjeta.map(g => (
+                  <div className="mb-sobre" key={g.guest_id}>
+                    <button
+                      className={`mb-sobre-h${g.fichas.every(f => sel.includes(f.key)) ? ' on' : ''}`}
+                      onClick={() => alternarGrupo(g.fichas)}
+                    >
+                      <i style={{ '--fam': colorDe(g.guest_id) }} />
+                      <span>{g.grupo}</span>
+                      <b>{g.fichas.length}</b>
+                    </button>
+                    {g.fichas.map(f => (
+                      <Ficha
+                        key={f.key} ficha={f} compacta
+                        seleccionada={sel.includes(f.key)} onSeleccionar={alternar}
+                        editando={editandoEs(f, 'pool')}
+                        onEditar={x => abrirEditor(x, 'pool')}
+                        onGuardar={(x, v, o) => guardarNombre(x, v, { ...o, zona: 'pool' })}
+                        onCancelar={cerrarEditor}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+              {elegidas.length > 0 && (
+                <button className="adm-btn adm-btn-gold mb-focal-sentar"
+                        onClick={() => sentar(elegidas, focal.id)}>
+                  Sentar {elegidas.length} en {focal.nombre}
+                </button>
+              )}
+            </aside>
+          )}
+        </div>
+
+        {aviso && <div className="mb-toast">{aviso}</div>}
       </div>
     )
   }
@@ -979,9 +1082,11 @@ export default function MesasBoard() {
         ))}
       </div>
 
-      <div className="mb-grid">
-        {/* ── Sin mesa ── */}
-        <aside
+      {/* Con todo el mundo sentado, «Sin mesa» son 260 px de columna para decir
+          «todos ubicados»: el plano los necesita más. Vuelve sola en cuanto
+          alguien se levanta de una mesa. */}
+      <div className={`mb-grid${sinMesa.length ? '' : ' solo'}`}>
+        {sinMesa.length > 0 && <aside
           className="mb-pool"
           onDragOver={e => e.preventDefault()}
           onDrop={e => {
@@ -1025,7 +1130,7 @@ export default function MesasBoard() {
               )
             })}
           </div>
-        </aside>
+        </aside>}
 
         {/* ── Mesas ── */}
         <div className="mb-mesas">

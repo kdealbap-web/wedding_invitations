@@ -471,6 +471,16 @@ ella. En plano el salón entero cabe en pantalla.
   El botón «ver» salta al detalle de esa mesa. Por eso `medidas()` recibe `mini`
   y el nombre: el mínimo del radio existe para que quepa el nombre dentro del
   tablero, y «Mesa 7» necesita mucho menos sitio que «Amigos del colegio».
+- El tablero va **a pantalla completa**: en `/admin/mesas` la barra lateral se
+  reduce a un riel de iconos y «Sin mesa» sólo ocupa columna si queda alguien por
+  sentar. Con la barra entera (220 px), el pool (260) y el padding, en un portátil
+  quedaban ~800 px para un salón que mide 1100: se veía por una ventanita con
+  scroll propio. La barra vuelve entera al salir de mesas.
+- El botón **«ver»** de cada mesa del plano la abre **sola, a pantalla completa**:
+  el círculo grande —`escala` en `MesaRedonda`, que multiplica la geometría en vez
+  de aplicar un `transform`, para que los puestos sigan cayendo donde se los toca—,
+  su lista, su capitán, y ‹ › para recorrer las doce sin volver al tablero. Esc
+  cierra. Con doce mesas, revisarlas de a una es el gesto de la víspera.
 - `mesaMini` es **una función que devuelve JSX, no un componente**. Definido como
   componente dentro del render, React ve un tipo nuevo en cada pasada y desmonta
   y vuelve a montar las once mesas —perdiendo el foco y relanzando la animación

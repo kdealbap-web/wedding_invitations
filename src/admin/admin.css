@@ -754,12 +754,66 @@ body.admin-body {
 
 .mb-filtros-sep { width: 1px; height: 1rem; background: #263144; margin: 0 .35rem }
 
+/* ═══════════════════════════════════════════════════════════
+   A PANTALLA COMPLETA  ·  el salón necesita el ancho
+   ═══════════════════════════════════════════════════════════
+   El plano son seis columnas de mesas. Con la barra lateral entera (220 px),
+   el pool (260) y el padding (64), en un portátil quedaban ~800 px para un
+   salón que mide 1120: se veía por una ventanita con scroll propio. */
+.adm-sidebar.riel { width: 62px; padding: 1.25rem .5rem; align-items: center }
+.adm-sidebar.riel .adm-logo { font-size: .7rem; letter-spacing: .06em; margin-bottom: 1.25rem;
+                  padding-bottom: .6rem; width: 100%; text-align: center }
+.adm-sidebar.riel .adm-nav a { justify-content: center; padding: .6rem }
+.adm-sidebar.riel .adm-nav a span,
+.adm-sidebar.riel .adm-signout span { display: none }
+.adm-sidebar.riel .adm-signout { justify-content: center; padding: .6rem }
+.adm-main.mb-root { padding: 1.1rem 1.25rem }
+/* Sin nadie por sentar, el pool no ocupa columna */
+.mb-grid.solo { grid-template-columns: 1fr }
+
+/* ═══════════════════════════════════════════════════════════
+   UNA MESA SOLA  ·  lo que abre el «ver» del plano
+   ═══════════════════════════════════════════════════════════ */
+.mb-focal-bar  { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+                 padding-bottom: .9rem; border-bottom: 1px solid #1e293b }
+.mb-focal-t    { flex: 1; min-width: 0; text-align: center }
+.mb-focal-t h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.9rem;
+                 font-weight: 400; color: #e2e8f0; line-height: 1.1 }
+.mb-focal-t span { font-size: .74rem; color: #64748b }
+.mb-focal-nav  { display: flex; align-items: center; gap: .4rem; color: #64748b; font-size: .78rem }
+.mb-focal-nav button { width: 38px; height: 38px; border-radius: 9px; border: 1px solid #263144;
+                 background: #121a29; color: #94a3b8; font-size: 1.1rem; cursor: pointer }
+.mb-focal-nav button:hover { color: #c8a96e; border-color: rgba(200,169,110,.5) }
+.mb-focal-nav span { font-variant-numeric: tabular-nums; min-width: 3rem; text-align: center }
+.mb-focal-nav span i { font-style: normal; opacity: .45; margin: 0 .15em }
+
+/* La mesa al centro y, si queda gente suelta, el pool al lado. Sin nadie
+   suelto la mesa se queda sola con todo el ancho, que es lo normal el día
+   antes: el reparto ya está hecho y esto es para revisar. */
+.mb-focal-cuerpo { display: flex; justify-content: center; align-items: flex-start;
+                 gap: 1.5rem; padding: 1.5rem 0 3rem }
+.mb-focal-cuerpo > .mr { flex: 0 1 640px; padding: 1.5rem 1.2rem 1rem }
+.mb-focal-pool { flex: 0 0 300px; position: sticky; top: 1rem }
+.mb-focal-sentar { width: 100%; margin-top: .8rem; justify-content: center }
+
+/* La mesa grande: la geometría la escala `escala`, pero el texto vive en CSS */
+.mr.grande .mr-nombre { font-size: 1.35rem }
+.mr.grande .mr-cuenta { font-size: .85rem }
+.mr.grande .mr-puesto { font-size: .82rem }
+.mr.grande .mr-lista li { font-size: .92rem; padding: .2rem .5rem }
+.mr.grande .mr-capitan { font-size: .8rem }
+
+@media (max-width: 860px) {
+  .mb-focal-cuerpo { flex-direction: column; align-items: stretch }
+  .mb-focal-pool   { position: static; flex: 1 }
+}
+
 /* En pantallas estrechas el salón deja de caber en seis columnas. Se conserva
    la forma del salón y se desplaza el plano dentro de sí mismo: la página nunca
    se mueve en horizontal. El mínimo sube con COLUMNAS. */
-@media (max-width: 1280px) {
+@media (max-width: 1180px) {
   .mb-salon       { overflow-x: auto; padding-bottom: .4rem }
-  .mb-salon-plano { min-width: 1120px }
+  .mb-salon-plano { min-width: 1100px }
 }
 
 .mb-sin-mesas { grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem;
