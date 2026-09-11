@@ -684,19 +684,34 @@ reconocen antes de leerlo.
 
 #### El banderín del capitán
 
-Uno por capitán. **No es una hoja: cuelga del cuello**, así que es una tira de
-**9 × 20 cm a 300 dpi** con esta anatomía, que vive en la constante `BANDERIN`:
+Uno por capitán. **No es una hoja: cuelga del cuello de la botella**, así que la
+pieza es una tira de **9,9 × 22 cm** impresa sobre una hoja de **12,9 × 25 cm**.
+Todo vive en la constante `BANDERIN`:
 
 ```
-  ├─ 4 cm   doblez, marcado con línea de puntos. Va detrás del cuello,
-  │         así que sólo lleva el escudo y el sello «A & K».
-  ├─ 11,5   el encargo
-  └─ 4,5    la punta, recortada con clip-path
+  ┌ margen 1,5 cm (2,1 arriba) ── el blanco de donde se agarra para cortar,
+  │                               y donde van TODAS las marcas
+  │ ┌───────── pieza 9,9 × 22 ─────────┐
+  │ │  4,4 cm  doblez, va detrás        │
+  │ ├┈┈┈┈┈┈┈┈  ◯ agujero Ø 3,5 ┈┈┈┈┈┈┈┤  ← el agujero va A CABALLO del doblez
+  │ │ 12,65    el encargo               │
+  │ └ 4,95     la punta ───────────────┘
 ```
 
-Lo blanco de alrededor de la figura es descarte: se imprime y se recorta por el
-borde del color.
-
+- **El agujero va centrado en la línea del doblez**, mitad arriba y mitad abajo:
+  al doblar, las dos mitades se superponen y queda un agujero redondo que pasa
+  por las dos capas. Es como se hace un collarín de botella, y es lo que hace que
+  el doblez sirva para algo.
+- **Ø 3,5 cm es para el CUELLO, no para el cuerpo.** La botella mide 8,5 cm de
+  diámetro, pero el banderín entra por arriba y se apoya en el hombro. Un agujero
+  de 8,5 en una pieza de 9,9 dejaría 7 mm de papel a cada lado y se rompería al
+  colgarlo.
+- El vaciado se hace con una **máscara radial**, no con un círculo pintado de
+  blanco: lo que se ve ahí es papel que se quita, y tiene que verse así en la
+  prueba de impresión.
+- **Las marcas van en una capa SVG aparte y siempre dentro del margen blanco** —
+  corte, doblez, medidas y el nombre del capitán al pie—. Lo que se imprima
+  encima de la pieza se queda ahí para siempre.
 - **Sin flores y sin letra chica.** Esto se lee de lejos, de noche y con la
   fiesta encima: todo en mayúscula, sobre el terracota de la boda con confeti
   dorado. Las acuarelas de la participación son para el papel que se mira de
@@ -705,8 +720,7 @@ borde del color.
   del capitán, así que regenerar no cambia lo que ya se mandó a imprimir.
 - El texto es el que escribieron los novios y va **completo o no va**: quién es,
   qué mesa comanda, por qué lo eligieron, «HAZ LO TUYO Y COMANDA», sus dos
-  derechos y la canción de su mesa. Nada de iconos ni de apartados numerados —
-  eso era la versión hoja, y se leía como un reglamento.
+  derechos y la canción de su mesa.
 - El nombre **baja de cuerpo si pasa de 18 caracteres**, y la canción si pasa de
   26: son los dos únicos datos que cambian de largo entre un capitán y otro.
 
