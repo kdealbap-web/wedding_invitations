@@ -420,44 +420,51 @@ function htmlBanderin(mesa, nombreLargo, arte) {
 
   /* Los 4,4 cm que se doblan sobre el cuello: van detrás, así que van limpios */
   .doblez{height:${cm(B.doblez)}px;flex-shrink:0}
+  /* El contenido arranca bajo el agujero y TERMINA ANTES DE LA PUNTA: los
+     lados del triángulo se comen el texto que baje de ahí. Se deja entrar 1,1 cm
+     en la punta, donde todavía mide casi 8 cm de ancho, y ni un milímetro más. */
   .cuerpo{flex:1;display:flex;flex-direction:column;align-items:center;
-    padding:${cm(B.agujero / 2 + 0.55)}px ${cm(0.68)}px 0}
+    padding:${cm(B.agujero / 2 + 0.42)}px ${cm(0.68)}px ${cm(B.punta - 1.1)}px}
+  /* El escudo va aquí y no en el doblez: esa franja se dobla hacia atrás y el
+     logo quedaría de espaldas. */
+  .crest{height:${cm(1.05)}px;width:auto;margin-bottom:9px;
+    filter:brightness(1.4) saturate(.55)}
 
   .quien{margin-top:0}
   .quien small{display:block;font-size:18px;font-weight:400;letter-spacing:.3em;color:#F2D79B}
   .quien b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    font-size:${capitan.length > 18 ? 36 : 43}px;letter-spacing:.02em;line-height:1.12;margin-top:5px}
+    font-size:${capitan.length > 18 ? 33 : 39}px;letter-spacing:.02em;line-height:1.12;margin-top:5px}
 
-  .cargo{font-size:17px;letter-spacing:.26em;color:rgba(255,243,228,.85);margin-top:${cm(0.4)}px}
+  .cargo{font-size:16px;letter-spacing:.26em;color:rgba(255,243,228,.85);margin-top:${cm(0.3)}px}
   .num{display:flex;align-items:baseline;justify-content:center;gap:11px;margin-top:4px}
-  .num small{font-family:Jost,system-ui,sans-serif;font-size:24px;font-weight:400;
+  .num small{font-family:Jost,system-ui,sans-serif;font-size:21px;font-weight:400;
     letter-spacing:.24em;color:#F2D79B}
   .num span{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    font-size:${cm(1.5)}px;line-height:.9;color:#FFF3E4}
+    font-size:${cm(1.15)}px;line-height:.9;color:#FFF3E4}
 
-  .por{font-size:19px;font-weight:300;line-height:1.42;letter-spacing:.04em;
-    margin-top:${cm(0.44)}px;color:rgba(255,243,228,.94)}
-  .lema{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:37px;
-    letter-spacing:.04em;color:#F2D79B;margin-top:${cm(0.32)}px;line-height:1.12}
+  .por{font-size:17.5px;font-weight:300;line-height:1.4;letter-spacing:.04em;
+    margin-top:${cm(0.34)}px;color:rgba(255,243,228,.94)}
+  .lema{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:32px;
+    letter-spacing:.04em;color:#F2D79B;margin-top:${cm(0.26)}px;line-height:1.1}
 
-  .der{margin-top:${cm(0.42)}px;display:flex;flex-direction:column;gap:${cm(0.26)}px;width:100%}
-  .der p{font-size:18.5px;font-weight:400;line-height:1.38;letter-spacing:.04em;
-    padding:${cm(0.24)}px ${cm(0.2)}px;border:1px solid rgba(242,215,155,.45);border-radius:6px;
+  .der{margin-top:${cm(0.32)}px;display:flex;flex-direction:column;gap:${cm(0.2)}px;width:100%}
+  .der p{font-size:17px;font-weight:400;line-height:1.35;letter-spacing:.04em;
+    padding:${cm(0.17)}px ${cm(0.18)}px;border:1px solid rgba(242,215,155,.45);border-radius:6px;
     background:rgba(255,243,228,.07)}
-  .der b{display:block;font-size:14px;letter-spacing:.24em;color:#F2D79B;margin-bottom:5px}
+  .der b{display:block;font-size:13px;letter-spacing:.24em;color:#F2D79B;margin-bottom:4px}
 
-  .cancion{margin-top:${cm(0.42)}px;width:100%}
-  .cancion b{display:block;font-size:14px;letter-spacing:.24em;color:#F2D79B;margin-bottom:5px}
+  .cancion{margin-top:${cm(0.3)}px;width:100%}
+  .cancion b{display:block;font-size:13px;letter-spacing:.24em;color:#F2D79B;margin-bottom:4px}
   .cancion span{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    font-size:${cancion.length > 26 ? 24 : 29}px;line-height:1.2;color:#FFF3E4}
+    font-size:${cancion.length > 26 ? 22 : 27}px;line-height:1.18;color:#FFF3E4}
   .cancion.vacia span{border-bottom:1px solid rgba(242,215,155,.5);min-height:28px}
 
-  .firma{margin-top:auto;padding-bottom:${cm(B.punta * 0.6)}px}
+  .firma{margin-top:auto}
   .firma i{display:block;width:${cm(2.4)}px;height:1px;background:rgba(242,215,155,.5);
-    margin:0 auto ${cm(0.26)}px}
+    margin:${cm(0.28)}px auto ${cm(0.2)}px}
   .firma span{font-size:13.5px;letter-spacing:.24em;color:rgba(255,243,228,.72)}
   .firma u{display:block;width:12px;height:12px;background:#F2D79B;opacity:.75;
-    transform:rotate(45deg);margin:${cm(0.8)}px auto 0}
+    transform:rotate(45deg);margin:${cm(0.5)}px auto 0}
 
   /* Las marcas van en una capa aparte, encima de todo, y los rótulos SIEMPRE
      dentro del margen blanco: lo que se imprima sobre la pieza se queda ahí. */
@@ -469,6 +476,7 @@ function htmlBanderin(mesa, nombreLargo, arte) {
     <div class="conf">${confeti(mesa.nombre + capitan, 52, pw, ph)}</div>
     <div class="doblez"></div>
     <div class="cuerpo">
+      ${arte.logo ? `<img class="crest" src="${arte.logo}" alt="">` : ''}
       <p class="quien"><small>QUERIDO</small><b>${esc(capitan.toUpperCase())}</b></p>
       <p class="cargo">ERES EL CAPITÁN DE LA</p>
       <p class="num"><small>MESA</small><span>${esc(numero.toUpperCase())}</span></p>

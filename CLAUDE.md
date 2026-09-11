@@ -709,6 +709,15 @@ Todo vive en la constante `BANDERIN`:
 - El vaciado se hace con una **máscara radial**, no con un círculo pintado de
   blanco: lo que se ve ahí es papel que se quita, y tiene que verse así en la
   prueba de impresión.
+- **El escudo va debajo del agujero, no en el doblez.** Esa franja se dobla hacia
+  atrás, así que un logo ahí queda de espaldas y no lo ve nadie.
+- **El contenido termina antes de la punta.** Los lados del triángulo se comen el
+  texto que baje de ahí, y la canción —que es lo último— es justo lo que se
+  perdía. Se deja entrar 1,1 cm en la punta, donde todavía mide casi 8 cm de
+  ancho, y ni un milímetro más: por eso `.cuerpo` lleva `padding-bottom` y la
+  firma ya no empuja con `margin-top:auto` contra el borde. Si agregas un bloque,
+  mira el peor caso —el nombre más largo con la canción más larga— antes de dar
+  por bueno.
 - **Las marcas van en una capa SVG aparte y siempre dentro del margen blanco** —
   corte, doblez, medidas y el nombre del capitán al pie—. Lo que se imprima
   encima de la pieza se queda ahí para siempre.
