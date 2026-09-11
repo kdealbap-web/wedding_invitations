@@ -651,6 +651,14 @@ reconocen antes de leerlo.
   sin alfa** —186 kB entre las cuatro, contra 1,1 MB en PNG— porque se componen
   sobre blanco puro, igual que en el original. **Por eso el afiche es blanco y no
   marfil:** sobre cualquier otro fondo se vería el rectángulo de cada recorte.
+- Sale en **dos formatos**, del mismo generador y con la misma composición:
+  `bienvenida.png` (A4 vertical, tres columnas) y
+  `bienvenida-pendon-75x175.png` (75 × 175 cm exactos a 150 dpi, 4430 × 10334 px,
+  **dos** columnas, 6,4 cm de margen parejo). Ambos viven en `FORMATOS`, que es
+  el único sitio donde se tocan medidas y tamaños de letra.
+- **El número de columnas no es decorativo:** en el pendón manda el alto —seis
+  filas de hasta ocho nombres— y en la A4 manda el ancho. Con tres columnas en el
+  pendón los nombres no caben de ancho; con dos en la A4 no caben de alto.
 - **Proporción A4 vertical (1 : √2) y alto fijo.** Se manda a imprimir a un
   pliego con esas proporciones, así que la lámina las respeta desde el origen en
   vez de crecer con el contenido y que el impresor la recorte o la deje con
