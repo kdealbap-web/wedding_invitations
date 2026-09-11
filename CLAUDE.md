@@ -531,9 +531,10 @@ esa noche. Se elige con el `<select>` del pie de cada mesa, y los candidatos son
   Si contara la sola asignación, la ficha diría «todas con capitán» mientras otra
   avisa de que uno está fuera, y las dos se contradirían.
 - Las mesas **vacías no cuentan** como pendientes: todavía no pueden tener capitán.
-- Va a los dos exports: columna **Capítán** en la hoja `Mesas`, columna **Rol** en
-  `Reparto`, y en las imágenes en la cabecera de cada hoja de mesa — que es el
-  papel que de verdad se lleva al salón— y con ★ en el plano general.
+- Va al **Excel**: columna **Capitán** en la hoja `Mesas` y columna **Rol** en
+  `Reparto`. En las **imágenes no aparece**: el papel del capitán es su propia
+  tarjeta (ver «La tarjeta del capitán»), y marcarlo además en las hojas y en el
+  plano repetía un dato que el salón no usa.
 
 #### Los novios son una tarjeta más
 
@@ -608,7 +609,8 @@ Dos formatos, y cada uno se genera desde el panel y desde consola:
 | | Botón | Consola |
 |---|---|---|
 | Excel (5 hojas, con **Reparto**) | «Exportar Excel» | `npm run export` |
-| Imágenes (plano + dos hojas por mesa) | «Exportar imágenes» | `npm run mesas-img` |
+| Imágenes (afiche + plano + hoja por mesa) | «Exportar imágenes» | `npm run mesas-img` |
+| Tarjetas de capitán | — | `npm run mesas-img` |
 | Ambos | — | `npm run export-todo` |
 
 Las imágenes van a 2x para que impresas no se vean pixeladas. El **script**
@@ -617,12 +619,18 @@ empaqueta en ZIP con `jszip` — el navegador no deja descargar doce archivos
 sueltos sin aprobar cada uno. Son dos herramientas distintas a propósito, pero
 comparten paleta, tipografías y el criterio de qué nombre está incompleto.
 
-Salen **dos papeles distintos**, que se mandan a imprimir por separado:
+Salen **tres papeles distintos**, que se mandan a imprimir por separado:
 
 - `bienvenida.png` — **el afiche de la entrada**, uno solo y con todas las mesas.
-- `hojas-de-trabajo/` — la hoja sobria por mesa: nombres, de qué tarjeta viene
-  cada uno, el capitán en la cabecera y **en rojo lo que falta por arreglar**. La
-  usan la wedding y el salón.
+- `capitanes/` — una tarjeta por capitán, para entregarle en mano.
+- `hojas-de-trabajo/` — la hoja sobria por mesa: los nombres, de qué tarjeta viene
+  cada uno y **en rojo lo que falta por arreglar**. La usan la wedding y el salón.
+
+> **La mesa de los novios no entra en ninguna imagen.** En el afiche porque ellos
+> no se van a buscar en el atril, y en las hojas porque el salón ya sabe dónde los
+> sienta. Sigue en la base y **en el Excel**, donde tiene que seguir: el catering
+> los cobra y cuentan para el total. `paraImprimir()` es el filtro, y está en los
+> dos módulos.
 
 #### El afiche de bienvenida
 
@@ -653,6 +661,24 @@ reconocen antes de leerlo.
 > `scripts/export-mesas-img.mjs`) son **la misma composición dibujada con dos
 > herramientas**. Si tocas una, toca la otra: las constantes de `AFICHE` y el CSS
 > de `.hoja` están puestos para dar el mismo resultado.
+
+#### La tarjeta del capitán
+
+Una por capitán, tamaño carta, para imprimir y entregarle en mano. No es un papel
+de trabajo: es **el encargo**, con el texto que escribieron los novios, sobre la
+misma participación que el afiche —blanco, escudo, dos esquinas de acuarela—.
+
+- Sólo salen las mesas **con capitán elegido**: una tarjeta con el nombre en
+  blanco no se puede entregar.
+- **La canción de la mesa sale de `mesas.notas`**, que estaba sin usar. Si está
+  vacía, la tarjeta imprime el renglón rotulado «escribe aquí la canción de la
+  mesa» en vez de esconder el punto: es un dato que se completa a mano el mismo
+  día, y el LEEME dice cuántas faltan.
+- Va **sólo en el script de consola** (`npm run mesas-img`), no en el botón del
+  panel. Es texto largo maquetado —seis apartados con sangría y numeración—, y
+  rehacerlo en `<canvas>` sería un motor de composición de texto para un papel
+  que se imprime una vez. Si algún día hace falta desde la tableta, el camino es
+  mover la tarjeta a HTML y capturarla, no dibujarla a mano.
 
 ### Los cupos viven en `src/admin/cupos.js`
 

@@ -6,6 +6,7 @@
  * Genera, en entrega/mesas/:
  *   bienvenida.png             el afiche de la entrada: todas las mesas con sus
  *                              invitados, sobre la plantilla de la participación
+ *   capitanes/NN_*.png         una tarjeta por capitán con su encargo
  *   00_plano-general.png       todas las mesas de un vistazo, con sus nombres
  *   hojas-de-trabajo/NN_*.png  una hoja por mesa para la wedding: nombres,
  *                              tarjeta de origen y capitán, tamaño carta
@@ -257,6 +258,117 @@ function htmlAfiche(mesas, porMesa, arte) {
 </div></body></html>`
 }
 
+// ─── La tarjeta del capitán ───
+//
+// Una por capitán, para imprimir y entregar. No es un papel de trabajo: es el
+// encargo, escrito por los novios, así que va sobre la misma participación que
+// el afiche —blanco, escudo, esquinas de acuarela— y el texto es de ellos.
+//
+// La canción de cada mesa sale de `mesas.notas`, que estaba sin usar. Si está
+// vacía, la tarjeta deja el renglón en blanco para escribirla a mano: es mejor
+// que inventar una o que esconder el encargo.
+function htmlCapitan(mesa, capitan, arte) {
+  const cancion = (mesa.notas || '').trim()
+
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
+  .hoja{width:816px;height:1056px;padding:58px 74px 40px;background:#fff;position:relative;
+    display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden}
+  .fl{position:absolute;z-index:0}
+  .fl-si{top:0;left:0;width:132px}
+  .fl-id{bottom:0;right:0;width:150px}
+  .hoja > *:not(.fl){position:relative;z-index:1}
+
+  .crest{height:66px;width:auto}
+  .ayk{font-family:'Great Vibes',cursive;font-size:34px;color:#9A5B45;line-height:1.1;margin-top:10px}
+  .cargo{font-size:11px;letter-spacing:.34em;color:#B08C4F;margin-top:14px}
+  .quien{font-family:'Cormorant Garamond',Georgia,serif;font-size:38px;color:#2A1D14;
+    margin-top:18px;line-height:1.15}
+  .mesa{font-size:12px;letter-spacing:.24em;color:#8A7866;margin-top:6px}
+  .rule{display:flex;align-items:center;gap:14px;margin:22px 0 20px;width:300px}
+  .rule i{flex:1;height:1px;background:#D8C9AE}
+  .rule b{color:#B08C4F;font-size:11px}
+
+  .cuerpo{text-align:left;width:100%;flex:1}
+  .intro{font-family:'Cormorant Garamond',Georgia,serif;font-size:17.5px;line-height:1.6;
+    color:#2A1D14}
+  .intro em{font-style:italic;color:#8A7866}
+  .lista-t{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#B08C4F;
+    margin:18px 0 10px}
+  ol{list-style:none;counter-reset:n}
+  ol li{counter-increment:n;position:relative;padding-left:30px;margin-bottom:15px}
+  ol li::before{content:counter(n);position:absolute;left:6px;top:2px;
+    font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;color:#C8A96E}
+  ol b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;
+    font-size:17px;color:#2A1D14}
+  ol span{display:block;font-size:13px;line-height:1.55;color:#6B5B4B;margin-top:3px}
+  .cancion{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;
+    color:#9A5B45;margin:4px 0 5px}
+  /* Sin canción anotada queda el renglón para escribirla a mano, y dice que
+     está para eso: una línea suelta y sin explicación no se entiende. */
+  .cancion.vacia{font-family:Jost,system-ui,sans-serif;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:#C0B3A3;border-bottom:1px solid #D8C9AE;
+    width:74%;padding-bottom:9px}
+
+  .pie{font-size:11px;letter-spacing:.18em;color:#A2917F;padding-top:14px;
+    border-top:1px solid #D8C9AE;width:440px;white-space:nowrap}
+</style></head><body><div class="hoja">
+  ${arte.si ? `<img class="fl fl-si" src="${arte.si}" alt="">` : ''}
+  ${arte.id ? `<img class="fl fl-id" src="${arte.id}" alt="">` : ''}
+  ${arte.logo ? `<img class="crest" src="${arte.logo}" alt="">` : ''}
+  <p class="ayk">Angely &amp; Kevin</p>
+  <p class="cargo">CAPITÁN DE MESA</p>
+  <p class="quien">${esc(capitan)},</p>
+  <p class="mesa">${esc(mesa.nombre.toUpperCase())}</p>
+  <div class="rule"><i></i><b>&#9670;</b><i></i></div>
+
+  <div class="cuerpo">
+    <p class="intro">
+      Esto es más un <em>«te conocemos y sabemos que contigo la cosa prende»</em> que una
+      obligación. Por eso te elegimos como Capitán de Mesa en nuestro día. No es un cargo
+      serio, es un <em>«tú eres de los que hace que la fiesta funcione»</em>.
+    </p>
+    <p class="lista-t">Lo que nos encantaría que hicieras · sin presión, con toda la confianza</p>
+    <ol>
+      <li>
+        <b>Ponte la cinta de capitán y siéntete el jefe de la mesa.</b>
+        <span>Como en el fútbol: el capitán da el ejemplo, pero también disfruta.</span>
+      </li>
+      <li>
+        <b>Anima a tu mesa a bailar.</b>
+        <span>Cuando suene la música, tú das el primer paso. Si ves a alguien tímido,
+        invítalo, jálalo a la pista, pero sin obligar: que sea por buena energía.</span>
+      </li>
+      <li>
+        <b>Ayuda a que las botellas circulen.</b>
+        <span>Sirve, comparte, brinda. Y si al final sobra un poco… tú sabes que eso no
+        se desperdicia.</span>
+      </li>
+      <li>
+        <b>La canción de tu mesa.</b>
+        ${cancion
+          ? `<span class="cancion">«${esc(cancion)}»</span>`
+          : '<span class="cancion vacia">escribe aquí la canción de la mesa</span>'}
+        <span>Cuando el DJ la suelte, nos haría mucha ilusión ver a tu mesa reaccionar como
+        si fuera su himno: gritos, palmas, baile, lo que salga de forma natural.</span>
+      </li>
+      <li>
+        <b>Brindis cuando digan «¡Vivan Angely y Kevin!»</b>
+        <span>Copas arriba en tu mesa y un brindis rápido. Después, si hay música, a seguir
+        disfrutando en la pista.</span>
+      </li>
+      <li>
+        <b>Si puedes, guarda una foto o un video.</b>
+        <span>Nos encantaría después ver cómo tu mesa bailó, cómo te pusiste la cinta y
+        cómo disfrutaron.</span>
+      </li>
+    </ol>
+  </div>
+
+  <p class="pie">12 DE SEPTIEMBRE DE 2026 · CASONA DEL PRADO</p>
+</div></body></html>`
+}
+
 async function main() {
   const nav = process.env.CHROME_PATH || CHROME.find(p => existsSync(p))
   if (!nav) throw new Error('No encontré Chrome ni Edge')
@@ -348,6 +460,22 @@ async function main() {
       console.log(`  ✓ ${nombre}`)
     }
 
+    // Una tarjeta por capitán elegido. Las mesas sin capitán no sacan tarjeta:
+    // una con el nombre en blanco no se puede entregar.
+    const conCapitan = imprimibles.filter(m => m.capitan_id && nombreDe.get(m.capitan_id))
+    if (conCapitan.length) {
+      await mkdir(join(SALIDA, 'capitanes'), { recursive: true })
+      for (const [i, m] of conCapitan.entries()) {
+        const quien = nombreDe.get(m.capitan_id)
+        const nombre = `${String(i + 1).padStart(2, '0')}_${slug(quien)}.png`
+        await captura(htmlCapitan(m, quien, arte), join(SALIDA, 'capitanes', nombre))
+        console.log(`  ✓ capitanes/${nombre}`)
+      }
+    } else {
+      console.log('  · Sin capitanes elegidos todavía: no se generó ninguna tarjeta.')
+    }
+    const sinCancion = conCapitan.filter(m => !(m.notas || '').trim()).length
+
     const faltan = [...porMesa.values()].flat().filter(p => p.falta).length
     const sentados = [...porMesa.values()].reduce((s, g) => s + g.length, 0)
     await writeFile(join(SALIDA, 'LEEME.txt'),
@@ -355,6 +483,10 @@ async function main() {
 Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
 Generado el ${cuando}
 
+  capitanes/NN_*.png         Una tarjeta por capitán, para imprimir y entregar:
+                             su nombre, su mesa y el encargo. La canción de cada
+                             mesa sale de la columna «notas» de esa mesa; si está
+                             vacía, la tarjeta deja el renglón para escribirla.
   bienvenida.png             EL AFICHE DE LA ENTRADA: todas las mesas con sus
                              invitados, sobre la participación —el escudo, las
                              esquinas de acuarela y el mismo blanco—. Es la
@@ -362,10 +494,11 @@ Generado el ${cuando}
                              nada en rojo: la leen los invitados.
   00_plano-general.png       Todas las mesas de un vistazo, para la wedding.
   hojas-de-trabajo/NN_*.png  Una hoja por mesa para la wedding y el salón:
-                             nombres, de qué tarjeta viene cada uno y el
-                             capitán. Marca en rojo lo que falta por arreglar.
+                             los nombres y de qué tarjeta viene cada uno. Marca
+                             en rojo lo que falta por arreglar.
 
-  Mesas ...... ${ms.data.length}
+  Mesas ...... ${imprimibles.length} (sin contar la de los novios)
+  Capitanes .. ${conCapitan.length}${sinCancion ? `, ${sinCancion} sin canción anotada` : ''}
   Sentados ... ${sentados}
   Por completar ... ${faltan} nombre(s), marcados en rojo con un punto.
 
@@ -374,7 +507,7 @@ Los nombres en rojo no sirven para una tarjeta de mesa: son genéricos
 /admin/mesas, con doble clic sobre la ficha.
 `, 'utf8')
 
-    console.log(`\n  ${imprimibles.length + 2} imágenes en ${SALIDA}`)
+    console.log(`\n  ${imprimibles.length + conCapitan.length + 2} imágenes en ${SALIDA}`)
     if (faltan) console.warn(`  Ojo: ${faltan} nombre(s) por completar, marcados en rojo.\n`)
     else console.log('  Todos los nombres completos.\n')
   } finally {
