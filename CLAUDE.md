@@ -658,8 +658,12 @@ reconocen antes de leerlo.
 - El contenido rara vez llena el alto, así que **lo que sobra se reparte entre
   las filas** en vez de amontonarse al final. Cada fila mide lo que su mesa más
   llena, o las columnas se desalinean.
-- La tipografía va **grande y con peso** —nombres en 34 px del 500, títulos de
-  mesa en 54 del 600—: esto se lee de pie, a un metro y con gente detrás.
+- La tipografía va **grande y con peso** —nombres en 44 px del 600, títulos de
+  mesa en 62 del 600—: esto se lee de pie, a un metro y con gente detrás. Es el
+  máximo que entra: cuatro filas de hasta ocho nombres en un alto fijo. Si se
+  sube más, la última fila se sale de la lámina.
+- Un nombre que no cabe en su columna **baja a 36 px en vez de partirse en dos
+  renglones**: partido descuadra la columna y se lee peor. Hoy le pasa a uno.
 - **No marca en rojo** los nombres flojos: esta lámina la leen los invitados. Los
   rojos se miran en las hojas de trabajo, y el LEEME dice cuántos quedan. Si
   añades un aviso nuevo, decide en cuál de los dos papeles va.

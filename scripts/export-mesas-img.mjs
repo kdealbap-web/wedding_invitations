@@ -204,7 +204,9 @@ function htmlAfiche(mesas, porMesa, arte) {
   const bloques = mesas.map(m => {
     const gente = porMesa.get(m.id) || []
     const nombres = gente.length
-      ? gente.map(p => `<li>${esc(p.nombre)}</li>`).join('')
+      // Un nombre muy largo partido en dos renglones descuadra la columna y se
+      // lee peor que el mismo nombre un punto más chico. Sólo hay uno o dos así.
+      ? gente.map(p => `<li${p.nombre.length > 26 ? ' class="largo"' : ''}>${esc(p.nombre)}</li>`).join('')
       : '<li class="vacia">—</li>'
     return `<section class="m"><h2>${esc(m.nombre)}</h2><ul>${nombres}</ul></section>`
   }).join('')
@@ -225,12 +227,12 @@ function htmlAfiche(mesas, porMesa, arte) {
   .fl-ii{bottom:0;left:0;width:425px}
   .hoja > *:not(.fl){position:relative;z-index:1}
 
-  .crest{width:auto;height:210px;margin-bottom:44px}
+  .crest{width:auto;height:175px;margin-bottom:34px}
   .bien{font-family:'Cormorant Garamond',Georgia,serif;font-weight:400;font-size:92px;
     letter-spacing:.28em;text-indent:.3em;color:#2A1D14;line-height:1}
-  .verso{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:34px;
-    color:#8A7866;line-height:1.5;margin-top:24px}
-  .rule{display:flex;align-items:center;gap:20px;margin:40px 0 12px;width:460px}
+  .verso{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:30px;
+    color:#8A7866;line-height:1.45;margin-top:20px}
+  .rule{display:flex;align-items:center;gap:20px;margin:30px 0 10px;width:460px}
   .rule i{flex:1;height:1px;background:#D8C9AE}
   .rule b{color:#B08C4F;font-size:15px}
   .guia{font-size:15px;letter-spacing:.28em;text-transform:uppercase;color:#A2917F}
@@ -238,12 +240,13 @@ function htmlAfiche(mesas, porMesa, arte) {
   /* El bloque de mesas ocupa lo que sobra y reparte sus filas: la lámina tiene
      alto fijo y el contenido no siempre lo llena. */
   .mesas{flex:1;width:100%;display:grid;grid-template-columns:repeat(${cols},1fr);
-    gap:20px 46px;align-content:space-evenly;padding:34px 0 10px}
-  .m h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:54px;
-    color:#9A5B45;padding-bottom:12px;margin-bottom:18px;border-bottom:1.5px solid #E3D9CB}
+    gap:16px 46px;align-content:space-evenly;padding:26px 0 8px}
+  .m h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:62px;
+    color:#9A5B45;padding-bottom:12px;margin-bottom:16px;border-bottom:2px solid #E3D9CB}
   .m ul{list-style:none}
-  .m li{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:34px;
-    line-height:1.42;color:#2A1D14}
+  .m li{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:44px;
+    line-height:1.3;color:#2A1D14}
+  .m li.largo{font-size:36px;line-height:1.58}
   .m li.vacia{color:#C0B3A3;font-weight:400}
 
   .pie{padding-top:28px;border-top:1px solid #D8C9AE;width:560px}

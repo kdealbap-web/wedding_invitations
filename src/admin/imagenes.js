@@ -40,8 +40,8 @@ async function esperarFuentes() {
   await document.fonts.ready
   await Promise.all([
     document.fonts.load('400 64px "Cormorant Garamond"'),
-    document.fonts.load('500 34px "Cormorant Garamond"'),
-    document.fonts.load('600 54px "Cormorant Garamond"'),
+    document.fonts.load('600 44px "Cormorant Garamond"'),
+    document.fonts.load('600 62px "Cormorant Garamond"'),
     document.fonts.load('300 14px Jost'),
     document.fonts.load('400 40px "Great Vibes"'),
   ])
@@ -187,10 +187,10 @@ async function hojaMesa(mesa, gente, cuando) {
 const AFICHE = {
   w: 2200,
   margen: 230,
-  cabecera: 780,   // del borde al primer título de mesa
+  cabecera: 700,   // del borde al primer título de mesa
   pie: 260,        // lo que se reserva abajo para la firma
-  linea: 48,       // alto de renglón de cada nombre
-  titulo: 74,      // alto del título de mesa con su filete
+  linea: 57,       // alto de renglón de cada nombre
+  titulo: 94,      // alto del título de mesa con su filete
 }
 AFICHE.h = Math.round(AFICHE.w * Math.SQRT2)
 
@@ -223,16 +223,16 @@ async function aficheBienvenida(mesas, porMesa, arte) {
   x.textAlign = 'center'
   let y = 120
   if (arte.logo) {
-    const h = 210, w = arte.logo.width * (h / arte.logo.height)
+    const h = 175, w = arte.logo.width * (h / arte.logo.height)
     x.drawImage(arte.logo, cx - w / 2, y, w, h)
   }
-  y += 210 + 116
+  y += 175 + 106
 
   x.fillStyle = TINTA; x.font = fd(92, 400)
   x.fillText('B I E N V E N I D O S', cx, y)
   y += 74
 
-  x.fillStyle = SUAVE; x.font = `italic ${fd(34)}`
+  x.fillStyle = SUAVE; x.font = `italic ${fd(30)}`
   x.fillText('Gracias por acompañarnos en el día más importante de nuestras vidas.', cx, y); y += 50
   x.fillText('Guardamos un sitio para cada uno de ustedes.', cx, y); y += 66
 
@@ -257,15 +257,18 @@ async function aficheBienvenida(mesas, porMesa, arte) {
   for (const fila of filas) {
     fila.forEach((m, i) => {
       const mx = A.margen + i * (ancho + hueco) + ancho / 2
-      x.fillStyle = ACC_P; x.font = fd(54, 600)
+      x.fillStyle = ACC_P; x.font = fd(62, 600)
       x.fillText(recorta(x, m.nombre, ancho), mx, fy)
-      x.strokeStyle = BORDE; x.lineWidth = 1.5
+      x.strokeStyle = BORDE; x.lineWidth = 2
       x.beginPath(); x.moveTo(mx - ancho / 2, fy + 24); x.lineTo(mx + ancho / 2, fy + 24); x.stroke()
       x.lineWidth = 1
 
       const gente = porMesa.get(m.id) || []
-      x.font = fd(34, 500)
       gente.forEach((p, k) => {
+        // Un nombre muy largo baja un punto antes que recortarse: en un afiche
+        // de mesas, «Osiris Rafaela Pomarico…» no dice a quién sentaron.
+        x.font = fd(44, 600)
+        if (x.measureText(p.nombre).width > ancho) x.font = fd(36, 600)
         x.fillStyle = TINTA
         x.fillText(recorta(x, p.nombre, ancho), mx, fy + A.titulo + k * A.linea)
       })
