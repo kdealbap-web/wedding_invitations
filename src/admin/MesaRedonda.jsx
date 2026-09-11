@@ -1,6 +1,14 @@
 import { nombreIncompleto } from './nombres'
 import EditarNombre from './EditarNombre'
 
+// Una mesa que se arrastra viaja en un tipo MIME propio, y no en `text/plain`,
+// que es por donde viajan las fichas de gente. Así cada destino reconoce lo
+// suyo: el tipo se puede leer en `dragover` —el contenido no—, que es cuando
+// hay que decidir si la celda acepta lo que viene encima.
+export const MIME_MESA = 'application/x-mesa'
+export const arrastraMesa = e => e.dataTransfer.types.includes(MIME_MESA)
+export const idDeMesa     = e => e.dataTransfer.getData(MIME_MESA)
+
 // ─── Color por tarjeta ───
 // Cada familia recibe un color estable, sacado de su id. Sirve para ver de un
 // vistazo si una familia quedó partida entre dos mesas, que es lo que más
@@ -45,6 +53,7 @@ export default function MesaRedonda({
   zona, editando, onEditar, onGuardar, onCancelar,
   onEditarMesa, onBorrar, buscarFicha, onSobre, nueva,
   onCapitan, nombreDe, mini, onAbrir,
+  movible, moviendo, onMover,
 }) {
   const { s, R, caja, tablero } = medidas(mesa.capacidad, mini, mesa.nombre || '')
   const lleno = gente.length >= mesa.capacidad
@@ -85,7 +94,7 @@ export default function MesaRedonda({
   return (
     <section
       id={`mesa-${mesa.id}`}
-      className={`mr${mini ? ' mini' : ''}${pasada ? ' pasada' : lleno ? ' llena' : ''}${activa ? ' activa' : ''}${eligiendo ? ' destino' : ''}`}
+      className={`mr${mini ? ' mini' : ''}${pasada ? ' pasada' : lleno ? ' llena' : ''}${activa ? ' activa' : ''}${eligiendo ? ' destino' : ''}${moviendo ? ' moviendo' : ''}`}
       onDragOver={e => { e.preventDefault(); if (!activa) onSobre(mesa.id) }}
       // dragleave salta también al pasar por encima de un hijo; sin comprobar
       // el destino, la mesa parpadearía todo el rato
@@ -165,6 +174,34 @@ export default function MesaRedonda({
           y cuánto le falta. Un clic abre la vista de detalle de esa mesa. */}
       {mini && (
         <footer className="mr-mini-pie">
+          {/* El asa de mover. Va aparte y no sobre la mesa entera porque la
+              mesa ya responde a tres gestos —soltar gente, tocar para sentar a
+              la selección, arrastrar un puesto— y un cuarto encima de todos
+              sería una lotería. Arrastrarla la mueve; tocarla la deja elegida
+              y el siguiente toque en una celda la lleva ahí, que es como se
+              reparte en tableta. El tipo MIME propio la distingue de las
+              fichas, que viajan en `text/plain`. */}
+          {movible && (
+            <button
+              className={`mr-asa${moviendo ? ' on' : ''}`}
+              draggable
+              onDragStart={e => {
+                e.stopPropagation()
+                e.dataTransfer.setData(MIME_MESA, mesa.id)
+                e.dataTransfer.effectAllowed = 'move'
+              }}
+              onClick={e => { e.stopPropagation(); onMover(mesa) }}
+              title={moviendo
+                ? `${mesa.nombre} está elegida: tocá el sitio del salón donde va`
+                : `Mover ${mesa.nombre} de sitio: arrastrala, o tocá aquí y después su sitio`}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="5 9 2 12 5 15" /><polyline points="9 5 12 2 15 5" />
+                <polyline points="15 19 12 22 9 19" /><polyline points="19 9 22 12 19 15" />
+                <line x1="2" y1="12" x2="22" y2="12" /><line x1="12" y1="2" x2="12" y2="22" />
+              </svg>
+            </button>
+          )}
           <span className={pasada ? 'mal' : lleno ? 'ok' : ''}>{gente.length}<i>/</i>{mesa.capacidad}</span>
           {capitan && <b title={`Capitán: ${nombreDe(capitan)}`}>★ {nombreDe(capitan).split(' ')[0]}</b>}
           {!capitan && gente.length > 0 && <b className="pend" title="Esta mesa aún no tiene capitán">sin capitán</b>}

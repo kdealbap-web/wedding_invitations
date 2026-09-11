@@ -424,22 +424,48 @@ al revés: **la mesa viene a la selección**, no la persona a la mesa.
 
 Hay dos vistas, y el conmutador está junto a los filtros:
 
-- **Plano del salón** (la de arranque) — las mesas **donde están de verdad**:
-  los novios al frente, y desde ahí dos hileras enfrentadas de cinco.
-  La 1 queda frente a la 6, la 2 frente a la 7, y así hasta la 5 con la 10.
+- **Plano del salón** (la de arranque) — las mesas **donde están de verdad**,
+  con los novios a la derecha y el resto del salón a su izquierda.
 - **Detalle** — cada mesa entera, con sus nombres, su capitán y sus puestos.
 
-En flujo automático las once mesas se apilaban en cuatro filas y la 10 quedaba
-a dos mil píxeles del pool: no había forma de arrastrar a nadie hasta ella. En
-plano el salón entero mide unos **450 px** y cabe en pantalla.
+En flujo automático las once mesas se apilaban en cuatro filas y la última
+quedaba a dos mil píxeles del pool: no había forma de arrastrar a nadie hasta
+ella. En plano el salón entero cabe en pantalla.
 
-- La posición sale del **nombre**: `Mesa 7` → hilera 2, columna 2. Cualquier otro
-  nombre («Mesa principal», «Los abuelos») no tiene sitio fijo y va al frente,
-  con los novios; los números por encima de 10 van en una fila aparte al final.
-  **Renombrar una mesa la mueve de sitio en el plano**, y eso es lo correcto.
-- Si falta un número, el plano **enseña el hueco** en vez de cerrar filas: un
-  salón con la 9 vacía no es un salón de nueve mesas.
-- `POR_HILERA` es 5. Si el salón cambia de forma, es la única constante que tocar.
+- **El sitio vive en la base** — `mesas.fila` y `mesas.col` (migración `007`),
+  1-based. Hasta el 10·IX·2026 salía del **nombre** contra una cuadrícula escrita
+  en el código, y eso ataba dos cosas que no van juntas: para mover una mesa
+  había que renumerarla, y cada cambio del salón —hubo dos en tres días— era un
+  cambio de código más una permutación en SQL. Ahora **mover y renumerar son dos
+  gestos distintos**, que es lo que siempre fueron.
+- Se mueve **arrastrando el asa** de la mesa (`.mr-asa`, sólo en el plano) **o**
+  tocándola y después la celda: en tableta el arrastre es incómodo, igual que
+  al repartir gente. Soltar encima de otra mesa **las intercambia**.
+- El asa va aparte y no sobre la mesa entera porque la mesa ya responde a tres
+  gestos —soltar gente, tocar para sentar a la selección, arrastrar un puesto—
+  y un cuarto encima de todos sería una lotería.
+- Las mesas viajan en un **tipo MIME propio** (`MIME_MESA`), no en `text/plain`,
+  que es por donde viajan las fichas de gente: el tipo se puede leer en
+  `dragover` —el contenido no— y es cuando hay que decidir si la celda acepta lo
+  que viene encima.
+- `HILERAS` es **3**, el máximo del salón; `COL_MIN` es 6. La cuadrícula **crece
+  sola**: siempre sobra una columna —y una hilera, hasta la tercera— para poder
+  soltar una mesa en sitio nuevo sin hacerle hueco antes.
+- Una mesa **sin `fila`/`col` no se pierde**: va debajo del plano, en «Sin sitio
+  en el plano», y de ahí se arrastra adentro. Soltar una mesa ahí la saca del
+  salón sin borrarla.
+- **No hay UNIQUE sobre (fila, col)** a propósito: intercambiar son dos UPDATE y
+  el índice haría chocar el primero contra el segundo —el mismo problema de
+  ciclos que obliga al UPDATE único al renumerar en SQL—. Si aun así quedan dos
+  mesas en la misma celda, el plano pinta una y manda la otra abajo en vez de
+  tragársela.
+- Los **muebles** del salón (hoy sólo la mesa de postres) son una constante
+  `MUEBLES` en `MesasBoard.jsx` y **no** filas de `mesas`: una fila los metería
+  en el Excel, en los avisos y en las hojas impresas como una mesa vacía a la
+  que le falta gente. Por eso su sitio sí se queda escrito en el código.
+- Si la 007 no está aplicada, el panel **cae al plano viejo** —posición deducida
+  del nombre contra `PLANO`, sin poder mover nada— igual que el control de
+  capitán con la 006. Se puede desplegar el código antes que la migración.
 - En el plano la mesa va **compacta**: sin lista de nombres, sin selector de
   capitán, sin pie. Lo que se ve es dónde está, cuánto le falta y quién manda.
   El botón «ver» salta al detalle de esa mesa. Por eso `medidas()` recibe `mini`
@@ -457,6 +483,25 @@ numeración corriente empieza en **«Mesa 1»** después de ella. `nuevaMesa()` 
 el número del más alto que ya exista entre las que casan con `/^Mesa \d+$/`, y
 no de `mesas.length`, por dos razones: así la principal no consume el 1, y así
 borrar una del medio no genera un nombre repetido.
+
+**Renumerar** es un botón del tablero — `src/admin/RenumerarMesas.jsx`. Una fila
+por mesa con su número nuevo, validando en vivo repetidos, vacíos y huecos, y dos
+atajos que numeran siguiendo el plano (de izquierda a derecha o al revés, porque
+la lectura del salón depende de por dónde se entra).
+
+- **No mueve nada de sitio.** El sitio se arrastra en el plano; esto cambia la
+  etiqueta. Nadie se levanta de su silla ni pierde a su capitán.
+- Sí arrastra el **`orden`**, porque el panel, el Excel y las imágenes listan por
+  ahí: renumerar sin tocarlo dejaría los papeles en la secuencia vieja. Se rehace
+  para todas, cambien de número o no —es idempotente y corrige las que venían
+  descuadradas—, y la principal queda en **0**: sin el 0 explícito empata con la
+  Mesa 1 y el desempate por nombre la deja segunda.
+- Se escribe **por `id`**, nunca buscando por nombre, y por eso una permutación
+  con ciclos (la 6 pasa a 2 y la 2 a 6) no se pisa a sí misma.
+
+El par `supabase/scripts/renumerar-mesas.sql` + `.mjs` hace lo mismo desde
+consola, con el mapeo escrito a mano. Queda para un cambio masivo preparado de
+antemano o para cuando no hay panel a mano; el camino corriente es el botón.
 
 #### Capitán de mesa
 
@@ -654,6 +699,13 @@ Migración `006_capitan_mesa.sql`: `mesas.capitan_id` → `guest_members`, más 
 vista `mesa_summary` rehecha para exponer el nombre ya resuelto. Ver «Capitán de
 mesa». El panel comprueba si la columna existe y esconde el control si no, así
 que se puede desplegar el código antes de aplicarla sin romper nada.
+
+Migración `007_plano_mesas.sql`: `mesas.fila` y `mesas.col` —el sitio de cada
+mesa en el salón— y `mesa_summary` rehecha otra vez para exponerlas. Trae una
+semilla con el plano tal como estaba dibujado en el código, así que el plano
+arranca idéntico a como se venía viendo; sólo toca las que no tienen sitio, y por
+eso se puede correr dos veces. Ver «El plano del salón». Mismo truco que la 006:
+el panel detecta si las columnas existen y cae al plano viejo si no.
 
 Las migraciones en `supabase/migrations/` están numeradas y llevan un comentario de
 cabecera explicando el porqué. Mantén ese formato al añadir una nueva.

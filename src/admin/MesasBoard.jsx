@@ -1,11 +1,12 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { supabase } from '../lib/supabase'
 import { estadoOf, personasOf, ESTADOS } from './cupos'
 import { nombreIncompleto, MOTIVO, normalizarNombre } from './nombres'
 import { exportarExcel } from './descargar'
 import { exportarImagenes } from './imagenes'
-import MesaRedonda, { colorDe } from './MesaRedonda'
+import MesaRedonda, { colorDe, arrastraMesa, idDeMesa } from './MesaRedonda'
 import EditarNombre from './EditarNombre'
+import RenumerarMesas from './RenumerarMesas'
 
 // ─── Quién se sienta ───
 // Se siembra a la PERSONA, no a la tarjeta: una familia puede repartirse entre
@@ -43,32 +44,114 @@ function armarGrupos(rows, miembrosPorTarjeta, incluir) {
 const idAnon = (guestId, i) => `anon:${guestId}:${i}`
 
 // ─── El plano del salón ───
-// Las mesas no van en un flujo automático que las apila en cuatro filas: van
-// donde están de verdad en el salón. Dos hileras enfrentadas de cinco, con el
-// frente —el lado de los novios— a la izquierda: la 1 queda frente a la 6, la 2
-// frente a la 7, y así. Puesto así el salón entero cabe en pantalla, que es lo
-// que hacía imposible arrastrar a alguien hasta la Mesa 10.
-const POR_HILERA = 5
+// Las mesas no van en un flujo automático que las apila en filas: van donde
+// están de verdad en el salón. Puesto así el salón entero cabe en pantalla, que
+// es lo que hacía imposible arrastrar a alguien hasta la última mesa.
+//
+// El sitio de cada mesa vive en la base (`mesas.fila` y `mesas.col`, migración
+// 007) y se arrastra desde aquí. Antes salía del NOMBRE contra una cuadrícula
+// escrita en el código, y eso ataba dos cosas que no van juntas: para mover una
+// mesa había que renumerarla, y cada cambio del salón —hubo dos en tres días—
+// era un cambio de código más una permutación en SQL. Ahora el número es lo que
+// siempre fue, una etiqueta, y mover y renumerar son dos gestos distintos.
+const HILERAS = 3    // el salón no pasa de tres hileras
+const COL_MIN = 6    // ancho mínimo de la cuadrícula: el salón se ve entero
 
-/** «Mesa 7» → 7. Cualquier otro nombre no tiene sitio fijo en el plano. */
+// Un mueble se dibuja para poder ubicarse, pero no vive en `mesas`: no tiene
+// invitados, ni capitán, ni puestos, y no cuenta para nada. Una fila en la base
+// lo metería en el Excel, en los avisos y en las hojas que se imprimen como una
+// mesa vacía a la que le falta gente. Tampoco es un hueco: ahí no falta nada.
+// Por eso su sitio sí se queda escrito aquí.
+const MUEBLES = [{ rotulo: 'Mesa de Postres', fila: 1, col: 5 }]
+
+// La de los novios responde a los dos nombres: el salón la llama «Mesa de los
+// Novios» y en la base es «Mesa principal» desde que se creó. Aceptando ambos,
+// el plano de respaldo queda bien se la renombre o no.
+const NOVIOS = ['mesa de los novios', 'mesa principal']
+
+// El salón tal como estaba dibujado antes de la 007. Es el respaldo para
+// cuando esa migración todavía no se aplicó: se pinta igual que siempre, pero
+// sin poder mover nada. La semilla de la 007 escribe estas mismas posiciones.
+const PLANO = [
+  [11, 8, 5,    2, null, 'novios'],
+  [10, 7, 3, null, null,     null],
+  [ 9, 6, 4,    1, null,     null],
+]
+
+/** «Mesa 7» → 7. Cualquier otro nombre no tiene número. */
 const numeroDe = m => {
   const x = (m.nombre || '').match(/^\s*Mesa\s+(\d+)\s*$/i)
   return x ? Number(x[1]) : null
 }
 
-function armarPlano(mesas) {
-  const cabecera = [], sueltas = []
-  const hileras = [Array(POR_HILERA).fill(null), Array(POR_HILERA).fill(null)]
-  for (const m of mesas) {
-    const n = numeroDe(m)
-    // Sin número no tiene sitio en la cuadrícula: la principal y las que se
-    // hayan renombrado («Los abuelos») van arriba, no se pierden.
-    if (n === null) { cabecera.push(m); continue }
-    if (n >= 1 && n <= POR_HILERA * 2) hileras[n <= POR_HILERA ? 0 : 1][(n - 1) % POR_HILERA] = m
-    else sueltas.push(m)
-  }
-  return { cabecera, hileras, sueltas }
+const esNovios = m => NOVIOS.includes((m.nombre || '').trim().toLowerCase())
+
+/** Una celda del salón: o lleva mesa, o lleva un mueble, o está libre. */
+const celdaLibre = (fila, col) => {
+  const mu = MUEBLES.find(x => x.fila === fila && x.col === col)
+  return mu ? { fila, col, mueble: mu.rotulo } : { fila, col, mesa: null }
 }
+
+// El plano de verdad: el que sale de `fila`/`col`. Siempre sobra una columna
+// —y una hilera, hasta la tercera— para poder soltar una mesa en sitio nuevo
+// sin tener que hacerle hueco antes.
+function planoGuardado(mesas) {
+  const puestas = [], sueltas = [], repetidas = []
+  const ocupada = new Map()
+  for (const m of mesas) {
+    // Fuera de las tres hileras del salón no hay dónde pintarla, así que baja a
+    // «sin sitio» en vez de desaparecer: de ahí se arrastra de vuelta adentro.
+    if (!m.fila || !m.col || m.fila > HILERAS) { sueltas.push(m); continue }
+    const k = `${m.fila}:${m.col}`
+    // Dos mesas en la misma celda es posible: la base no lo impide a propósito
+    // (un UNIQUE rompería el intercambio, que son dos UPDATE). La segunda no
+    // se pierde —se manda abajo con las sueltas— y el tablero lo avisa.
+    if (ocupada.has(k)) { repetidas.push(m); sueltas.push(m); continue }
+    ocupada.set(k, m)
+    puestas.push(m)
+  }
+
+  const columnas = Math.max(COL_MIN, ...puestas.map(m => m.col), ...MUEBLES.map(x => x.col)) + 1
+  const filas = Math.min(HILERAS, Math.max(1, ...puestas.map(m => m.fila)) + 1)
+  const hileras = Array.from({ length: filas }, (_, r) =>
+    Array.from({ length: columnas }, (_, c) => {
+      const celda = celdaLibre(r + 1, c + 1)
+      return celda.mueble ? celda : { ...celda, mesa: ocupada.get(`${r + 1}:${c + 1}`) || null }
+    }))
+
+  return { hileras, columnas, sueltas, repetidas, movible: true }
+}
+
+// El respaldo, mientras la 007 no esté aplicada: la posición se deduce del
+// nombre, como hasta el 10·IX·2026, y no se puede mover nada.
+function planoPorNumero(mesas) {
+  const porNumero = new Map()
+  for (const m of mesas) { const n = numeroDe(m); if (n !== null && !porNumero.has(n)) porNumero.set(n, m) }
+  const novios = mesas.find(esNovios)
+
+  const colocadas = new Set()
+  const hileras = PLANO.map((fila, r) => fila.map((c, i) => {
+    const celda = celdaLibre(r + 1, i + 1)
+    if (celda.mueble || c === null) return celda
+    const m = c === 'novios' ? novios : porNumero.get(c)
+    if (m) colocadas.add(m.id)
+    // Una celda numerada sin mesa sí se enseña como hueco: un salón al que le
+    // falta la 11 no es un salón de diez mesas.
+    return { ...celda, mesa: m || null, rotulo: c === 'novios' ? 'Novios' : `Mesa ${c}` }
+  }))
+
+  // Las que no tienen sitio en la cuadrícula no se pierden: van debajo.
+  return {
+    hileras, columnas: PLANO[0].length, repetidas: [],
+    sueltas: mesas.filter(m => !colocadas.has(m.id)), movible: false,
+  }
+}
+
+// `fila in m` distingue «la columna no existe» —007 sin aplicar, PostgREST ni
+// siquiera devuelve la clave— de «existe y está vacía». Mismo truco que con
+// `capitan_id` y la 006.
+const armarPlano = mesas =>
+  mesas.some(m => 'fila' in m) ? planoGuardado(mesas) : planoPorNumero(mesas)
 
 /** El motivo por el que una ficha está marcada, ya sea plaza anónima o nombre flojo. */
 const motivoDe = ficha => ficha.anon ? 'vacio' : nombreIncompleto(ficha.nombre)
@@ -226,6 +309,10 @@ export default function MesasBoard() {
   const [imagenes, setImagenes]     = useState('')
   const [sobre, setSobre]           = useState(null)  // mesa bajo el puntero al arrastrar
   const [nueva, setNueva]           = useState(null)  // mesa recién creada, para nombrarla
+  // Mesa elegida para mover de sitio, por el camino del clic: el arrastre es
+  // incómodo en tableta y el salón entero se reacomoda desde ahí.
+  const [moviendo, setMoviendo]     = useState(null)
+  const [renumerar, setRenumerar]   = useState(false)
   // «plano» reparte; «detalle» revisa. Se arranca en plano porque mientras
   // queda gente por sentar lo que importa es alcanzar todas las mesas.
   const [vista, setVista]           = useState('plano')
@@ -545,13 +632,53 @@ export default function MesasBoard() {
     return () => document.removeEventListener('dragover', alArrastrar)
   }, [])
 
-  // Esc suelta la selección: es la salida esperada y evita sentar sin querer.
+  // Esc suelta lo que esté elegido —gente o mesa—: es la salida esperada y
+  // evita sentar, o mover una mesa, sin querer.
   useEffect(() => {
-    if (!sel.length) return
-    const alPulsar = e => { if (e.key === 'Escape') setSel([]) }
+    if (!sel.length && !moviendo) return
+    const alPulsar = e => { if (e.key === 'Escape') { setSel([]); setMoviendo(null) } }
     document.addEventListener('keydown', alPulsar)
     return () => document.removeEventListener('keydown', alPulsar)
-  }, [sel.length])
+  }, [sel.length, moviendo])
+
+  // ─── Renumerar ───
+  // Se escribe por `id`, nunca buscando por nombre, y por eso una permutación
+  // con ciclos (la 6 pasa a 2 y la 2 a 6) no se pisa a sí misma. El mismo
+  // cuidado que obliga al UPDATE único en supabase/scripts/renumerar-mesas.sql,
+  // donde el mapeo se escribía a mano.
+  async function aplicarRenumeracion(cambios) {
+    for (const c of cambios) {
+      const { error: e } = await supabase.from('mesas')
+        .update({ nombre: c.nombre, orden: c.orden }).eq('id', c.id)
+      if (e) return flash(e.message)
+    }
+    setRenumerar(false)
+    await cargar()
+    flash(`Renumeradas ${cambios.length} mesa(s) · regenerá el Excel y las imágenes`)
+  }
+
+  // ─── Mover una mesa de sitio ───
+  // Escribe `fila`/`col` por id. Si la celda ya tiene mesa, las dos se
+  // intercambian el sitio: es lo que uno espera al soltar una encima de otra, y
+  // evita dejar dos en la misma celda —la base no lo impide a propósito, así
+  // que lo cuida el panel—. `fila` en null saca la mesa del plano sin borrarla.
+  async function moverMesa(mesaId, fila, col) {
+    const yo = mesas.find(m => m.id === mesaId)
+    if (!yo) return
+    setMoviendo(null)
+    if ((yo.fila ?? null) === fila && (yo.col ?? null) === col) return
+    const ocupa = fila && mesas.find(m => m.fila === fila && m.col === col && m.id !== mesaId)
+    const cambios = [{ id: mesaId, fila, col }]
+    if (ocupa) cambios.push({ id: ocupa.id, fila: yo.fila ?? null, col: yo.col ?? null })
+    for (const c of cambios) {
+      const { error: e } = await supabase.from('mesas').update({ fila: c.fila, col: c.col }).eq('id', c.id)
+      if (e) return flash(e.message.includes('column') ? 'Falta aplicar 007_plano_mesas.sql' : e.message)
+    }
+    await cargar()
+    flash(ocupa
+      ? `${yo.nombre} y ${ocupa.nombre} intercambiaron sitio`
+      : fila ? `${yo.nombre} → hilera ${fila}, columna ${col}` : `${yo.nombre} salió del plano`)
+  }
 
   // La mesa de los novios va aparte y no lleva número: la numeración corriente
   // empieza en «Mesa 1» después de ella. Se toma del número más alto que ya
@@ -668,11 +795,58 @@ export default function MesasBoard() {
       onEditarMesa={editarMesa} onBorrar={borrarMesa}
       buscarFicha={k => todasLasFichas.find(x => x.key === k)}
       onSobre={setSobre} onCapitan={asignarCapitan} nombreDe={nombreDe}
+      // Elegir una mesa para moverla suelta la selección de gente: con las dos
+      // vivas, un clic en una mesa querría decir dos cosas a la vez.
+      movible={plano.movible} moviendo={moviendo === m.id}
+      onMover={() => { setSel([]); setMoviendo(v => v === m.id ? null : m.id) }}
       onAbrir={() => { setVista('detalle'); setTimeout(() => {
         document.getElementById(`mesa-${m.id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
       }, 40) }}
     />
   )
+
+  // Una celda del salón. Con la 007 aplicada, TODA celda es destino: se suelta
+  // una mesa encima —o se toca, si venía elegida con el asa— y ahí se queda. La
+  // celda ocupada también acepta: las dos mesas intercambian sitio.
+  const celdaPlano = celda => {
+    const { fila, col } = celda
+    const k = `${fila}:${col}`
+    if (celda.mueble) return <div key={k} className="mb-mueble">{celda.mueble}</div>
+
+    // Sin la 007 el plano se mira pero no se toca: la posición sale del nombre.
+    if (!plano.movible) {
+      if (celda.mesa) return mesaMini(celda.mesa)
+      if (celda.rotulo) return <div key={k} className="mb-hueco">{celda.rotulo}</div>
+      return <div key={k} className="mb-nada" aria-hidden="true" />
+    }
+
+    const eligiendo = moviendo && moviendo !== celda.mesa?.id
+    const queViene = eligiendo ? mesas.find(m => m.id === moviendo)?.nombre : ''
+    return (
+      <div
+        key={k}
+        className={`mb-celda${celda.mesa ? ' con' : ''}${eligiendo ? ' destino' : ''}`}
+        onDragOver={e => { if (arrastraMesa(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } }}
+        onDrop={e => {
+          const id = idDeMesa(e)
+          if (!id) return
+          e.preventDefault()
+          e.stopPropagation()
+          moverMesa(id, fila, col)
+        }}
+        onClick={() => { if (eligiendo) moverMesa(moviendo, fila, col) }}
+        title={eligiendo
+          ? celda.mesa
+            ? `Intercambiar ${queViene} con ${celda.mesa.nombre}`
+            : `Traer ${queViene} aquí · hilera ${fila}, columna ${col}`
+          : undefined}
+      >
+        {celda.mesa
+          ? mesaMini(celda.mesa)
+          : <span className="mb-celda-sitio" aria-hidden="true">{fila}·{col}</span>}
+      </div>
+    )
+  }
 
   if (cargando) return <div className="adm-main"><p style={{ color: '#64748b' }}>Cargando…</p></div>
 
@@ -721,6 +895,12 @@ export default function MesasBoard() {
               finally { setImagenes('') }
             }}
           >{imagenes || 'Exportar imágenes'}</button>
+          {mesas.length > 0 && (
+            <button className="adm-btn adm-btn-ghost" onClick={() => setRenumerar(true)}
+                    title="Cambiar el número de las mesas y el orden en que salen en el Excel y las hojas">
+              Renumerar
+            </button>
+          )}
           <button className="adm-btn adm-btn-gold" onClick={nuevaMesa}>+ Mesa</button>
         </div>
       </div>
@@ -893,36 +1073,45 @@ export default function MesasBoard() {
           ))}
 
           {/* ── El plano ──
-              Dos hileras enfrentadas, el frente a la izquierda. La 1 queda
-              frente a la 6, la 2 frente a la 7. Es el salón, no una lista. */}
+              El salón, no una lista: cada mesa donde está de verdad. El sitio
+              sale de `fila`/`col` y se arrastra —o se toca el asa y después la
+              celda, que es como se trabaja en tableta—. */}
           {vista === 'plano' && mesas.length > 0 && (
-            <div className="mb-salon">
+            <div className={`mb-salon${moviendo ? ' moviendo' : ''}`}>
+              {plano.movible && (
+                <p className="mb-salon-ayuda">
+                  {moviendo
+                    ? <><b>{mesas.find(m => m.id === moviendo)?.nombre}</b> elegida · tocá el sitio del salón donde va, o Esc para dejarla donde está</>
+                    : <>Arrastrá una mesa por su asa <span className="mb-asa-ej" aria-hidden="true">✥</span> para moverla de sitio, o tocá el asa y después la celda. Si soltás encima de otra mesa, las dos intercambian sitio.</>}
+                </p>
+              )}
               <div className="mb-salon-plano">
-                {/* Los novios al frente: la 1 y la 6 son las que quedan junto
-                    a ellos, y de ahi el salon se lee hacia el fondo. */}
-                {plano.cabecera.length > 0 && (
-                  <div className="mb-cabecera">
-                    {plano.cabecera.map(mesaMini)}
-                  </div>
-                )}
-                <span className="mb-frente" aria-hidden="true">frente</span>
+                <span className="mb-borde" aria-hidden="true">parte superior</span>
                 <div className="mb-hileras">
-                  <div className="mb-hilera">
-                    {plano.hileras[0].map((m, i) => m
-                      ? mesaMini(m)
-                      : <div key={`h0${i}`} className="mb-hueco">Mesa {i + 1}</div>)}
-                  </div>
-                  <div className="mb-pasillo"><span>pasillo</span></div>
-                  <div className="mb-hilera">
-                    {plano.hileras[1].map((m, i) => m
-                      ? mesaMini(m)
-                      : <div key={`h1${i}`} className="mb-hueco">Mesa {i + POR_HILERA + 1}</div>)}
-                  </div>
+                  {plano.hileras.map((fila, r) => (
+                    <Fragment key={r}>
+                      {r > 0 && <div className="mb-pasillo"><span>pasillo</span></div>}
+                      <div className="mb-hilera"
+                           style={{ gridTemplateColumns: `repeat(${plano.columnas}, minmax(0, 1fr))` }}>
+                        {fila.map(celda => celdaPlano(celda))}
+                      </div>
+                    </Fragment>
+                  ))}
                 </div>
+                <span className="mb-borde" aria-hidden="true">parte inferior</span>
               </div>
 
-              {plano.sueltas.length > 0 && (
-                <div className="mb-salon-cab otras">
+              {/* Fuera del plano: mesas todavía sin sitio. No se pierden, y de
+                  aquí se arrastran adentro. Soltar una mesa aquí la saca del
+                  salón sin borrarla, que es como se deshace una colocación. */}
+              {(plano.sueltas.length > 0 || moviendo) && (
+                <div
+                  className={`mb-salon-cab otras${moviendo ? ' destino' : ''}`}
+                  onDragOver={e => { if (arrastraMesa(e)) e.preventDefault() }}
+                  onDrop={e => { const id = idDeMesa(e); if (id) { e.preventDefault(); moverMesa(id, null, null) } }}
+                  onClick={() => { if (moviendo) moverMesa(moviendo, null, null) }}
+                >
+                  <span className="mb-fuera-t">Sin sitio en el plano</span>
                   {plano.sueltas.map(mesaMini)}
                 </div>
               )}
@@ -930,6 +1119,14 @@ export default function MesasBoard() {
           )}
         </div>
       </div>
+
+      {renumerar && (
+        <RenumerarMesas
+          mesas={mesas}
+          onCerrar={() => setRenumerar(false)}
+          onAplicar={aplicarRenumeracion}
+        />
+      )}
 
       {/* ── A qué mesa ──
           Las mesas vienen a la selección en vez de obligar a arrastrar mil
