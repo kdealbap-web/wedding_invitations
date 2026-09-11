@@ -40,6 +40,8 @@ async function esperarFuentes() {
   await document.fonts.ready
   await Promise.all([
     document.fonts.load('400 64px "Cormorant Garamond"'),
+    document.fonts.load('500 34px "Cormorant Garamond"'),
+    document.fonts.load('600 54px "Cormorant Garamond"'),
     document.fonts.load('300 14px Jost'),
     document.fonts.load('400 40px "Great Vibes"'),
   ])
@@ -179,28 +181,31 @@ async function hojaMesa(mesa, gente, cuando) {
 //
 // Los nombres flojos NO salen en rojo: esta lámina la leen los invitados. Los
 // rojos se miran en las hojas de trabajo, que son las que revisa la wedding.
+// Proporción A4 vertical (1 : √2): el afiche se manda a imprimir a un pliego con
+// esas proporciones, así que la lámina las respeta desde el origen en vez de
+// crecer con el contenido y que el impresor la recorte o la deje con franjas.
 const AFICHE = {
-  w: 2000, margen: 250,
-  cabecera: 640,     // del borde al primer título de mesa
-  linea: 34,         // alto de renglón de cada nombre
-  titulo: 62,        // alto del título de mesa con su filete
-  entreFilas: 54,
-  pie: 300,
+  w: 2200,
+  margen: 230,
+  cabecera: 780,   // del borde al primer título de mesa
+  pie: 260,        // lo que se reserva abajo para la firma
+  linea: 48,       // alto de renglón de cada nombre
+  titulo: 74,      // alto del título de mesa con su filete
 }
+AFICHE.h = Math.round(AFICHE.w * Math.SQRT2)
 
 async function aficheBienvenida(mesas, porMesa, arte) {
   const A = AFICHE
-  const cols = mesas.length <= 6 ? 3 : 4
+  const cols = mesas.length <= 4 ? 2 : 3
   const filas = []
   for (let i = 0; i < mesas.length; i += cols) filas.push(mesas.slice(i, i + cols))
   // Cada fila mide lo que su mesa más llena: así las columnas no se desalinean.
   const altoFila = f => A.titulo + Math.max(1, ...f.map(m => (porMesa.get(m.id) || []).length)) * A.linea
-  const alto = A.cabecera + filas.reduce((t, f) => t + altoFila(f) + A.entreFilas, 0) - A.entreFilas + A.pie
 
-  const { c, x } = lienzo(A.w, alto)
+  const { c, x } = lienzo(A.w, A.h)
   const cx = A.w / 2
   x.fillStyle = '#fff'
-  x.fillRect(0, 0, A.w, alto)
+  x.fillRect(0, 0, A.w, A.h)
 
   // Las cuatro esquinas, ancladas a los bordes. Vienen recortadas sobre blanco
   // puro, así que se pegan opacas: sobre un fondo de otro color se les vería el
@@ -208,54 +213,58 @@ async function aficheBienvenida(mesas, porMesa, arte) {
   const flor = (img, ancho, dx, dy) => {
     if (!img) return
     const h = img.height * (ancho / img.width)
-    x.drawImage(img, dx === 0 ? 0 : A.w - ancho, dy === 0 ? 0 : alto - h, ancho, h)
+    x.drawImage(img, dx === 0 ? 0 : A.w - ancho, dy === 0 ? 0 : A.h - h, ancho, h)
   }
-  flor(arte.si, 255, 0, 0)
-  flor(arte.sd, 332, 1, 0)
-  flor(arte.id, 296, 1, 1)
-  flor(arte.ii, 361, 0, 1)
+  flor(arte.si, 300, 0, 0)
+  flor(arte.sd, 390, 1, 0)
+  flor(arte.id, 350, 1, 1)
+  flor(arte.ii, 425, 0, 1)
 
   x.textAlign = 'center'
-  let y = 110
+  let y = 120
   if (arte.logo) {
-    const h = 150, w = arte.logo.width * (h / arte.logo.height)
+    const h = 210, w = arte.logo.width * (h / arte.logo.height)
     x.drawImage(arte.logo, cx - w / 2, y, w, h)
   }
-  y += 150 + 96
+  y += 210 + 116
 
-  x.fillStyle = TINTA; x.font = fd(58, 300)
+  x.fillStyle = TINTA; x.font = fd(92, 400)
   x.fillText('B I E N V E N I D O S', cx, y)
-  y += 56
+  y += 74
 
-  x.fillStyle = SUAVE; x.font = `italic ${fd(26)}`
-  x.fillText('Gracias por acompañarnos en el día más importante de nuestras vidas.', cx, y); y += 38
-  x.fillText('Guardamos un sitio para cada uno de ustedes.', cx, y); y += 56
+  x.fillStyle = SUAVE; x.font = `italic ${fd(34)}`
+  x.fillText('Gracias por acompañarnos en el día más importante de nuestras vidas.', cx, y); y += 50
+  x.fillText('Guardamos un sitio para cada uno de ustedes.', cx, y); y += 66
 
   x.strokeStyle = FILETE; x.lineWidth = 1
-  x.beginPath(); x.moveTo(cx - 210, y); x.lineTo(cx - 18, y); x.stroke()
-  x.beginPath(); x.moveTo(cx + 18, y); x.lineTo(cx + 210, y); x.stroke()
+  x.beginPath(); x.moveTo(cx - 230, y); x.lineTo(cx - 20, y); x.stroke()
+  x.beginPath(); x.moveTo(cx + 20, y); x.lineTo(cx + 230, y); x.stroke()
   x.fillStyle = ORO_P
-  x.save(); x.translate(cx, y); x.rotate(Math.PI / 4); x.fillRect(-5, -5, 10, 10); x.restore()
-  y += 34
+  x.save(); x.translate(cx, y); x.rotate(Math.PI / 4); x.fillRect(-6, -6, 12, 12); x.restore()
+  y += 44
 
-  x.fillStyle = '#A2917F'; x.font = fb(13)
+  x.fillStyle = '#A2917F'; x.font = fb(15)
   x.fillText('B U S C A   T U   N O M B R E', cx, y)
 
-  // Las mesas
+  // Las mesas. La lámina tiene alto fijo y el contenido no siempre lo llena, así
+  // que lo que sobra se reparte entre las filas en vez de quedar todo al final.
   const util = A.w - A.margen * 2
-  const hueco = 40
+  const hueco = 46
   const ancho = (util - hueco * (cols - 1)) / cols
-  let fy = A.cabecera
+  const alto = filas.reduce((t, f) => t + altoFila(f), 0)
+  const aire = Math.max(24, (A.h - A.cabecera - A.pie - alto) / Math.max(1, filas.length))
+  let fy = A.cabecera + aire / 2
   for (const fila of filas) {
     fila.forEach((m, i) => {
       const mx = A.margen + i * (ancho + hueco) + ancho / 2
-      x.fillStyle = ACC_P; x.font = fd(34, 500)
+      x.fillStyle = ACC_P; x.font = fd(54, 600)
       x.fillText(recorta(x, m.nombre, ancho), mx, fy)
-      x.strokeStyle = BORDE
-      x.beginPath(); x.moveTo(mx - ancho / 2, fy + 18); x.lineTo(mx + ancho / 2, fy + 18); x.stroke()
+      x.strokeStyle = BORDE; x.lineWidth = 1.5
+      x.beginPath(); x.moveTo(mx - ancho / 2, fy + 24); x.lineTo(mx + ancho / 2, fy + 24); x.stroke()
+      x.lineWidth = 1
 
       const gente = porMesa.get(m.id) || []
-      x.font = fd(23)
+      x.font = fd(34, 500)
       gente.forEach((p, k) => {
         x.fillStyle = TINTA
         x.fillText(recorta(x, p.nombre, ancho), mx, fy + A.titulo + k * A.linea)
@@ -265,17 +274,17 @@ async function aficheBienvenida(mesas, porMesa, arte) {
         x.fillText('—', mx, fy + A.titulo)
       }
     })
-    fy += altoFila(fila) + A.entreFilas
+    fy += altoFila(fila) + aire
   }
 
-  // El pie, sobre el suelo del afiche y no pegado a la última fila
-  const yp = alto - A.pie + 110
+  // El pie, sobre el suelo de la lámina y no pegado a la última fila
+  const yp = A.h - A.pie + 70
   x.strokeStyle = FILETE
-  x.beginPath(); x.moveTo(cx - 260, yp); x.lineTo(cx + 260, yp); x.stroke()
-  x.fillStyle = ACC_P; x.font = fs(52)
-  x.fillText('Angely & Kevin', cx, yp + 74)
-  x.fillStyle = SUAVE; x.font = fb(14)
-  x.fillText('1 2   D E   S E P T I E M B R E   D E   2 0 2 6   ·   C A S O N A   D E L   P R A D O', cx, yp + 112)
+  x.beginPath(); x.moveTo(cx - 280, yp); x.lineTo(cx + 280, yp); x.stroke()
+  x.fillStyle = ACC_P; x.font = fs(58)
+  x.fillText('Angely & Kevin', cx, yp + 82)
+  x.fillStyle = SUAVE; x.font = fb(16)
+  x.fillText('1 2   D E   S E P T I E M B R E   D E   2 0 2 6   ·   C A S O N A   D E L   P R A D O', cx, yp + 126)
 
   return png(c)
 }

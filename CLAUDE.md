@@ -651,8 +651,15 @@ reconocen antes de leerlo.
   sin alfa** —186 kB entre las cuatro, contra 1,1 MB en PNG— porque se componen
   sobre blanco puro, igual que en el original. **Por eso el afiche es blanco y no
   marfil:** sobre cualquier otro fondo se vería el rectángulo de cada recorte.
-- Cuatro columnas (tres si hay seis mesas o menos) y el alto crece con las filas.
-  Cada fila mide lo que su mesa más llena, o las columnas se desalinean.
+- **Proporción A4 vertical (1 : √2) y alto fijo.** Se manda a imprimir a un
+  pliego con esas proporciones, así que la lámina las respeta desde el origen en
+  vez de crecer con el contenido y que el impresor la recorte o la deje con
+  franjas. Tres columnas (dos si hay cuatro mesas o menos).
+- El contenido rara vez llena el alto, así que **lo que sobra se reparte entre
+  las filas** en vez de amontonarse al final. Cada fila mide lo que su mesa más
+  llena, o las columnas se desalinean.
+- La tipografía va **grande y con peso** —nombres en 34 px del 500, títulos de
+  mesa en 54 del 600—: esto se lee de pie, a un metro y con gente detrás.
 - **No marca en rojo** los nombres flojos: esta lámina la leen los invitados. Los
   rojos se miran en las hojas de trabajo, y el LEEME dice cuántos quedan. Si
   añades un aviso nuevo, decide en cuál de los dos papeles va.
@@ -669,6 +676,11 @@ Una por capitán, tamaño carta, para imprimir y entregarle en mano. No es un pa
 de trabajo: es **el encargo**, con el texto que escribieron los novios, sobre la
 misma participación que el afiche —blanco, escudo, dos esquinas de acuarela—.
 
+- Lleva **un icono por encargo** —cinta, música, botella, disco, copas, cámara—
+  dibujados inline como el resto del proyecto, el nombre de la mesa en una
+  cápsula y la canción sobre un realce con filete dorado. La primera versión era
+  un folio de texto corrido y se leía como un reglamento, que es justo lo
+  contrario de lo que dice.
 - Sólo salen las mesas **con capitán elegido**: una tarjeta con el nombre en
   blanco no se puede entregar.
 - **La canción de la mesa sale de `mesas.notas`**, que estaba sin usar. Se
