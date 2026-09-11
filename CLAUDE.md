@@ -21,6 +21,7 @@ npm run preview          # sirve dist/ localmente
 npm run optimize-images  # recomprime src/assets/img/*.jpg (respalda en _originals/)
 npm run optimize-images -- --desde=src/imagenes_editadas   # ingiere fotos de fuera
 npm run favicons         # regenera public/favicon* desde el logo de la boda
+npm run logo             # el logo a 1000/2000/4000 px + un .svg, para impresores
 
 npm run usb              # arma entrega/USB_BODA_AyK/ para el proveedor de las LED
 npm run export           # invitados + cupos + mesas a Excel con fórmulas vivas
@@ -828,6 +829,24 @@ Extraídas del código existente — síguelas, no impongas otras.
 - Estilos puntuales van en `style={{…}}` inline; los reutilizables, al archivo CSS.
 - Las imágenes se importan desde `src/assets/images.js` (barrel de exports), nunca
   por ruta directa.
+
+### El logo, para imprimir
+
+`npm run logo` → `entrega/logo/`: el monograma a 1000, 2000 y 4000 px con fondo
+transparente, uno sobre blanco para quien no acepta alfa, y un `.svg`.
+
+> **El master mide 454 × 345 px.** No hay más resolución en el repositorio, así
+> que todo lo que sale de ahí es una **ampliación** —Lanczos y un enfoque
+> suave— y no inventa detalle: a 300 dpi el master da 3,8 cm. El `.svg` tampoco
+> es un vector: es el PNG grande envuelto en SVG, para los programas que piden
+> ese formato. **Un vector de verdad sólo sale del archivo original de quien
+> diseñó el logo** (.ai, .eps, .pdf, .svg); si aparece, reemplaza a todo esto.
+
+El master trae ~10.000 píxeles de alfa muy bajo alrededor de las letras:
+invisibles sobre blanco, pero al ampliar y enfocar salen como motas de color y
+sobre fondo oscuro se ven todas. `sinMotas()` las borra por umbral antes y
+después de ampliar —el enfoque vuelve a levantar halo—, conservando el borde de
+verdad (alfa 40–224), que es lo que evita que la curva quede escalonada.
 
 ## Datos de la boda
 
