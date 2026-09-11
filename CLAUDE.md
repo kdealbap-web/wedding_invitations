@@ -598,7 +598,7 @@ Dos formatos, y cada uno se genera desde el panel y desde consola:
 | | Botón | Consola |
 |---|---|---|
 | Excel (5 hojas, con **Reparto**) | «Exportar Excel» | `npm run export` |
-| Imágenes (plano + hoja por mesa) | «Exportar imágenes» | `npm run mesas-img` |
+| Imágenes (plano + dos hojas por mesa) | «Exportar imágenes» | `npm run mesas-img` |
 | Ambos | — | `npm run export-todo` |
 
 Las imágenes van a 2x para que impresas no se vean pixeladas. El **script**
@@ -606,6 +606,26 @@ dibuja en HTML y captura con Chrome headless; el **botón** dibuja en `<canvas>`
 empaqueta en ZIP con `jszip` — el navegador no deja descargar doce archivos
 sueltos sin aprobar cada uno. Son dos herramientas distintas a propósito, pero
 comparten paleta, tipografías y el criterio de qué nombre está incompleto.
+
+Cada mesa sale **dos veces**, en dos carpetas, porque son dos papeles distintos
+que se mandan a imprimir por separado:
+
+- `hojas-de-trabajo/` — la hoja sobria de siempre: nombres, de qué tarjeta viene
+  cada uno, el capitán en la cabecera y **en rojo lo que falta por arreglar**. La
+  usan la wedding y el salón.
+- `bienvenida/` — la que se pone **sobre la mesa** el día de la fiesta. Va sobre
+  la plantilla de la tarjeta de participación —marfil, filete interior doble, el
+  escudo `logo_a&K.png`, Cormorant y Great Vibes—: es el mismo papel que los
+  invitados ya recibieron en la mano. Lleva **BIENVENIDOS**, el nombre de la mesa
+  y los nombres, con ★ en el capitán.
+
+> La hoja de bienvenida **no marca en rojo** los nombres flojos: ésa la leen los
+> invitados. Los rojos se miran en la hoja de trabajo, y el LEEME dice cuántos
+> quedan. Si añades un aviso nuevo, decide en cuál de las dos va.
+
+Diez personas es la mesa más llena que hay y entra justa: la lista baja a 23 px
+a partir de nueve. **Si alargas el verso o subes el escudo, vuelve a mirar la
+mesa más llena.**
 
 ### Los cupos viven en `src/admin/cupos.js`
 

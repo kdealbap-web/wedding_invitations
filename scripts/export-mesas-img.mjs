@@ -4,8 +4,12 @@
  *   npm run mesas-img
  *
  * Genera, en entrega/mesas/:
- *   00_plano-general.png   todas las mesas de un vistazo, con sus nombres
- *   NN_<mesa>.png          una hoja por mesa, tamaño carta, para imprimir
+ *   00_plano-general.png       todas las mesas de un vistazo, con sus nombres
+ *   hojas-de-trabajo/NN_*.png  una hoja por mesa para la wedding: nombres,
+ *                              tarjeta de origen y capitán, tamaño carta
+ *   bienvenida/NN_*.png        la hoja decorada que se pone sobre la mesa el
+ *                              día de la fiesta, con la plantilla de la
+ *                              tarjeta de participación
  *
  * Se dibuja en HTML y se captura con el Chrome ya instalado, igual que las
  * cartelas de las LED: así comparte tipografías y paleta con el resto de la
@@ -23,6 +27,7 @@ import { join, resolve } from 'node:path'
 import { nombreIncompleto } from '../src/admin/nombres.js'
 
 const SALIDA = resolve('entrega/mesas')
+const LOGO   = resolve('src/assets/img/logo_a&K.png')
 const CHROME = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
@@ -30,7 +35,7 @@ const CHROME = [
   'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
 ]
 
-const FUENTES = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Jost:wght@300;400;500&display=swap'
+const FUENTES = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Great+Vibes&family=Jost:wght@300;400;500&display=swap'
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const slug = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -124,7 +129,7 @@ function htmlMesa(mesa, gente, cuando) {
     ? gente.map((p, i) => `
         <li>
           <span class="n">${i + 1}</span>
-          <span class="nom ${p.falta ? 'falta' : ''}">${esc(p.nombre)}</span>
+          <span class="nom ${p.falta ? 'falta' : ''}">${esc(p.nombre)}${p.manda ? '<b class="cap-m">CAPITÁN</b>' : ''}</span>
           <span class="tar">${esc(p.tarjeta)}</span>
         </li>`).join('')
     : '<li class="vacia">Esta mesa todavía no tiene a nadie asignado.</li>'
@@ -136,6 +141,9 @@ function htmlMesa(mesa, gente, cuando) {
   h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:400;font-size:64px;
     text-align:center;margin:10px 0 6px;letter-spacing:-.02em}
   .cap{text-align:center;font-size:13px;color:#8A7866;letter-spacing:.1em}
+  .capitan{text-align:center;font-size:12px;color:#C8A96E;letter-spacing:.14em;margin-top:6px}
+  .cap-m{font-family:Jost,system-ui,sans-serif;font-size:10px;font-weight:400;
+    color:#C8A96E;letter-spacing:.12em;margin-left:10px;vertical-align:middle}
   .rule{display:flex;align-items:center;gap:14px;margin:30px 0 26px}
   .rule i{flex:1;height:1px;background:#E3D9CB}
   .rule b{color:#C8A96E;font-size:12px}
@@ -151,9 +159,70 @@ function htmlMesa(mesa, gente, cuando) {
   <p class="sub">Angely &amp; Kevin · 12 · IX · 2026</p>
   <h1>${esc(mesa.nombre)}</h1>
   <p class="cap">${gente.length} de ${mesa.capacidad} puestos</p>
+  ${gente.find(p => p.manda) ? `<p class="capitan">CAPITÁN DE MESA · ${esc(gente.find(p => p.manda).nombre.toUpperCase())}</p>` : ''}
   <div class="rule"><i></i><b>&#9670;</b><i></i></div>
   <ol>${filas}</ol>
   <div class="pie"><span>Casona del Prado · Barranquilla</span><span>${cuando}</span></div>
+</div></body></html>`
+}
+
+// ─── Hoja de bienvenida, una por mesa ───
+//
+// La que se pone SOBRE la mesa el día de la fiesta. Va sobre la plantilla de la
+// tarjeta de participación —marfil, filete interior doble, el escudo, Cormorant
+// y Great Vibes— porque es el mismo papel que los invitados ya recibieron.
+//
+// Aquí los nombres flojos NO salen en rojo: esta hoja la leen ellos. Los rojos
+// se miran en la hoja de trabajo, que es la que revisa la wedding.
+function htmlBienvenida(mesa, gente, logo) {
+  const nombres = gente.length
+    ? gente.map(p => `<li>${esc(p.nombre)}${p.manda ? '<i title="Capitán de mesa">&#9733;</i>' : ''}</li>`).join('')
+    : '<li class="vacia">Esta mesa todavía no tiene invitados asignados.</li>'
+  const apretada = gente.length > 8
+
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
+  /* La paleta clara de tarjeta.css. Va en hex y no en oklch() para no depender
+     de la versión del Chrome que capture. */
+  .hoja{width:816px;height:1056px;padding:92px 76px 64px;background:#FBF5EA;
+    display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+  /* Filete interior doble: el marco clásico de las participaciones */
+  .hoja::before{content:'';position:absolute;inset:30px;border:1.5px solid #D8C9AE}
+  .hoja::after{content:'';position:absolute;inset:38px;border:.8px solid rgba(176,140,79,.45)}
+  .crest{height:104px;width:auto;margin-bottom:34px}
+  .bien{font-family:'Cormorant Garamond',Georgia,serif;font-weight:300;font-size:38px;
+    letter-spacing:.3em;text-indent:.3em;color:#2A1D14}
+  .verso{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:19px;
+    color:#8A7866;line-height:1.5;margin-top:14px}
+  .rule{display:flex;align-items:center;gap:14px;margin:34px 0 30px;width:70%}
+  .rule i{flex:1;height:1px;background:#D8C9AE}
+  .rule b{color:#B08C4F;font-size:11px}
+  h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:400;font-size:54px;
+    letter-spacing:-.01em;color:#2A1D14}
+  ol{list-style:none;margin-top:26px;flex:1}
+  ol li{font-family:'Cormorant Garamond',Georgia,serif;font-size:${apretada ? 23 : 25}px;
+    line-height:${apretada ? 1.42 : 1.56};color:#2A1D14}
+  ol li i{color:#B08C4F;font-size:.6em;font-style:normal;vertical-align:middle;margin-left:8px}
+  ol li.vacia{color:#C0B3A3;font-style:italic;font-size:21px}
+  .nota{font-size:10px;color:#C0B3A3;letter-spacing:.1em;margin-bottom:10px}
+  /* Ancha para que «Angely & Kevin» quepa en un renglón: partida en dos deja
+     de leerse como una firma. */
+  .firma{border-top:1px solid #D8C9AE;padding-top:20px;width:300px}
+  .firma .ayk{font-family:'Great Vibes',cursive;font-size:38px;color:#9A5B45;
+    line-height:1.1;white-space:nowrap}
+  .firma .cuando{font-size:11px;letter-spacing:.2em;color:#8A7866;margin-top:10px;white-space:nowrap}
+</style></head><body><div class="hoja">
+  ${logo ? `<img class="crest" src="${logo}" alt="">` : ''}
+  <p class="bien">BIENVENIDOS</p>
+  <p class="verso">Gracias por acompañarnos en el día<br>más importante de nuestras vidas</p>
+  <div class="rule"><i></i><b>&#9670;</b><i></i></div>
+  <h1>${esc(mesa.nombre)}</h1>
+  <ol>${nombres}</ol>
+  ${gente.some(p => p.manda) ? '<p class="nota">&#9733;&nbsp; capitán de mesa</p>' : ''}
+  <div class="firma">
+    <p class="ayk">Angely &amp; Kevin</p>
+    <p class="cuando">12 · IX · 2026</p>
+  </div>
 </div></body></html>`
 }
 
@@ -185,6 +254,9 @@ async function main() {
           nombre,
           tarjeta: grupoDe.get(a.guest_id) || '',
           falta: !a.member_id || !!nombreIncompleto(nombre),
+          // Quien manda en la mesa esa noche. Una «plaza sin nombre» no puede
+          // serlo: no hay a quién avisarle.
+          manda: !!a.member_id && a.member_id === m.capitan_id,
         }
       })
       .sort((x, y) => x.tarjeta.localeCompare(y.tarjeta, 'es') || x.nombre.localeCompare(y.nombre, 'es'))
@@ -193,11 +265,18 @@ async function main() {
 
   // Carpeta limpia: si se renombra una mesa, no queda el PNG viejo
   if (existsSync(SALIDA)) {
-    for (const f of await readdir(SALIDA)) await rm(join(SALIDA, f), { force: true })
+    for (const f of await readdir(SALIDA)) await rm(join(SALIDA, f), { force: true, recursive: true })
   }
   await mkdir(SALIDA, { recursive: true })
 
   const cuando = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
+  // El escudo viaja como data URI: setContent no tiene una URL base contra la
+  // que resolver una ruta de disco, así que un file:// dentro de ese about:blank
+  // no carga. Si falta el archivo, la hoja sale sin él y se avisa.
+  let logo = null
+  if (existsSync(LOGO)) logo = `data:image/png;base64,${(await readFile(LOGO)).toString('base64')}`
+  else console.warn('  Ojo: no encontré el escudo en', LOGO)
+
   const browser = await puppeteer.launch({
     executablePath: nav, headless: 'shell',
     args: ['--force-device-scale-factor=1', '--hide-scrollbars', '--disable-lcd-text'],
@@ -218,9 +297,15 @@ async function main() {
     await captura(htmlPlano(ms.data, porMesa, cuando), join(SALIDA, '00_plano-general.png'))
     console.log('  ✓ 00_plano-general.png')
 
+    // Dos juegos en dos carpetas: se mandan a imprimir por separado y en
+    // papeles distintos. Mezclados en la raíz había que ir eligiendo archivo
+    // por archivo cuál era cuál.
+    await mkdir(join(SALIDA, 'hojas-de-trabajo'), { recursive: true })
+    await mkdir(join(SALIDA, 'bienvenida'), { recursive: true })
     for (const [i, m] of ms.data.entries()) {
       const nombre = `${String(i + 1).padStart(2, '0')}_${slug(m.nombre)}.png`
-      await captura(htmlMesa(m, porMesa.get(m.id), cuando), join(SALIDA, nombre))
+      await captura(htmlMesa(m, porMesa.get(m.id), cuando), join(SALIDA, 'hojas-de-trabajo', nombre))
+      await captura(htmlBienvenida(m, porMesa.get(m.id), logo), join(SALIDA, 'bienvenida', nombre))
       console.log(`  ✓ ${nombre}`)
     }
 
@@ -231,8 +316,14 @@ async function main() {
 Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
 Generado el ${cuando}
 
-  00_plano-general.png   Todas las mesas de un vistazo.
-  NN_<mesa>.png          Una hoja por mesa, proporción carta, para imprimir.
+  00_plano-general.png       Todas las mesas de un vistazo.
+  hojas-de-trabajo/NN_*.png  Una hoja por mesa para la wedding y el salón:
+                             nombres, de qué tarjeta viene cada uno y el
+                             capitán. Marca en rojo lo que falta por arreglar.
+  bienvenida/NN_*.png        La que se pone SOBRE la mesa el día de la fiesta:
+                             el escudo, BIENVENIDOS y los nombres, sobre la
+                             misma plantilla de la participación. Ésta no marca
+                             nada en rojo — la leen los invitados.
 
   Mesas ...... ${ms.data.length}
   Sentados ... ${sentados}
@@ -243,7 +334,7 @@ Los nombres en rojo no sirven para una tarjeta de mesa: son genéricos
 /admin/mesas, con doble clic sobre la ficha.
 `, 'utf8')
 
-    console.log(`\n  ${ms.data.length + 1} imágenes en ${SALIDA}`)
+    console.log(`\n  ${ms.data.length * 2 + 1} imágenes en ${SALIDA}`)
     if (faltan) console.warn(`  Ojo: ${faltan} nombre(s) por completar, marcados en rojo.\n`)
     else console.log('  Todos los nombres completos.\n')
   } finally {
