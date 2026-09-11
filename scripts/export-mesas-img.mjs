@@ -44,6 +44,13 @@ const CHROME = [
 
 const FUENTES = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Great+Vibes&family=Jost:wght@300;400;500&display=swap'
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+// La mesa de los novios no entra en NINGUNA imagen: en el afiche porque ellos
+// no van a buscarse en el atril, y en las hojas porque el salón ya sabe dónde
+// sientan a los novios. Sigue en la base y en el Excel —el catering los cobra,
+// así que cuentan para el total—; lo que no hace falta es imprimirla.
+const esPrincipal = m => /^\s*Mesa\s+(principal|de\s+los\s+novios)\s*$/i.test(m.nombre || '')
+const paraImprimir = mesas => mesas.filter(m => !esPrincipal(m))
 const slug = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
@@ -136,7 +143,7 @@ function htmlMesa(mesa, gente, cuando) {
     ? gente.map((p, i) => `
         <li>
           <span class="n">${i + 1}</span>
-          <span class="nom ${p.falta ? 'falta' : ''}">${esc(p.nombre)}${p.manda ? '<b class="cap-m">CAPITÁN</b>' : ''}</span>
+          <span class="nom ${p.falta ? 'falta' : ''}">${esc(p.nombre)}</span>
           <span class="tar">${esc(p.tarjeta)}</span>
         </li>`).join('')
     : '<li class="vacia">Esta mesa todavía no tiene a nadie asignado.</li>'
@@ -166,7 +173,6 @@ function htmlMesa(mesa, gente, cuando) {
   <p class="sub">Angely &amp; Kevin · 12 · IX · 2026</p>
   <h1>${esc(mesa.nombre)}</h1>
   <p class="cap">${gente.length} de ${mesa.capacidad} puestos</p>
-  ${gente.find(p => p.manda) ? `<p class="capitan">CAPITÁN DE MESA · ${esc(gente.find(p => p.manda).nombre.toUpperCase())}</p>` : ''}
   <div class="rule"><i></i><b>&#9670;</b><i></i></div>
   <ol>${filas}</ol>
   <div class="pie"><span>Casona del Prado · Barranquilla</span><span>${cuando}</span></div>
@@ -325,17 +331,18 @@ async function main() {
       await caja.screenshot({ path: destino, type: 'png' })
     }
 
-    await captura(htmlPlano(ms.data, porMesa, cuando), join(SALIDA, '00_plano-general.png'))
+    await captura(htmlPlano(paraImprimir(ms.data), porMesa, cuando), join(SALIDA, '00_plano-general.png'))
     console.log('  ✓ 00_plano-general.png')
 
     // El afiche es UNO solo y con todas las mesas: el invitado que llega no sabe
     // cuál es la suya. Va aparte de las hojas de trabajo, que son otro papel y
     // se mandan a imprimir por separado.
-    await captura(htmlAfiche(ms.data, porMesa, arte), join(SALIDA, 'bienvenida.png'))
+    const imprimibles = paraImprimir(ms.data)
+    await captura(htmlAfiche(imprimibles, porMesa, arte), join(SALIDA, 'bienvenida.png'))
     console.log('  ✓ bienvenida.png')
 
     await mkdir(join(SALIDA, 'hojas-de-trabajo'), { recursive: true })
-    for (const [i, m] of ms.data.entries()) {
+    for (const [i, m] of imprimibles.entries()) {
       const nombre = `${String(i + 1).padStart(2, '0')}_${slug(m.nombre)}.png`
       await captura(htmlMesa(m, porMesa.get(m.id), cuando), join(SALIDA, 'hojas-de-trabajo', nombre))
       console.log(`  ✓ ${nombre}`)
@@ -367,7 +374,7 @@ Los nombres en rojo no sirven para una tarjeta de mesa: son genéricos
 /admin/mesas, con doble clic sobre la ficha.
 `, 'utf8')
 
-    console.log(`\n  ${ms.data.length + 2} imágenes en ${SALIDA}`)
+    console.log(`\n  ${imprimibles.length + 2} imágenes en ${SALIDA}`)
     if (faltan) console.warn(`  Ojo: ${faltan} nombre(s) por completar, marcados en rojo.\n`)
     else console.log('  Todos los nombres completos.\n')
   } finally {
