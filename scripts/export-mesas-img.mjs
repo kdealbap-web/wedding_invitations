@@ -297,147 +297,192 @@ function htmlAfiche(mesas, porMesa, arte, F) {
 }
 
 
-// Iconos de línea, uno por encargo. Dibujados aquí y no traídos de una
-// librería: son seis, y el resto del proyecto también los lleva inline.
-const ICONOS = {
-  cinta:   '<circle cx="12" cy="8" r="6"/><path d="M8.2 13.6 7 22l5-2.8L17 22l-1.2-8.4"/>',
-  baile:   '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
-  botella: '<path d="M10 2h4v4l2 3v13H8V9l2-3V2z"/><line x1="8" y1="13" x2="16" y2="13"/>',
-  cancion: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M12 3v3M12 18v3"/>',
-  brindis: '<path d="M5 3h6l-1 7a2 2 0 0 1-4 0L5 3z"/><path d="M13 3h6l-1 7a2 2 0 0 1-4 0l-1-7z"/><line x1="8" y1="12" x2="8" y2="21"/><line x1="16" y1="12" x2="16" y2="21"/><line x1="5" y1="21" x2="11" y2="21"/><line x1="13" y1="21" x2="19" y2="21"/>',
-  foto:    '<path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13" r="4"/>',
-}
-const icono = k => `<i class="ic"><svg viewBox="0 0 24 24">${ICONOS[k]}</svg></i>`
+// ─── El banderín del capitán ───
+//
+// Cuelga del cuello, así que no es una hoja: es una tira de 9 × 20 cm con los
+// primeros 4 cm de doblez y la punta abajo. El área de diseño son 9 × 16 cm.
+//
+//   px de CSS = cm × CM, y se captura al doble → 300 dpi en el archivo.
+//
+// Nada de flores y nada de letra chica: esto se lee de lejos, de noche y con la
+// fiesta encima. Todo en mayúscula, sobre el terracota de la boda con confeti
+// dorado. El texto es el que escribieron los novios.
+const CM = 59.055            // px de CSS por centímetro, a 150; al doble = 300 dpi
+const cm = n => +(n * CM).toFixed(1)
 
-// ─── La tarjeta del capitán ───
-//
-// Una por capitán, para imprimir y entregar. No es un papel de trabajo: es el
-// encargo, escrito por los novios, así que va sobre la misma participación que
-// el afiche —blanco, escudo, esquinas de acuarela— y el texto es de ellos.
-//
-// Lleva icono por encargo y el nombre sobre un realce de color: la primera
-// versión era un folio de texto corrido y se leía como un reglamento, que es
-// justo lo contrario de lo que dice.
-//
-// La canción de cada mesa sale de `mesas.notas`. Si está vacía, la tarjeta deja
-// el renglón rotulado para escribirla a mano: es mejor que inventar una o que
-// esconder el encargo.
-function htmlCapitan(mesa, capitan, arte) {
+const BANDERIN = { w: 9, h: 20, doblez: 4, punta: 4.5 }
+
+// Confeti repetible: el mismo nombre de mesa da siempre el mismo reparto, así
+// que regenerar no cambia lo que ya se mandó a imprimir.
+function confeti(semilla, n, W, H) {
+  let x = 0
+  for (let i = 0; i < semilla.length; i++) x = (x * 31 + semilla.charCodeAt(i)) >>> 0
+  const azar = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296)
+  const piezas = []
+  for (let i = 0; i < n; i++) {
+    const w = 4 + azar() * 7
+    piezas.push(`<i style="left:${(azar() * W).toFixed(1)}px;top:${(azar() * H).toFixed(1)}px;
+      width:${w.toFixed(1)}px;height:${(w * (0.3 + azar() * 0.5)).toFixed(1)}px;
+      transform:rotate(${(azar() * 180).toFixed(0)}deg);opacity:${(0.18 + azar() * 0.4).toFixed(2)}"></i>`)
+  }
+  return piezas.join('')
+}
+
+function htmlBanderin(mesa, capitan, arte) {
+  const B = BANDERIN
   const cancion = (mesa.notas || '').trim()
+  const numero = (mesa.nombre || '').replace(/^\s*mesa\s*/i, '').trim()
+  // La punta empieza aquí; el clip-path la recorta desde este alto.
+  const hastaPunta = ((B.h - B.punta) / B.h * 100).toFixed(2)
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
-  .hoja{width:816px;height:1056px;padding:46px 62px 34px;background:#fff;position:relative;
-    display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden}
-  .fl{position:absolute;z-index:0}
-  .fl-si{top:0;left:0;width:120px}
-  .fl-sd{top:0;right:0;width:150px}
-  .fl-id{bottom:0;right:0;width:140px}
-  .fl-ii{bottom:0;left:0;width:165px}
-  .hoja > *:not(.fl){position:relative;z-index:1}
+  .hoja{width:${cm(B.w)}px;height:${cm(B.h)}px;position:relative;background:#fff}
+  /* El banderín: terracota de la boda, con la punta recortada abajo. Fuera de
+     la figura queda blanco, que es por donde corta el impresor. */
+  .ban{position:absolute;inset:0;color:#FFF3E4;text-align:center;
+    background:linear-gradient(163deg,#7E2E1B 0%,#A8442A 48%,#8B3620 100%);
+    clip-path:polygon(0 0,100% 0,100% ${hastaPunta}%,50% 100%,0 ${hastaPunta}%);
+    display:flex;flex-direction:column;align-items:center;overflow:hidden}
+  /* Confeti dorado: el fondo fiestero, sin flores */
+  .conf{position:absolute;inset:0;pointer-events:none}
+  .conf i{position:absolute;display:block;background:#F2D79B;border-radius:1px}
+  .ban > *:not(.conf){position:relative;z-index:1;width:100%}
 
-  .crest{height:62px;width:auto}
-  .ayk{font-family:'Great Vibes',cursive;font-size:36px;color:#9A5B45;line-height:1.1;margin-top:8px}
-  /* El cargo, en una banda: es el título del papel y antes se perdía */
-  .cargo{display:inline-flex;align-items:center;gap:12px;margin-top:14px;
-    font-size:11px;letter-spacing:.32em;color:#B08C4F}
-  .cargo i{display:block;width:44px;height:1px;background:#D8C9AE}
-  .quien{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:44px;
-    color:#2A1D14;margin-top:12px;line-height:1.1}
-  .mesa{display:inline-block;margin-top:10px;padding:5px 18px;border-radius:999px;
-    background:#FBF3E8;border:1px solid #EADFC9;
-    font-size:12px;letter-spacing:.24em;color:#9A5B45}
+  /* Los 4 cm que se doblan sobre el cuello: van detrás, así que sólo el sello */
+  .doblez{height:${cm(B.doblez)}px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:6px;
+    border-bottom:2px dashed rgba(255,243,228,.38)}
+  .doblez img{height:${cm(1.5)}px;width:auto;filter:brightness(1.45) saturate(.6)}
+  .doblez span{font-size:11px;letter-spacing:.3em;color:rgba(255,243,228,.5)}
 
-  .intro{font-family:'Cormorant Garamond',Georgia,serif;font-size:17px;line-height:1.55;
-    color:#2A1D14;margin-top:22px;max-width:600px}
-  .intro em{font-style:italic;color:#9A5B45}
+  .cuerpo{flex:1;display:flex;flex-direction:column;align-items:center;
+    padding:${cm(0.55)}px ${cm(0.62)}px 0}
+  .quien{margin-top:${cm(0.5)}px}
+  .quien small{display:block;font-size:17px;font-weight:400;letter-spacing:.3em;color:#F2D79B}
+  .quien b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
+    font-size:${capitan.length > 18 ? 34 : 40}px;letter-spacing:.02em;line-height:1.12;margin-top:5px}
 
-  .lista-t{display:flex;align-items:center;gap:12px;width:100%;margin:20px 0 14px;
-    font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#B08C4F;white-space:nowrap}
-  .lista-t i{flex:1;height:1px;background:#EADFC9}
+  .cargo{font-size:16px;letter-spacing:.26em;color:rgba(255,243,228,.85);margin-top:${cm(0.42)}px}
+  /* «MESA» y el número en el mismo renglón: el número manda y la palabra lo
+     acompaña, que es como se lee de lejos. */
+  .num{display:flex;align-items:baseline;justify-content:center;gap:10px;margin-top:4px}
+  .num small{font-family:Jost,system-ui,sans-serif;font-size:22px;font-weight:400;
+    letter-spacing:.24em;color:#F2D79B}
+  .num span{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
+    font-size:${cm(1.45)}px;line-height:.9;color:#FFF3E4}
 
-  ol{list-style:none;width:100%;text-align:left}
-  ol li{display:flex;gap:14px;align-items:flex-start;margin-bottom:13px}
-  .ic{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:#FBF3E8;
-    border:1px solid #EADFC9;display:flex;align-items:center;justify-content:center}
-  .ic svg{width:17px;height:17px;fill:none;stroke:#B08C4F;stroke-width:1.6;
-    stroke-linecap:round;stroke-linejoin:round}
-  ol b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    font-size:17.5px;color:#2A1D14;line-height:1.3}
-  ol span{display:block;font-size:12.5px;line-height:1.5;color:#6B5B4B;margin-top:3px}
+  .por{font-size:18.5px;font-weight:300;line-height:1.45;letter-spacing:.04em;
+    margin-top:${cm(0.46)}px;color:rgba(255,243,228,.94)}
+  .lema{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:35px;
+    letter-spacing:.04em;color:#F2D79B;margin-top:${cm(0.34)}px;line-height:1.12}
 
-  /* La canción, en su propio realce: es el único dato de la tarjeta que cambia
-     de mesa a mesa y el que el capitán va a buscar. */
-  .cancion{display:flex;align-items:center;gap:10px;margin:7px 0 5px;padding:9px 14px;
-    background:#FBF3E8;border-left:3px solid #C8A96E;border-radius:0 8px 8px 0}
-  .cancion svg{width:15px;height:15px;flex-shrink:0;fill:none;stroke:#9A5B45;stroke-width:1.6;
-    stroke-linecap:round;stroke-linejoin:round}
-  .cancion em{font-family:'Cormorant Garamond',Georgia,serif;font-style:normal;font-weight:600;
-    font-size:18px;color:#9A5B45;letter-spacing:.01em}
-  .cancion.vacia em{font-family:Jost,system-ui,sans-serif;font-weight:300;font-size:10.5px;
-    letter-spacing:.14em;text-transform:uppercase;color:#C0B3A3;
-    border-bottom:1px solid #D8C9AE;padding-bottom:8px;flex:1}
+  .der{margin-top:${cm(0.42)}px;display:flex;flex-direction:column;gap:${cm(0.28)}px;width:100%}
+  .der p{font-size:18px;font-weight:400;line-height:1.4;letter-spacing:.05em;
+    padding:${cm(0.24)}px ${cm(0.2)}px;border:1px solid rgba(242,215,155,.45);border-radius:6px;
+    background:rgba(255,243,228,.07)}
+  .der b{display:block;font-size:13.5px;letter-spacing:.24em;color:#F2D79B;margin-bottom:5px}
 
-  .cierre{font-family:'Great Vibes',cursive;font-size:30px;color:#9A5B45;margin-top:6px}
-  .pie{font-size:10.5px;letter-spacing:.18em;color:#A2917F;padding-top:12px;margin-top:8px;
-    border-top:1px solid #D8C9AE;width:440px;white-space:nowrap}
+  .cancion{margin-top:${cm(0.42)}px;width:100%}
+  .cancion b{display:block;font-size:13.5px;letter-spacing:.24em;color:#F2D79B;margin-bottom:5px}
+  .cancion span{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
+    font-size:${cancion.length > 26 ? 23 : 28}px;line-height:1.2;color:#FFF3E4}
+  .cancion.vacia span{border-bottom:1px solid rgba(242,215,155,.5);min-height:26px}
+
+  /* La firma baja hasta donde empieza la punta: con más aire, el triángulo
+     quedaba vacío y el banderín se veía cortado a la mitad. */
+  .firma{margin-top:auto;padding-bottom:${cm(B.punta * 0.62)}px}
+  .firma i{display:block;width:${cm(2.2)}px;height:1px;background:rgba(242,215,155,.5);
+    margin:0 auto ${cm(0.26)}px}
+  .firma span{font-size:13px;letter-spacing:.24em;color:rgba(255,243,228,.72)}
+  /* Un rombo dentro de la punta, para que el triángulo no quede mudo */
+  .firma u{display:block;width:11px;height:11px;background:#F2D79B;opacity:.75;
+    transform:rotate(45deg);margin:${cm(0.75)}px auto 0}
+</style></head><body><div class="hoja"><div class="ban">
+  <div class="conf">${confeti(mesa.nombre + capitan, 46, cm(B.w), cm(B.h))}</div>
+
+  <div class="doblez">
+    ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
+    <span>A &amp; K</span>
+  </div>
+
+  <div class="cuerpo">
+    <p class="quien"><small>QUERIDO</small><b>${esc(capitan.toUpperCase())}</b></p>
+    <p class="cargo">ERES EL CAPITÁN DE LA</p>
+    <p class="num"><small>MESA</small><span>${esc(numero.toUpperCase())}</span></p>
+
+    <p class="por">FUISTE ELEGIDO POR TU HISTORIAL DE SIEMPRE ANIMAR A LAS PERSONAS DE TU ALREDEDOR</p>
+    <p class="lema">HAZ LO TUYO<br>Y COMANDA</p>
+
+    <div class="der">
+      <p><b>TIENES DERECHO A</b>QUE NO QUEDE UN VASO VACÍO EN LA MESA</p>
+      <p><b>Y EL DEBER DE</b>QUE ESTA SEA LA MESA MÁS ANIMADA, POR ESCÁNDALO</p>
+    </div>
+
+    <div class="cancion${cancion ? '' : ' vacia'}">
+      <b>LA CANCIÓN DE TU MESA</b>
+      <span>${cancion ? esc(cancion.toUpperCase()) : ''}</span>
+    </div>
+
+    <div class="firma"><i></i><span>ANGELY &amp; KEVIN · 12 · IX · 2026</span><u></u></div>
+  </div>
+</div></div></body></html>`
+}
+
+// ─── Las tarjetas de agradecimiento ───
+//
+// Una por capitán, más chica y más cuadrada que el banderín, y repartidas en
+// una hoja A4 con marcas de corte: se imprimen de a ocho y se cortan.
+const GRACIAS = { w: 9, h: 6.5, cols: 2, filas: 4 }
+
+function htmlAgradecimientos(lote, arte, hoja, total) {
+  const G = GRACIAS
+  const tarjetas = lote.map(({ mesa, capitan }) => {
+    const numero = (mesa.nombre || '').replace(/^\s*mesa\s*/i, '').trim()
+    // «FREDY ALFONSO DE ALBA CASTRO» no entra al mismo cuerpo que «JOSÉ DE ALBA»
+    const cuerpo = capitan.length > 22 ? 23 : capitan.length > 16 ? 28 : 33
+    return `<div class="t" style="--n:${cuerpo}px">
+      <div class="conf">${confeti('gracias' + capitan, 22, cm(G.w), cm(G.h))}</div>
+      <div class="in">
+        ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
+        <p class="g">GRACIAS,</p>
+        <p class="n">${esc(capitan.toUpperCase())}</p>
+        <p class="m">POR COMANDAR LA MESA ${esc(numero.toUpperCase())}</p>
+        <p class="f">ANGELY &amp; KEVIN</p>
+      </div>
+    </div>`
+  }).join('')
+
+  // Los huecos que sobran en la última hoja se dejan vacíos, con su marca de
+  // corte: así las ocho posiciones caen siempre en el mismo sitio del pliego.
+  const vacias = Array.from({ length: G.cols * G.filas - lote.length },
+    () => '<div class="t vacia"></div>').join('')
+
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
+  .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#fff;padding:${cm(1.35)}px ${cm(1.5)}px;
+    display:flex;flex-direction:column}
+  .rejilla{display:grid;grid-template-columns:repeat(${G.cols},${cm(G.w)}px);
+    grid-auto-rows:${cm(G.h)}px;gap:${cm(0.35)}px;justify-content:center;align-content:start}
+  .t{position:relative;overflow:hidden;color:#FFF3E4;text-align:center;
+    background:linear-gradient(158deg,#7E2E1B 0%,#A8442A 50%,#8B3620 100%);
+    outline:1px dashed #D9C7A8;outline-offset:0}
+  .t.vacia{background:none}
+  .conf{position:absolute;inset:0}
+  .conf i{position:absolute;display:block;background:#F2D79B;border-radius:1px}
+  .in{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;padding:${cm(0.4)}px}
+  .in img{height:${cm(1.35)}px;width:auto;filter:brightness(1.45) saturate(.6);margin-bottom:6px}
+  .g{font-size:15px;letter-spacing:.32em;color:#F2D79B}
+  .n{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:var(--n);
+    line-height:1.1;color:#FFF3E4}
+  .m{font-size:14px;letter-spacing:.14em;color:rgba(255,243,228,.92);margin-top:5px}
+  .f{font-size:12.5px;letter-spacing:.24em;color:#F2D79B;margin-top:9px;
+    padding-top:8px;border-top:1px solid rgba(242,215,155,.45)}
+  .pie{margin-top:auto;text-align:center;font-size:11px;letter-spacing:.18em;color:#B9AC9C}
 </style></head><body><div class="hoja">
-  ${arte.si ? `<img class="fl fl-si" src="${arte.si}" alt="">` : ''}
-  ${arte.sd ? `<img class="fl fl-sd" src="${arte.sd}" alt="">` : ''}
-  ${arte.id ? `<img class="fl fl-id" src="${arte.id}" alt="">` : ''}
-  ${arte.ii ? `<img class="fl fl-ii" src="${arte.ii}" alt="">` : ''}
-  ${arte.logo ? `<img class="crest" src="${arte.logo}" alt="">` : ''}
-  <p class="ayk">Angely &amp; Kevin</p>
-  <p class="cargo"><i></i>CAPITÁN DE MESA<i></i></p>
-  <p class="quien">${esc(capitan)}</p>
-  <p class="mesa">${esc(mesa.nombre.toUpperCase())}</p>
-
-  <p class="intro">
-    Esto es más un <em>«te conocemos y sabemos que contigo la cosa prende»</em> que una
-    obligación. Por eso te elegimos como Capitán de Mesa en nuestro día. No es un cargo
-    serio, es un <em>«tú eres de los que hace que la fiesta funcione»</em>.
-  </p>
-
-  <p class="lista-t"><i></i>Sin presión, con toda la confianza<i></i></p>
-
-  <ol>
-    <li>${icono('cinta')}<div>
-      <b>Ponte la cinta de capitán y siéntete el jefe de la mesa.</b>
-      <span>Como en el fútbol: el capitán da el ejemplo, pero también disfruta.</span>
-    </div></li>
-    <li>${icono('baile')}<div>
-      <b>Anima a tu mesa a bailar.</b>
-      <span>Cuando suene la música, tú das el primer paso. Si ves a alguien tímido, invítalo,
-      jálalo a la pista, pero sin obligar: que sea por buena energía.</span>
-    </div></li>
-    <li>${icono('botella')}<div>
-      <b>Ayuda a que las botellas circulen.</b>
-      <span>Sirve, comparte, brinda. Y si al final sobra un poco… tú sabes que eso no se
-      desperdicia.</span>
-    </div></li>
-    <li>${icono('cancion')}<div>
-      <b>La canción de tu mesa.</b>
-      <p class="cancion${cancion ? '' : ' vacia'}">
-        <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        <em>${cancion ? esc(cancion) : 'escribe aquí la canción de la mesa'}</em>
-      </p>
-      <span>Cuando el DJ la suelte, nos haría mucha ilusión ver a tu mesa reaccionar como si
-      fuera su himno: gritos, palmas, baile, lo que salga de forma natural.</span>
-    </div></li>
-    <li>${icono('brindis')}<div>
-      <b>Brindis cuando digan «¡Vivan Angely y Kevin!»</b>
-      <span>Copas arriba en tu mesa y un brindis rápido. Después, si hay música, a seguir
-      disfrutando en la pista.</span>
-    </div></li>
-    <li>${icono('foto')}<div>
-      <b>Si puedes, guarda una foto o un video.</b>
-      <span>Nos encantaría después ver cómo tu mesa bailó, cómo te pusiste la cinta y cómo
-      disfrutaron.</span>
-    </div></li>
-  </ol>
-
-  <p class="cierre">¡Nos vemos en la pista!</p>
-  <p class="pie">12 DE SEPTIEMBRE DE 2026 · CASONA DEL PRADO</p>
+  <div class="rejilla">${tarjetas}${vacias}</div>
+  <p class="pie">ANGELY &amp; KEVIN · TARJETAS DE AGRADECIMIENTO · HOJA ${hoja} DE ${total} · CORTAR POR LA LÍNEA</p>
 </div></body></html>`
 }
 
@@ -538,19 +583,31 @@ async function main() {
       console.log(`  ✓ ${nombre}`)
     }
 
-    // Una tarjeta por capitán elegido. Las mesas sin capitán no sacan tarjeta:
-    // una con el nombre en blanco no se puede entregar.
+    // Un banderín por capitán elegido. Las mesas sin capitán no sacan ninguno:
+    // uno con el nombre en blanco no se puede entregar.
     const conCapitan = imprimibles.filter(m => m.capitan_id && nombreDe.get(m.capitan_id))
     if (conCapitan.length) {
       await mkdir(join(SALIDA, 'capitanes'), { recursive: true })
       for (const [i, m] of conCapitan.entries()) {
         const quien = nombreDe.get(m.capitan_id)
         const nombre = `${String(i + 1).padStart(2, '0')}_${slug(quien)}.png`
-        await captura(htmlCapitan(m, quien, arte), join(SALIDA, 'capitanes', nombre))
+        await captura(htmlBanderin(m, quien, arte), join(SALIDA, 'capitanes', nombre))
         console.log(`  ✓ capitanes/${nombre}`)
       }
+
+      // Las de agradecimiento, repartidas de a ocho en hojas A4 con marca de corte
+      await mkdir(join(SALIDA, 'agradecimiento'), { recursive: true })
+      const porHoja = GRACIAS.cols * GRACIAS.filas
+      const todas = conCapitan.map(m => ({ mesa: m, capitan: nombreDe.get(m.capitan_id) }))
+      const hojas = Math.ceil(todas.length / porHoja)
+      for (let h = 0; h < hojas; h++) {
+        const lote = todas.slice(h * porHoja, (h + 1) * porHoja)
+        const nombre = `hoja-${h + 1}.png`
+        await captura(htmlAgradecimientos(lote, arte, h + 1, hojas), join(SALIDA, 'agradecimiento', nombre))
+        console.log(`  ✓ agradecimiento/${nombre}`.padEnd(40), `${lote.length} tarjeta(s)`)
+      }
     } else {
-      console.log('  · Sin capitanes elegidos todavía: no se generó ninguna tarjeta.')
+      console.log('  · Sin capitanes elegidos todavía: no se generó ningún banderín.')
     }
     const sinCancion = conCapitan.filter(m => !(m.notas || '').trim()).length
 
@@ -561,10 +618,15 @@ async function main() {
 Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
 Generado el ${cuando}
 
-  capitanes/NN_*.png         Una tarjeta por capitán, para imprimir y entregar:
-                             su nombre, su mesa y el encargo. La canción de cada
-                             mesa sale de la columna «notas» de esa mesa; si está
-                             vacía, la tarjeta deja el renglón para escribirla.
+  capitanes/NN_*.png         EL BANDERÍN de cada capitán, para colgar del cuello:
+                             9 × 20 cm a 300 dpi. Los primeros 4 cm son el
+                             doblez —van marcados con la línea de puntos— y
+                             abajo termina en punta. Se imprime y se recorta por
+                             la figura; lo blanco de alrededor es el descarte.
+                             La canción sale de la columna «notas» de la mesa.
+  agradecimiento/hoja-N.png  Las tarjetas de agradecimiento, de 9 × 6,5 cm,
+                             repartidas de a ocho en una hoja A4 a 300 dpi.
+                             Se cortan por la línea de puntos.
   bienvenida-pendon-75x175.png
                              EL MISMO AFICHE EN PENDÓN: 75 × 175 cm exactos a
                              150 dpi (4430 × 10334 px), a dos columnas, con

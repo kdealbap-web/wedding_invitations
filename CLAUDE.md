@@ -682,34 +682,55 @@ reconocen antes de leerlo.
 > herramientas**. Si tocas una, toca la otra: las constantes de `AFICHE` y el CSS
 > de `.hoja` están puestos para dar el mismo resultado.
 
-#### La tarjeta del capitán
+#### El banderín del capitán
 
-Una por capitán, tamaño carta, para imprimir y entregarle en mano. No es un papel
-de trabajo: es **el encargo**, con el texto que escribieron los novios, sobre la
-misma participación que el afiche —blanco, escudo, dos esquinas de acuarela—.
+Uno por capitán. **No es una hoja: cuelga del cuello**, así que es una tira de
+**9 × 20 cm a 300 dpi** con esta anatomía, que vive en la constante `BANDERIN`:
 
-- Lleva **un icono por encargo** —cinta, música, botella, disco, copas, cámara—
-  dibujados inline como el resto del proyecto, el nombre de la mesa en una
-  cápsula y la canción sobre un realce con filete dorado. La primera versión era
-  un folio de texto corrido y se leía como un reglamento, que es justo lo
-  contrario de lo que dice.
-- Sólo salen las mesas **con capitán elegido**: una tarjeta con el nombre en
-  blanco no se puede entregar.
-- **La canción de la mesa sale de `mesas.notas`**, que estaba sin usar. Se
-  escribe en el panel desde tres sitios: la lista **«Canciones de las mesas»**
-  —la cola para llenarlas todas de una sentada, Enter salta a la siguiente—, el
-  pie de cada mesa en la vista Detalle, y la mesa abierta a pantalla completa.
-  Enter no guarda por su cuenta en ninguna: mueve el foco, y es el `blur` del
-  campo que se deja el que escribe. Guardar en los dos sitios escribiría cada
-  canción dos veces. Si está
-  vacía, la tarjeta imprime el renglón rotulado «escribe aquí la canción de la
-  mesa» en vez de esconder el punto: es un dato que se completa a mano el mismo
-  día, y el LEEME dice cuántas faltan.
-- Va **sólo en el script de consola** (`npm run mesas-img`), no en el botón del
-  panel. Es texto largo maquetado —seis apartados con sangría y numeración—, y
-  rehacerlo en `<canvas>` sería un motor de composición de texto para un papel
-  que se imprime una vez. Si algún día hace falta desde la tableta, el camino es
-  mover la tarjeta a HTML y capturarla, no dibujarla a mano.
+```
+  ├─ 4 cm   doblez, marcado con línea de puntos. Va detrás del cuello,
+  │         así que sólo lleva el escudo y el sello «A & K».
+  ├─ 11,5   el encargo
+  └─ 4,5    la punta, recortada con clip-path
+```
+
+Lo blanco de alrededor de la figura es descarte: se imprime y se recorta por el
+borde del color.
+
+- **Sin flores y sin letra chica.** Esto se lee de lejos, de noche y con la
+  fiesta encima: todo en mayúscula, sobre el terracota de la boda con confeti
+  dorado. Las acuarelas de la participación son para el papel que se mira de
+  cerca; aquí estorbaban.
+- El **confeti es repetible**: sale de una semilla con el nombre de la mesa y el
+  del capitán, así que regenerar no cambia lo que ya se mandó a imprimir.
+- El texto es el que escribieron los novios y va **completo o no va**: quién es,
+  qué mesa comanda, por qué lo eligieron, «HAZ LO TUYO Y COMANDA», sus dos
+  derechos y la canción de su mesa. Nada de iconos ni de apartados numerados —
+  eso era la versión hoja, y se leía como un reglamento.
+- El nombre **baja de cuerpo si pasa de 18 caracteres**, y la canción si pasa de
+  26: son los dos únicos datos que cambian de largo entre un capitán y otro.
+
+#### Las tarjetas de agradecimiento
+
+Una por capitán, **9 × 6,5 cm**, repartidas de a **ocho en una hoja A4 a 300 dpi**
+con línea de corte punteada. Once capitanes son dos hojas; los huecos que sobran
+en la última se dejan vacíos **con su marca**, para que las ocho posiciones caigan
+siempre en el mismo sitio del pliego y el corte sirva para las dos hojas.
+
+Mismo fondo que el banderín. El nombre tiene tres cuerpos según su largo, porque
+«FREDY ALFONSO DE ALBA CASTRO» y «JOSÉ DE ALBA» no entran igual.
+
+> El texto de agradecimiento —«GRACIAS, [NOMBRE] · POR COMANDAR LA MESA N»— lo
+> escribí yo: es lo único de estas piezas que no salió de los novios. Si lo
+> cambian, está en `htmlAgradecimientos()`.
+
+#### Las dos piezas van sólo por consola
+
+`npm run mesas-img` las genera; el botón del panel no. Son maquetación densa en
+HTML —figura recortada, confeti posicionado, imposición en pliego— y rehacerla en
+`<canvas>` sería escribir un motor de composición para papeles que se imprimen una
+vez. Si algún día hacen falta desde la tableta, el camino es capturar ese mismo
+HTML, no volver a dibujarlo.
 
 ### Los cupos viven en `src/admin/cupos.js`
 
