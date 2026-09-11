@@ -4,12 +4,11 @@
  *   npm run mesas-img
  *
  * Genera, en entrega/mesas/:
+ *   bienvenida.png             el afiche de la entrada: todas las mesas con sus
+ *                              invitados, sobre la plantilla de la participación
  *   00_plano-general.png       todas las mesas de un vistazo, con sus nombres
  *   hojas-de-trabajo/NN_*.png  una hoja por mesa para la wedding: nombres,
  *                              tarjeta de origen y capitán, tamaño carta
- *   bienvenida/NN_*.png        la hoja decorada que se pone sobre la mesa el
- *                              día de la fiesta, con la plantilla de la
- *                              tarjeta de participación
  *
  * Se dibuja en HTML y se captura con el Chrome ya instalado, igual que las
  * cartelas de las LED: así comparte tipografías y paleta con el resto de la
@@ -27,7 +26,15 @@ import { join, resolve } from 'node:path'
 import { nombreIncompleto } from '../src/admin/nombres.js'
 
 const SALIDA = resolve('entrega/mesas')
-const LOGO   = resolve('src/assets/img/logo_a&K.png')
+// El escudo y las cuatro esquinas de acuarela, recortadas de la participación.
+// Ver «El afiche de bienvenida» en CLAUDE.md.
+const ARTE = [
+  ['logo', resolve('src/assets/img/logo_a&K.png'), 'image/png'],
+  ['si',   resolve('src/assets/img/flor-sup-izq.jpg'), 'image/jpeg'],
+  ['sd',   resolve('src/assets/img/flor-sup-der.jpg'), 'image/jpeg'],
+  ['id',   resolve('src/assets/img/flor-inf-der.jpg'), 'image/jpeg'],
+  ['ii',   resolve('src/assets/img/flor-inf-izq.jpg'), 'image/jpeg'],
+]
 const CHROME = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
@@ -166,62 +173,80 @@ function htmlMesa(mesa, gente, cuando) {
 </div></body></html>`
 }
 
-// ─── Hoja de bienvenida, una por mesa ───
+// ─── El afiche de bienvenida ───
 //
-// La que se pone SOBRE la mesa el día de la fiesta. Va sobre la plantilla de la
-// tarjeta de participación —marfil, filete interior doble, el escudo, Cormorant
-// y Great Vibes— porque es el mismo papel que los invitados ya recibieron.
+// UNA sola lámina con todas las mesas, la que se pone en la entrada del salón.
+// Antes era una hoja por mesa y no servía: el invitado que llega no sabe cuál
+// es la suya, que es justo lo que viene a averiguar.
 //
-// Aquí los nombres flojos NO salen en rojo: esta hoja la leen ellos. Los rojos
-// se miran en la hoja de trabajo, que es la que revisa la wedding.
-function htmlBienvenida(mesa, gente, logo) {
-  const nombres = gente.length
-    ? gente.map(p => `<li>${esc(p.nombre)}${p.manda ? '<i title="Capitán de mesa">&#9733;</i>' : ''}</li>`).join('')
-    : '<li class="vacia">Esta mesa todavía no tiene invitados asignados.</li>'
-  const apretada = gente.length > 8
+// Va sobre la participación: el mismo blanco, las mismas cuatro esquinas de
+// acuarela recortadas de ella y el mismo escudo. Es el papel que ya recibieron
+// en la mano, y por eso se reconoce antes de leerlo.
+//
+// Los nombres flojos NO salen en rojo: esta lámina la leen los invitados. Los
+// rojos se miran en las hojas de trabajo.
+function htmlAfiche(mesas, porMesa, arte) {
+  const cols = mesas.length <= 6 ? 3 : 4
+  const bloques = mesas.map(m => {
+    const gente = porMesa.get(m.id) || []
+    const nombres = gente.length
+      ? gente.map(p => `<li>${esc(p.nombre)}</li>`).join('')
+      : '<li class="vacia">—</li>'
+    return `<section class="m"><h2>${esc(m.nombre)}</h2><ul>${nombres}</ul></section>`
+  }).join('')
+
+  const flor = (k, cls) => arte[k] ? `<img class="fl ${cls}" src="${arte[k]}" alt="">` : ''
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
-  /* La paleta clara de tarjeta.css. Va en hex y no en oklch() para no depender
-     de la versión del Chrome que capture. */
-  .hoja{width:816px;height:1056px;padding:92px 76px 64px;background:#FBF5EA;
-    display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
-  /* Filete interior doble: el marco clásico de las participaciones */
-  .hoja::before{content:'';position:absolute;inset:30px;border:1.5px solid #D8C9AE}
-  .hoja::after{content:'';position:absolute;inset:38px;border:.8px solid rgba(176,140,79,.45)}
-  .crest{height:104px;width:auto;margin-bottom:34px}
-  .bien{font-family:'Cormorant Garamond',Georgia,serif;font-weight:300;font-size:38px;
-    letter-spacing:.3em;text-indent:.3em;color:#2A1D14}
-  .verso{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:19px;
-    color:#8A7866;line-height:1.5;margin-top:14px}
-  .rule{display:flex;align-items:center;gap:14px;margin:34px 0 30px;width:70%}
+  /* Blanco puro, como la participación: las esquinas florales vienen de ella
+     recortadas sobre blanco, así que cualquier otro fondo dejaría ver el
+     rectángulo de cada recorte. */
+  .hoja{width:2000px;background:#fff;padding:110px 250px 90px;position:relative;
+    display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden}
+  .fl{position:absolute;z-index:0}
+  .fl-si{top:0;left:0;width:255px}
+  .fl-sd{top:0;right:0;width:332px}
+  .fl-id{bottom:0;right:0;width:296px}
+  .fl-ii{bottom:0;left:0;width:361px}
+  .hoja > *:not(.fl){position:relative;z-index:1}
+
+  .crest{width:auto;height:150px;margin-bottom:38px}
+  .bien{font-family:'Cormorant Garamond',Georgia,serif;font-weight:300;font-size:58px;
+    letter-spacing:.34em;text-indent:.34em;color:#2A1D14;line-height:1}
+  .verso{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:26px;
+    color:#8A7866;line-height:1.55;margin-top:22px}
+  .rule{display:flex;align-items:center;gap:18px;margin:44px 0 10px;width:420px}
   .rule i{flex:1;height:1px;background:#D8C9AE}
-  .rule b{color:#B08C4F;font-size:11px}
-  h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:400;font-size:54px;
-    letter-spacing:-.01em;color:#2A1D14}
-  ol{list-style:none;margin-top:26px;flex:1}
-  ol li{font-family:'Cormorant Garamond',Georgia,serif;font-size:${apretada ? 23 : 25}px;
-    line-height:${apretada ? 1.42 : 1.56};color:#2A1D14}
-  ol li i{color:#B08C4F;font-size:.6em;font-style:normal;vertical-align:middle;margin-left:8px}
-  ol li.vacia{color:#C0B3A3;font-style:italic;font-size:21px}
-  .nota{font-size:10px;color:#C0B3A3;letter-spacing:.1em;margin-bottom:10px}
-  /* Ancha para que «Angely & Kevin» quepa en un renglón: partida en dos deja
-     de leerse como una firma. */
-  .firma{border-top:1px solid #D8C9AE;padding-top:20px;width:300px}
-  .firma .ayk{font-family:'Great Vibes',cursive;font-size:38px;color:#9A5B45;
-    line-height:1.1;white-space:nowrap}
-  .firma .cuando{font-size:11px;letter-spacing:.2em;color:#8A7866;margin-top:10px;white-space:nowrap}
+  .rule b{color:#B08C4F;font-size:13px}
+  .guia{font-size:13px;letter-spacing:.26em;text-transform:uppercase;color:#A2917F;margin-bottom:46px}
+
+  .mesas{display:grid;grid-template-columns:repeat(${cols},1fr);gap:54px 40px;width:100%}
+  .m h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:34px;
+    color:#9A5B45;letter-spacing:.01em;padding-bottom:10px;margin-bottom:14px;
+    border-bottom:1px solid #E3D9CB}
+  .m ul{list-style:none}
+  .m li{font-family:'Cormorant Garamond',Georgia,serif;font-size:23px;line-height:1.48;
+    color:#2A1D14}
+  .m li.vacia{color:#C0B3A3}
+
+  /* Sitio para que el ramo de abajo no toque la última fila de mesas */
+  .pie{margin-top:96px;padding-top:26px;border-top:1px solid #D8C9AE;width:520px}
+  .pie .ayk{font-family:'Great Vibes',cursive;font-size:52px;color:#9A5B45;line-height:1.1;
+    white-space:nowrap}
+  .pie .cuando{font-size:14px;letter-spacing:.22em;color:#8A7866;margin-top:14px}
 </style></head><body><div class="hoja">
-  ${logo ? `<img class="crest" src="${logo}" alt="">` : ''}
+  ${flor('si', 'fl-si')}${flor('sd', 'fl-sd')}${flor('id', 'fl-id')}${flor('ii', 'fl-ii')}
+  ${arte.logo ? `<img class="crest" src="${arte.logo}" alt="">` : ''}
   <p class="bien">BIENVENIDOS</p>
-  <p class="verso">Gracias por acompañarnos en el día<br>más importante de nuestras vidas</p>
+  <p class="verso">Gracias por acompañarnos en el día más importante de nuestras vidas.<br>
+    Guardamos un sitio para cada uno de ustedes.</p>
   <div class="rule"><i></i><b>&#9670;</b><i></i></div>
-  <h1>${esc(mesa.nombre)}</h1>
-  <ol>${nombres}</ol>
-  ${gente.some(p => p.manda) ? '<p class="nota">&#9733;&nbsp; capitán de mesa</p>' : ''}
-  <div class="firma">
+  <p class="guia">Busca tu nombre</p>
+  <div class="mesas">${bloques}</div>
+  <div class="pie">
     <p class="ayk">Angely &amp; Kevin</p>
-    <p class="cuando">12 · IX · 2026</p>
+    <p class="cuando">12 DE SEPTIEMBRE DE 2026 · CASONA DEL PRADO</p>
   </div>
 </div></body></html>`
 }
@@ -273,9 +298,15 @@ async function main() {
   // El escudo viaja como data URI: setContent no tiene una URL base contra la
   // que resolver una ruta de disco, así que un file:// dentro de ese about:blank
   // no carga. Si falta el archivo, la hoja sale sin él y se avisa.
-  let logo = null
-  if (existsSync(LOGO)) logo = `data:image/png;base64,${(await readFile(LOGO)).toString('base64')}`
-  else console.warn('  Ojo: no encontré el escudo en', LOGO)
+  // El escudo y las cuatro esquinas florales viajan como data URI: setContent no
+  // tiene una URL base contra la que resolver una ruta de disco, así que un
+  // file:// dentro de ese about:blank no carga. Lo que falte, se avisa y el
+  // afiche sale sin ello.
+  const arte = {}
+  for (const [k, f, mime] of ARTE) {
+    if (existsSync(f)) arte[k] = `data:${mime};base64,${(await readFile(f)).toString('base64')}`
+    else console.warn('  Ojo: no encontré', f)
+  }
 
   const browser = await puppeteer.launch({
     executablePath: nav, headless: 'shell',
@@ -297,15 +328,16 @@ async function main() {
     await captura(htmlPlano(ms.data, porMesa, cuando), join(SALIDA, '00_plano-general.png'))
     console.log('  ✓ 00_plano-general.png')
 
-    // Dos juegos en dos carpetas: se mandan a imprimir por separado y en
-    // papeles distintos. Mezclados en la raíz había que ir eligiendo archivo
-    // por archivo cuál era cuál.
+    // El afiche es UNO solo y con todas las mesas: el invitado que llega no sabe
+    // cuál es la suya. Va aparte de las hojas de trabajo, que son otro papel y
+    // se mandan a imprimir por separado.
+    await captura(htmlAfiche(ms.data, porMesa, arte), join(SALIDA, 'bienvenida.png'))
+    console.log('  ✓ bienvenida.png')
+
     await mkdir(join(SALIDA, 'hojas-de-trabajo'), { recursive: true })
-    await mkdir(join(SALIDA, 'bienvenida'), { recursive: true })
     for (const [i, m] of ms.data.entries()) {
       const nombre = `${String(i + 1).padStart(2, '0')}_${slug(m.nombre)}.png`
       await captura(htmlMesa(m, porMesa.get(m.id), cuando), join(SALIDA, 'hojas-de-trabajo', nombre))
-      await captura(htmlBienvenida(m, porMesa.get(m.id), logo), join(SALIDA, 'bienvenida', nombre))
       console.log(`  ✓ ${nombre}`)
     }
 
@@ -316,14 +348,15 @@ async function main() {
 Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
 Generado el ${cuando}
 
-  00_plano-general.png       Todas las mesas de un vistazo.
+  bienvenida.png             EL AFICHE DE LA ENTRADA: todas las mesas con sus
+                             invitados, sobre la participación —el escudo, las
+                             esquinas de acuarela y el mismo blanco—. Es la
+                             lámina grande que se monta en el atril. No marca
+                             nada en rojo: la leen los invitados.
+  00_plano-general.png       Todas las mesas de un vistazo, para la wedding.
   hojas-de-trabajo/NN_*.png  Una hoja por mesa para la wedding y el salón:
                              nombres, de qué tarjeta viene cada uno y el
                              capitán. Marca en rojo lo que falta por arreglar.
-  bienvenida/NN_*.png        La que se pone SOBRE la mesa el día de la fiesta:
-                             el escudo, BIENVENIDOS y los nombres, sobre la
-                             misma plantilla de la participación. Ésta no marca
-                             nada en rojo — la leen los invitados.
 
   Mesas ...... ${ms.data.length}
   Sentados ... ${sentados}
@@ -334,7 +367,7 @@ Los nombres en rojo no sirven para una tarjeta de mesa: son genéricos
 /admin/mesas, con doble clic sobre la ficha.
 `, 'utf8')
 
-    console.log(`\n  ${ms.data.length * 2 + 1} imágenes en ${SALIDA}`)
+    console.log(`\n  ${ms.data.length + 2} imágenes en ${SALIDA}`)
     if (faltan) console.warn(`  Ojo: ${faltan} nombre(s) por completar, marcados en rojo.\n`)
     else console.log('  Todos los nombres completos.\n')
   } finally {

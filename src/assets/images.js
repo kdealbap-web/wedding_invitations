@@ -26,6 +26,15 @@ import p5825 from './img/CANO5825.JPG'
 // cine/ desde disco, que no pasa por este barrel.
 import e6174 from './img/IMG_6174.jpg'
 import e6181 from './img/IMG_6181.jpg'
+// Las cuatro esquinas de acuarela, recortadas de la participación impresa
+// (src/participacion/Participacion-Angely-y-Kevin-celular (1).png) con sharp.
+// Las usa el afiche de bienvenida del panel de mesas. En JPEG y no en PNG
+// porque no necesitan alfa —se componen sobre blanco puro, igual que en la
+// participación— y así pesan 186 kB en vez de 1,1 MB.
+import florSupIzq from './img/flor-sup-izq.jpg'
+import florSupDer from './img/flor-sup-der.jpg'
+import florInfDer from './img/flor-inf-der.jpg'
+import florInfIzq from './img/flor-inf-izq.jpg'
 import iglesia from './img/iglesia.jpg'
 import casonaSalon from './img/casona_salon.jpeg'
 import logoWedding from './img/logo_a&K.png'
@@ -35,5 +44,6 @@ export {
   p5847, p5860, p5875, p5887, p5927,
   p5807, p5824, p5762, p5842, p5825,
   e6174, e6181,
+  florSupIzq, florSupDer, florInfDer, florInfIzq,
   iglesia, casonaSalon, logoWedding,
 }

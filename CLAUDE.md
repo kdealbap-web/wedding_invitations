@@ -617,25 +617,42 @@ empaqueta en ZIP con `jszip` — el navegador no deja descargar doce archivos
 sueltos sin aprobar cada uno. Son dos herramientas distintas a propósito, pero
 comparten paleta, tipografías y el criterio de qué nombre está incompleto.
 
-Cada mesa sale **dos veces**, en dos carpetas, porque son dos papeles distintos
-que se mandan a imprimir por separado:
+Salen **dos papeles distintos**, que se mandan a imprimir por separado:
 
-- `hojas-de-trabajo/` — la hoja sobria de siempre: nombres, de qué tarjeta viene
+- `bienvenida.png` — **el afiche de la entrada**, uno solo y con todas las mesas.
+- `hojas-de-trabajo/` — la hoja sobria por mesa: nombres, de qué tarjeta viene
   cada uno, el capitán en la cabecera y **en rojo lo que falta por arreglar**. La
   usan la wedding y el salón.
-- `bienvenida/` — la que se pone **sobre la mesa** el día de la fiesta. Va sobre
-  la plantilla de la tarjeta de participación —marfil, filete interior doble, el
-  escudo `logo_a&K.png`, Cormorant y Great Vibes—: es el mismo papel que los
-  invitados ya recibieron en la mano. Lleva **BIENVENIDOS**, el nombre de la mesa
-  y los nombres, con ★ en el capitán.
 
-> La hoja de bienvenida **no marca en rojo** los nombres flojos: ésa la leen los
-> invitados. Los rojos se miran en la hoja de trabajo, y el LEEME dice cuántos
-> quedan. Si añades un aviso nuevo, decide en cuál de las dos va.
+#### El afiche de bienvenida
 
-Diez personas es la mesa más llena que hay y entra justa: la lista baja a 23 px
-a partir de nueve. **Si alargas el verso o subes el escudo, vuelve a mirar la
-mesa más llena.**
+Es la lámina grande del atril de la entrada, así que **lleva todas las mesas en
+una sola hoja**: el invitado que llega no sabe cuál es la suya —es justo lo que
+viene a averiguar—, y una hoja por mesa no le sirve de nada hasta que ya está
+sentado.
+
+Va sobre la participación impresa, no sobre una plantilla nueva: el mismo blanco
+puro, el escudo `logo_a&K.png` y **las cuatro esquinas de acuarela recortadas de
+ella misma**. Es el papel que los invitados ya recibieron en la mano, así que lo
+reconocen antes de leerlo.
+
+- Las flores son `src/assets/img/flor-{sup,inf}-{izq,der}.jpg`, recortadas con
+  `sharp` de `src/participacion/Participacion-Angely-y-Kevin-celular (1).png` y
+  con los restos de texto de la participación tapados en blanco. Van en **JPEG y
+  sin alfa** —186 kB entre las cuatro, contra 1,1 MB en PNG— porque se componen
+  sobre blanco puro, igual que en el original. **Por eso el afiche es blanco y no
+  marfil:** sobre cualquier otro fondo se vería el rectángulo de cada recorte.
+- Cuatro columnas (tres si hay seis mesas o menos) y el alto crece con las filas.
+  Cada fila mide lo que su mesa más llena, o las columnas se desalinean.
+- **No marca en rojo** los nombres flojos: esta lámina la leen los invitados. Los
+  rojos se miran en las hojas de trabajo, y el LEEME dice cuántos quedan. Si
+  añades un aviso nuevo, decide en cuál de los dos papeles va.
+- Tampoco lleva capitán: al invitado no le dice nada. Va en la hoja de trabajo.
+
+> `aficheBienvenida()` (canvas, `src/admin/imagenes.js`) y `htmlAfiche()` (HTML,
+> `scripts/export-mesas-img.mjs`) son **la misma composición dibujada con dos
+> herramientas**. Si tocas una, toca la otra: las constantes de `AFICHE` y el CSS
+> de `.hoja` están puestos para dar el mismo resultado.
 
 ### Los cupos viven en `src/admin/cupos.js`
 

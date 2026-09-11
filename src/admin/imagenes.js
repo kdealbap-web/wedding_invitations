@@ -8,7 +8,7 @@
 // Comparte con el script la paleta, las tipografías y el criterio de qué
 // nombre está incompleto; lo que cambia es la herramienta de dibujo.
 import { supabase } from '../lib/supabase'
-import { logoWedding } from '../assets/images'
+import { logoWedding, florSupIzq, florSupDer, florInfDer, florInfIzq } from '../assets/images'
 import { nombreIncompleto } from './nombres'
 
 const TINTA  = '#2A1D14'
@@ -45,13 +45,20 @@ async function esperarFuentes() {
   ])
 }
 
-/** El escudo de la boda. Si no carga, la hoja sale igual: no es un dato. */
-const cargarLogo = () => new Promise(res => {
+/** Una imagen del afiche. Si no carga, se dibuja sin ella: no es un dato. */
+const cargarImagen = src => new Promise(res => {
   const img = new Image()
   img.onload = () => res(img)
   img.onerror = () => res(null)
-  img.src = logoWedding
+  img.src = src
 })
+
+/** El escudo y las cuatro esquinas florales, en paralelo. */
+async function cargarArte() {
+  const [logo, si, sd, id, ii] = await Promise.all(
+    [logoWedding, florSupIzq, florSupDer, florInfDer, florInfIzq].map(cargarImagen))
+  return { logo, si, sd, id, ii }
+}
 
 function lienzo(w, h) {
   const c = document.createElement('canvas')
@@ -165,96 +172,118 @@ async function hojaMesa(mesa, gente, cuando) {
   return png(c)
 }
 
-// ─── Hoja de bienvenida, una por mesa ───
+// ─── El afiche de bienvenida ───
 //
-// Ésta es la que se pone sobre la mesa el día de la fiesta, así que no es la
-// hoja de trabajo: va sobre la plantilla de la tarjeta de participación
-// —marfil, filete interior doble, el escudo, Cormorant y Great Vibes— porque
-// es el mismo papel que ya recibieron en la mano.
+// UNA sola lámina con todas las mesas, la que se monta en la entrada del salón.
+// Antes era una hoja por mesa y no servía: el invitado que llega no sabe cuál
+// es la suya, que es justo lo que viene a averiguar.
 //
-// A diferencia de la hoja de trabajo, aquí los nombres flojos NO se marcan en
-// rojo: esta hoja la leen los invitados. Los rojos se miran en la otra, que es
-// la que revisa la wedding, y el LEEME dice cuántos quedan.
-async function hojaBienvenida(mesa, gente, logo) {
-  const { c, x } = lienzo(CARTA.w, CARTA.h)
-  const cx = CARTA.w / 2
+// Va sobre la participación: el mismo blanco, el mismo escudo y las cuatro
+// esquinas de acuarela recortadas de ella. Es el papel que los invitados ya
+// recibieron en la mano, así que se reconoce antes de leerlo.
+//
+// Espejo de htmlAfiche() en scripts/export-mesas-img.mjs — misma composición,
+// otra herramienta de dibujo. Si cambias una, cambia la otra.
+//
+// Los nombres flojos NO salen en rojo: esta lámina la leen los invitados. Los
+// rojos se miran en las hojas de trabajo, que son las que revisa la wedding.
+const AFICHE = {
+  w: 2000, margen: 250,
+  cabecera: 640,     // del borde al primer título de mesa
+  linea: 34,         // alto de renglón de cada nombre
+  titulo: 62,        // alto del título de mesa con su filete
+  entreFilas: 54,
+  pie: 300,
+}
 
-  x.fillStyle = MARFIL
-  x.fillRect(0, 0, CARTA.w, CARTA.h)
+async function aficheBienvenida(mesas, porMesa, arte) {
+  const A = AFICHE
+  const cols = mesas.length <= 6 ? 3 : 4
+  const filas = []
+  for (let i = 0; i < mesas.length; i += cols) filas.push(mesas.slice(i, i + cols))
+  // Cada fila mide lo que su mesa más llena: así las columnas no se desalinean.
+  const altoFila = f => A.titulo + Math.max(1, ...f.map(m => (porMesa.get(m.id) || []).length)) * A.linea
+  const alto = A.cabecera + filas.reduce((t, f) => t + altoFila(f) + A.entreFilas, 0) - A.entreFilas + A.pie
 
-  // Filete interior doble: el marco clásico de las participaciones
-  x.strokeStyle = FILETE; x.lineWidth = 1.5
-  x.strokeRect(30, 30, CARTA.w - 60, CARTA.h - 60)
-  x.strokeStyle = 'rgba(176,140,79,.45)'; x.lineWidth = .8
-  x.strokeRect(38, 38, CARTA.w - 76, CARTA.h - 76)
+  const { c, x } = lienzo(A.w, alto)
+  const cx = A.w / 2
+  x.fillStyle = '#fff'
+  x.fillRect(0, 0, A.w, alto)
+
+  // Las cuatro esquinas, ancladas a los bordes. Vienen recortadas sobre blanco
+  // puro, así que se pegan opacas: sobre un fondo de otro color se les vería el
+  // rectángulo.
+  const flor = (img, ancho, dx, dy) => {
+    if (!img) return
+    const h = img.height * (ancho / img.width)
+    x.drawImage(img, dx === 0 ? 0 : A.w - ancho, dy === 0 ? 0 : alto - h, ancho, h)
+  }
+  flor(arte.si, 255, 0, 0)
+  flor(arte.sd, 332, 1, 0)
+  flor(arte.id, 296, 1, 1)
+  flor(arte.ii, 361, 0, 1)
 
   x.textAlign = 'center'
-  let y = 92
-
-  if (logo) {
-    const h = 104, w = logo.width * (h / logo.height)
-    x.drawImage(logo, cx - w / 2, y, w, h)
-    y += h + 44
-  } else {
-    y += 40
+  let y = 110
+  if (arte.logo) {
+    const h = 150, w = arte.logo.width * (h / arte.logo.height)
+    x.drawImage(arte.logo, cx - w / 2, y, w, h)
   }
+  y += 150 + 96
 
-  // El espaciado de BIENVENIDOS va con espacios y no con letterSpacing: es lo
-  // que ya hace el resto del módulo y no depende de qué navegador dibuje.
-  x.fillStyle = TINTA; x.font = fd(38, 300)
+  x.fillStyle = TINTA; x.font = fd(58, 300)
   x.fillText('B I E N V E N I D O S', cx, y)
-  y += 36
+  y += 56
 
-  x.fillStyle = SUAVE; x.font = `italic ${fd(19)}`
-  x.fillText('Gracias por acompañarnos en el día', cx, y); y += 26
-  x.fillText('más importante de nuestras vidas', cx, y); y += 40
+  x.fillStyle = SUAVE; x.font = `italic ${fd(26)}`
+  x.fillText('Gracias por acompañarnos en el día más importante de nuestras vidas.', cx, y); y += 38
+  x.fillText('Guardamos un sitio para cada uno de ustedes.', cx, y); y += 56
 
-  // Filete ornamental, el mismo de la hoja de trabajo
   x.strokeStyle = FILETE; x.lineWidth = 1
-  x.beginPath(); x.moveTo(120, y); x.lineTo(cx - 16, y); x.stroke()
-  x.beginPath(); x.moveTo(cx + 16, y); x.lineTo(CARTA.w - 120, y); x.stroke()
+  x.beginPath(); x.moveTo(cx - 210, y); x.lineTo(cx - 18, y); x.stroke()
+  x.beginPath(); x.moveTo(cx + 18, y); x.lineTo(cx + 210, y); x.stroke()
   x.fillStyle = ORO_P
-  x.save(); x.translate(cx, y); x.rotate(Math.PI / 4); x.fillRect(-4, -4, 8, 8); x.restore()
-  y += 62
+  x.save(); x.translate(cx, y); x.rotate(Math.PI / 4); x.fillRect(-5, -5, 10, 10); x.restore()
+  y += 34
 
-  x.fillStyle = TINTA; x.font = fd(54)
-  x.fillText(recorta(x, mesa.nombre, CARTA.w - 200), cx, y)
-  y += 46
+  x.fillStyle = '#A2917F'; x.font = fb(13)
+  x.fillText('B U S C A   T U   N O M B R E', cx, y)
 
-  // Los nombres. El paso se achica cuando la mesa va llena, para que diez
-  // personas quepan sin apretar el pie de la hoja.
-  const paso = gente.length > 8 ? 32 : 38
-  const cuerpo = gente.length > 8 ? 23 : 25
-  y += 20
-  if (!gente.length) {
-    x.fillStyle = TENUE; x.font = `italic ${fd(21)}`
-    x.fillText('Esta mesa todavía no tiene invitados asignados.', cx, y)
+  // Las mesas
+  const util = A.w - A.margen * 2
+  const hueco = 40
+  const ancho = (util - hueco * (cols - 1)) / cols
+  let fy = A.cabecera
+  for (const fila of filas) {
+    fila.forEach((m, i) => {
+      const mx = A.margen + i * (ancho + hueco) + ancho / 2
+      x.fillStyle = ACC_P; x.font = fd(34, 500)
+      x.fillText(recorta(x, m.nombre, ancho), mx, fy)
+      x.strokeStyle = BORDE
+      x.beginPath(); x.moveTo(mx - ancho / 2, fy + 18); x.lineTo(mx + ancho / 2, fy + 18); x.stroke()
+
+      const gente = porMesa.get(m.id) || []
+      x.font = fd(23)
+      gente.forEach((p, k) => {
+        x.fillStyle = TINTA
+        x.fillText(recorta(x, p.nombre, ancho), mx, fy + A.titulo + k * A.linea)
+      })
+      if (!gente.length) {
+        x.fillStyle = TENUE
+        x.fillText('—', mx, fy + A.titulo)
+      }
+    })
+    fy += altoFila(fila) + A.entreFilas
   }
-  for (const p of gente) {
-    x.fillStyle = TINTA; x.font = fd(cuerpo)
-    x.fillText(recorta(x, p.nombre, CARTA.w - 220), cx, y)
-    if (p.manda) {
-      const w = Math.min(x.measureText(p.nombre).width, CARTA.w - 220)
-      x.fillStyle = ORO_P; x.font = fb(12)
-      x.fillText('★', cx + w / 2 + 16, y - 2)
-    }
-    y += paso
-  }
 
-  // Pie
-  const yp = CARTA.h - 132
-  if (gente.some(p => p.manda)) {
-    x.fillStyle = TENUE; x.font = fb(10)
-    x.fillText('★  capitán de mesa', cx, yp - 16)
-  }
-  x.strokeStyle = FILETE; x.lineWidth = 1
-  x.beginPath(); x.moveTo(cx - 60, yp); x.lineTo(cx + 60, yp); x.stroke()
-
-  x.fillStyle = ACC_P; x.font = fs(38)
-  x.fillText('Angely & Kevin', cx, yp + 54)
-  x.fillStyle = SUAVE; x.font = fb(11)
-  x.fillText('1 2   D E   S E P T I E M B R E   D E   2 0 2 6', cx, yp + 78)
-  x.fillText('C A S O N A   D E L   P R A D O   ·   B A R R A N Q U I L L A', cx, yp + 96)
+  // El pie, sobre el suelo del afiche y no pegado a la última fila
+  const yp = alto - A.pie + 110
+  x.strokeStyle = FILETE
+  x.beginPath(); x.moveTo(cx - 260, yp); x.lineTo(cx + 260, yp); x.stroke()
+  x.fillStyle = ACC_P; x.font = fs(52)
+  x.fillText('Angely & Kevin', cx, yp + 74)
+  x.fillStyle = SUAVE; x.font = fb(14)
+  x.fillText('1 2   D E   S E P T I E M B R E   D E   2 0 2 6   ·   C A S O N A   D E L   P R A D O', cx, yp + 112)
 
   return png(c)
 }
@@ -341,7 +370,7 @@ const slug = s => (s || '').toLowerCase()
   .normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
-/** Genera el ZIP con el plano y una hoja por mesa, y lo descarga. */
+/** Genera el ZIP con el afiche, el plano y una hoja por mesa, y lo descarga. */
 export async function exportarImagenes(avisar = () => {}) {
   avisar('Consultando…')
   const [ms, as, mem, gs] = await Promise.all([
@@ -373,15 +402,13 @@ export async function exportarImagenes(avisar = () => {}) {
 
   const { default: JSZip } = await import('jszip')
   const zip = new JSZip()
-  const logo = await cargarLogo()
+  // El afiche es UNO y lleva todas las mesas: el invitado que llega no sabe
+  // cuál es la suya. Las hojas de trabajo son otro papel y van en su carpeta.
+  zip.file('bienvenida.png', await aficheBienvenida(ms.data, porMesa, await cargarArte()))
   zip.file('00_plano-general.png', await plano(ms.data, porMesa, cuando))
-  // Dos juegos, en dos carpetas: se mandan a imprimir por separado y en
-  // papeles distintos. Mezclados en la raíz había que ir eligiendo archivo
-  // por archivo cuál era cuál.
   for (const [i, m] of ms.data.entries()) {
     const n = `${String(i + 1).padStart(2, '0')}_${slug(m.nombre)}.png`
     zip.file(`hojas-de-trabajo/${n}`, await hojaMesa(m, porMesa.get(m.id), cuando))
-    zip.file(`bienvenida/${n}`, await hojaBienvenida(m, porMesa.get(m.id), logo))
   }
 
   const faltan = [...porMesa.values()].flat().filter(p => p.falta).length
@@ -390,14 +417,15 @@ export async function exportarImagenes(avisar = () => {}) {
 Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
 Generado el ${cuando}
 
-  00_plano-general.png       Todas las mesas de un vistazo.
+  bienvenida.png             EL AFICHE DE LA ENTRADA: todas las mesas con sus
+                             invitados, sobre la participación —el escudo, las
+                             esquinas de acuarela y el mismo blanco—. Es la
+                             lámina grande que se monta en el atril. No marca
+                             nada en rojo: la leen los invitados.
+  00_plano-general.png       Todas las mesas de un vistazo, para la wedding.
   hojas-de-trabajo/NN_*.png  Una hoja por mesa para la wedding y el salón:
-                             nombres, tarjeta de la que viene cada uno y el
+                             nombres, de qué tarjeta viene cada uno y el
                              capitán. Marca en rojo lo que falta por arreglar.
-  bienvenida/NN_*.png        La hoja que se pone SOBRE la mesa el día de la
-                             fiesta: el escudo, BIENVENIDOS y los nombres,
-                             sobre la misma plantilla de la participación.
-                             Ésta no marca nada en rojo — la leen los invitados.
 
   Mesas ...... ${ms.data.length}
   Sentados ... ${[...porMesa.values()].reduce((s, g) => s + g.length, 0)}
