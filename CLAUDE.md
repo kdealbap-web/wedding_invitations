@@ -19,6 +19,7 @@ npm run build            # build de producción → dist/
 npm run preview          # sirve dist/ localmente
 
 npm run optimize-images  # recomprime src/assets/img/*.jpg (respalda en _originals/)
+npm run optimize-images -- --desde=src/imagenes_editadas   # ingiere fotos de fuera
 npm run favicons         # regenera public/favicon* desde el logo de la boda
 
 npm run usb              # arma entrega/USB_BODA_AyK/ para el proveedor de las LED
@@ -217,10 +218,11 @@ propuestas conviven para comparar. `cine/` no forma parte del bundle de la SPA;
 es un módulo de producción que se ejecuta por línea de comandos. Ver `cine/README.md`.
 
 ```bash
-npm run cine                          # loop de 74 s + 5 segmentos de 15 s
+npm run cine                          # loop de 88 s + 5 segmentos de 15 s
 npm run cine -- --paleta=invitacion   # la otra paleta
 npm run cine -- --contacto            # sólo la hoja de contactos (~40 s)
 npm run cine -- --fotos="D:/fotos"    # otra fuente de fotos
+npm run preboda                       # el video del fotógrafo, adaptado al LED
 ```
 
 - **`guion.mjs` es la única fuente creativa.** Escenas, duraciones, fotos,
@@ -237,6 +239,8 @@ npm run cine -- --fotos="D:/fotos"    # otra fuente de fotos
   rápido — mosaico y ráfaga — con otra técnica: `sharp` compone cada estado como
   imagen completa y ffmpeg sólo las secuencia. Sin `zoompan`, así que las dos
   salen en menos de 2 min.
+- **`npm run preboda`** (`cine/preboda.mjs`) es el único módulo que **no compone
+  nada**: adapta el video del fotógrafo. Ver más abajo.
 
 > **Vigila el bitrate.** El grano es ruido aleatorio y x264 no lo comprime: con
 > CRF 14 los segmentos salían a 86–104 Mbps y el loop a 452 MB — 1,37 GB por
@@ -244,16 +248,60 @@ npm run cine -- --fotos="D:/fotos"    # otra fuente de fotos
 > están centralizados en `guion.mjs` (`X264_FINAL`, `GRANO`). **Si subes `GRANO`,
 > vuelve a medir el peso.**
 
-> **Las fotos llevan orientación EXIF 8** (17 de 20). El navegador la aplica;
-> `sharp` y `ffmpeg` **no**. Sin normalizar, el video sale con la gente acostada.
-> `fotos.mjs` escribe copias ya rotadas antes de que ffmpeg toque nada. **No
-> alimentes ffmpeg con los originales.**
+> **17 de las 28 fotos llevan orientación EXIF 8** — las `CANO*`, salvo tres. El
+> navegador la aplica; `sharp` y `ffmpeg` **no**. Sin normalizar, el video sale con
+> la gente acostada. `fotos.mjs` escribe copias ya rotadas antes de que ffmpeg
+> toque nada. **No alimentes ffmpeg con los originales.** Las ocho `IMG_*` de la
+> entrega editada ya vienen con la rotación aplicada y sin bandera pendiente, así
+> que pasan por el mismo camino sin hacer nada.
 
-> Al aplicar el EXIF esas 17 fotos resultan **verticales** (1467 × 2200). A sangre
-> en 16:9 habría que recortar el 63 % del alto. Por eso hay dos disposiciones que
+> Aplicado el EXIF, **24 de las 28 son verticales** (1467 × 2200). A sangre en 16:9
+> habría que recortar el 63 % del alto. Por eso hay dos disposiciones que
 > `fotos.mjs` elige sola: `pleno` (apaisada, a sangre, texto centrado) y
 > `editorial` (vertical entera en un panel a la derecha, fondo desenfocado de ella
-> misma, texto a bandera a la izquierda).
+> misma, texto a bandera a la izquierda). Sólo cuatro fotos son apaisadas
+> —`CANO5722`, `CANO5810`, `CANO5887` e `IMG_6181`—, así que **el guion las reparte
+> a propósito** por el loop para que no salgan once paneles editoriales seguidos.
+
+#### El video del fotógrafo
+
+`cine/preboda.mjs` toma el MOV de la sesión de preboda y lo deja reproducible en
+un panel de sala. **El montaje es de él y no se toca** — ni fundidos, ni rótulos,
+ni corrección de color sobre la imagen. Sólo resuelve tres incompatibilidades:
+
+- Viene en **HEVC (H.265)**, y muchos reproductores de LED sólo abren H.264. Se
+  transcodifica con los mismos `X264_FINAL` que el resto de la USB.
+- Viene **vertical** (1080 × 1920). Se usa la misma disposición `editorial` de las
+  fotos verticales: el video entero centrado sobre su propio desenfoque. El panel
+  ocupa **el alto completo** —y no la zona segura de 96 px— porque un 9:16 dentro
+  de un 16:9 no puede pasar del 31,6 % del ancho y achicarlo más lo dejaría en un
+  cuarto de pantalla. La zona segura existe para el texto, y aquí no hay texto
+  nuestro.
+- Viene a **30 fps** y toda la USB va a 29,97. Se conforma con el filtro `fps`
+  para que el reproductor no cambie de cadencia a mitad de la noche.
+
+Salen **dos archivos**: `09_preboda` con la pista original copiada bit a bit
+(`-c:a copy`, sin recodificar) y `09_preboda-sin-audio`, que es un remux y por
+tanto sale gratis. Quién manda el sonido esa noche se decide con el DJ en el
+salón, no en el script; el LEEME dice que se use **uno solo de los dos**.
+
+El master vive en `src/imagenes_editadas/`, que está **gitignoreado** por peso
+(176 MB). Si no está, el script lo dice y acepta `--video="ruta/al/archivo"`.
+
+#### Las fotos del fotógrafo
+
+Los masters de la entrega editada (4480 × 6720, 300 dpi, 8-16 MB cada una) viven en
+`src/imagenes_editadas/`, **gitignoreada**. Al repo entran las copias a 2200 px —el
+mismo lado largo que las veinte `CANO*`— con:
+
+```bash
+npm run optimize-images -- --desde=src/imagenes_editadas
+```
+
+Ingiere y termina; no vuelve a pasar por las que ya estaban, porque recomprimir dos
+veces sí degrada. De paso limpia el `.JPG.jpeg` que dejan las descargas. Después hay
+que registrarlas a mano en `src/assets/images.js` (prefijo `e`) si las va a usar la
+SPA; `cine/` y `fiesta.mjs` las encuentran solas, porque barren `src/assets/img`.
 
 ### Tipos de invitación
 

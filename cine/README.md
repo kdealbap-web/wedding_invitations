@@ -17,6 +17,9 @@ npm run cine -- --fotos="D:/fotos-boda"
 
 npm run fiesta                        # mosaico + ráfaga
 npm run fiesta -- --solo=rafaga
+
+npm run preboda                       # el video del fotógrafo, adaptado al LED
+npm run preboda -- --video="D:/otro/clip.MOV"
 ```
 
 Salida en `entrega/cine/<paleta>/` (gitignoreado).
@@ -43,19 +46,25 @@ cada cuadro y por eso tarda 3 minutos por cada 16 segundos.
 | `overlay.mjs` | Convierte una capa del guion en PNG con alfa. |
 | `render.mjs` | Orquestador del loop y los segmentos. |
 | `fiesta.mjs` | Piezas dinámicas de corte rápido: mosaico y ráfaga. |
+| `preboda.mjs` | El video del fotógrafo. No compone nada: sólo lo hace reproducible. |
 
 ## Dos trampas que ya están resueltas
 
-**1. Orientación EXIF.** 17 de las 20 fotos del repo llevan orientación EXIF 8
-(«girar 90° al mostrar»). El navegador la aplica; `sharp` y `ffmpeg` **no**.
-Alimentar ffmpeg con los originales produce video con la gente acostada.
-`fotos.mjs` escribe copias ya rotadas antes de tocar ffmpeg.
+**1. Orientación EXIF.** 17 de las 28 fotos del repo llevan orientación EXIF 8
+(«girar 90° al mostrar»): las `CANO*`, salvo tres. El navegador la aplica; `sharp` y
+`ffmpeg` **no**. Alimentar ffmpeg con los originales produce video con la gente
+acostada. `fotos.mjs` escribe copias ya rotadas antes de tocar ffmpeg. Las ocho
+`IMG_*` de la entrega editada ya vienen rotadas y pasan por el mismo camino.
 
-**2. Esas 17 fotos son verticales** (1467 × 2200 al mostrarse bien). A sangre en
+**2. 24 de las 28 son verticales** (1467 × 2200 al mostrarse bien). A sangre en
 16:9 habría que recortar el 63 % del alto: cabezas o pies fuera de cuadro. Por eso
 hay dos disposiciones, que `fotos.mjs` elige sola según la forma de cada foto:
 
-- **`pleno`** — foto apaisada a sangre, texto centrado encima. Sólo 3 fotos.
+- **`pleno`** — foto apaisada a sangre, texto centrado encima. Sólo 4 fotos:
+  `CANO5722`, `CANO5810`, `CANO5887` e `IMG_6181`. El guion las reparte a propósito
+  por el loop (escenas 1, 4, 6 y 8) para que no salgan once paneles seguidos iguales.
+  La única con la pareja centrada, `IMG_6181`, va en `historia-2`, que es la única
+  escena SIN capa de texto: en cualquier otra, los rótulos le caen encima.
 - **`editorial`** — la foto vertical **entera** en un panel a la derecha, fondo
   desenfocado de ella misma, y el texto a bandera a la izquierda.
 
@@ -90,6 +99,28 @@ es `zoompan` trabajando a 3840 × 2160 para que el zoom no se vea escalonado.
 - **Colores** → `paleta.mjs`.
 - **Tamaños tipográficos** → `overlay.mjs`.
 - **Grano, viñeta, intensidad del light leak** → `render.mjs`, función `escena()`.
+
+## El video del fotógrafo
+
+`preboda.mjs` es la excepción: **no compone nada**. El montaje es de él y no se
+toca —ni fundidos, ni rótulos, ni corrección de color—. Sólo resuelve que el
+archivo tal cual no sirve en un panel de sala:
+
+| Problema del master | Qué hace |
+|---|---|
+| HEVC (H.265) | Transcodifica con los mismos `X264_FINAL` del resto |
+| Vertical 1080 × 1920 | Panel centrado sobre su propio desenfoque, disposición `editorial` |
+| 30 fps | Conforma a 29,97 con el filtro `fps` |
+
+El panel usa **el alto completo**, no la zona segura de 96 px: un 9:16 dentro de un
+16:9 ya está topado en el 31,6 % del ancho, y achicarlo más lo dejaría en un cuarto
+de pantalla. La zona segura es para el texto, y aquí no hay texto nuestro.
+
+Salen dos archivos: con la pista original (`-c:a copy`, bit a bit) y sin ella (un
+remux, sale gratis). El LEEME de la USB pide que se use **uno solo de los dos**.
+
+El master está en `src/imagenes_editadas/`, gitignoreada por peso. Si no está, el
+script lo dice y acepta `--video=`.
 
 ## Las piezas de fiesta
 

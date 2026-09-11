@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { logoWedding, p5722, p5810, p5860, p5887, p5927 } from '../assets/images'
+import { logoWedding, p5722, p5810, p5887, e6174, e6181 } from '../assets/images'
 import './pantalla.css'
 
 // ─── Ornamentos compartidos ───
@@ -38,7 +38,7 @@ function Momento({ kicker, titulo, nota }) {
 // bg: foto de fondo · dim: opacidad del velo oscuro que la vuelve legible en LED
 const ALL_CARTELAS = [
   {
-    id: 'bienvenida', label: 'Bienvenida', bg: p5810, dim: 0.74,
+    id: 'bienvenida', label: 'Bienvenida', bg: e6181, dim: 0.74,
     Comp: () => (
       <>
         <img className="pl-logo" src={logoWedding} alt="Angely & Kevin" />
@@ -71,7 +71,7 @@ const ALL_CARTELAS = [
     Comp: () => <Momento kicker="Levantemos la copa" titulo="Un brindis" nota="Por los novios · por esta noche" />,
   },
   {
-    id: 'vals', label: 'Primer baile', bg: p5860, dim: 0.74,
+    id: 'vals', label: 'Primer baile', bg: p5810, dim: 0.74,
     Comp: () => <Momento kicker="Y que suene la música" titulo="El primer baile" nota="Angely & Kevin" />,
   },
   {
@@ -93,7 +93,7 @@ const ALL_CARTELAS = [
     ),
   },
   {
-    id: 'verso', label: 'Verso', bg: p5927, dim: 0.78,
+    id: 'verso', label: 'Verso', bg: e6174, dim: 0.78,
     Comp: () => (
       <>
         <img className="pl-crest" src={logoWedding} alt="" aria-hidden="true" />

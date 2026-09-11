@@ -40,3 +40,8 @@ dist-ssr
 
 # Cartelas LED exportadas: binarios pesados, se regeneran con npm run pantallas
 entrega/
+
+# Masters del fotógrafo (RAW-ish 4480×6720 + el MOV de preboda): cientos de MB.
+# Al repo entran las copias a 2200 px de src/assets/img, ingeridas con
+#   npm run optimize-images -- --desde=src/imagenes_editadas
+src/imagenes_editadas/

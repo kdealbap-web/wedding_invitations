@@ -60,7 +60,7 @@ export const LOOP = {
   escenas: [
     {
       id: 'apertura', frames: 330, foto: 'CANO5810.JPG',
-      plano: 'Plano general — la pareja en el portón',
+      plano: 'Plano general — la pareja en el portón, el centro libre para la marca',
       camara: { zoom: [1.00, 1.12], origen: 'centro' },
       efecto: 'Entra desde negro. El logo se revela con un latido dorado.',
       capa: {
@@ -82,8 +82,8 @@ export const LOOP = {
       },
     },
     {
-      id: 'bienvenida', frames: 240, foto: 'CANO5860.JPG',
-      plano: 'Plano americano — de la mano',
+      id: 'bienvenida', frames: 240, foto: 'IMG_6175.jpg',
+      plano: 'Plano entero — el beso frente a la buganvilla',
       camara: { zoom: [1.02, 1.13], origen: 'arriba' },
       efecto: 'Ascenso suave.',
       capa: { tipo: 'script', texto: 'Bienvenidos', nota: 'Gracias por estar aquí esta noche' },
@@ -96,11 +96,25 @@ export const LOOP = {
       capa: { tipo: 'titulo', kicker: 'Lo que nos trajo hasta acá', titulo: 'Nuestra historia', nota: null },
     },
     {
-      id: 'historia-2', frames: 240, foto: 'CANO5841.JPG',
-      plano: 'Plano general luminoso',
+      id: 'cartagena', frames: 240, foto: 'IMG_5746.jpg',
+      plano: 'Plano general — calle colonial, la cúpula al fondo',
+      camara: { zoom: [1.00, 1.10], origen: 'abajo' },
+      efecto: 'Ascenso lento: la calle se abre hacia la cúpula.',
+      capa: { tipo: 'titulo', kicker: 'Antes de este día', titulo: 'Cartagena', nota: null },
+    },
+    {
+      id: 'historia-2', frames: 240, foto: 'IMG_6181.jpg',
+      plano: 'Plano general apaisado — el atardecer en el agua',
       camara: { zoom: [1.00, 1.10], origen: 'der' },
-      efecto: 'Sin texto: la foto respira sola. Da aire antes del verso.',
+      efecto: 'Sin texto: la foto respira sola. Da aire antes del verso, y es la única\n      escena donde una apaisada con la pareja centrada no compite con nada.',
       capa: null,
+    },
+    {
+      id: 'atardecer', frames: 240, foto: 'IMG_6177.jpg',
+      plano: 'Contraluz de atardecer en el agua',
+      camara: { zoom: [1.12, 1.00], origen: 'centro' },
+      efecto: 'Retroceso: se abre hacia el sol del fondo.',
+      capa: { tipo: 'script', texto: 'Y todo nos trajo hasta hoy', nota: null },
     },
     {
       id: 'verso', frames: 300, foto: 'CANO5887.JPG',
@@ -114,8 +128,8 @@ export const LOOP = {
       },
     },
     {
-      id: 'hashtag', frames: 270, foto: 'CANO5847.JPG',
-      plano: 'Plano medio',
+      id: 'hashtag', frames: 270, foto: 'IMG_6174.jpg',
+      plano: 'Retrato de los dos, a cámara',
       camara: { zoom: [1.03, 1.13], origen: 'centro' },
       efecto: 'Acercamiento sostenido.',
       capa: {
@@ -153,8 +167,8 @@ export const LOOP = {
 // ══════════════════════════════════════════════════════════════════
 export const SEGMENTOS = [
   {
-    id: 'vals', titulo: 'El primer baile', frames: 450, foto: 'CANO5860.JPG',
-    plano: 'Plano americano', camara: { zoom: [1.00, 1.14], origen: 'centro' },
+    id: 'vals', titulo: 'El primer baile', frames: 450, foto: 'IMG_6176.jpg',
+    plano: 'Plano entero — frente con frente, de la mano', camara: { zoom: [1.00, 1.14], origen: 'centro' },
     efecto: 'Acercamiento continuo, sin cortes.',
     capa: { tipo: 'titulo', kicker: 'Y que suene la música', titulo: 'El primer baile', nota: 'Angely & Kevin' },
   },
@@ -165,14 +179,14 @@ export const SEGMENTOS = [
     capa: { tipo: 'titulo', kicker: 'Levantemos la copa', titulo: 'Un brindis', nota: 'Por los novios · por esta noche' },
   },
   {
-    id: 'torta', titulo: 'El corte de la torta', frames: 450, foto: 'CANO5825.JPG',
-    plano: 'Plano general luminoso', camara: { zoom: [1.02, 1.12], origen: 'arriba' },
+    id: 'torta', titulo: 'El corte de la torta', frames: 450, foto: 'IMG_6178.jpg',
+    plano: 'Muro ocre a contraluz, hora dorada', camara: { zoom: [1.02, 1.12], origen: 'arriba' },
     efecto: 'Ascenso suave.',
     capa: { tipo: 'titulo', kicker: 'El momento más dulce', titulo: 'El corte de la torta', nota: 'Acompáñanos alrededor de la mesa' },
   },
   {
-    id: 'ramo', titulo: 'El lanzamiento del ramo', frames: 450, foto: 'CANO5875.JPG',
-    plano: 'Plano medio', camara: { zoom: [1.10, 1.00], origen: 'der' },
+    id: 'ramo', titulo: 'El lanzamiento del ramo', frames: 450, foto: 'IMG_6179.jpg',
+    plano: 'Contraluz de atardecer, de pie en el agua', camara: { zoom: [1.10, 1.00], origen: 'der' },
     efecto: 'Deriva lateral y cierre.',
     capa: { tipo: 'titulo', kicker: 'Que la suerte decida', titulo: 'El lanzamiento del ramo', nota: 'Solteras a la pista' },
   },

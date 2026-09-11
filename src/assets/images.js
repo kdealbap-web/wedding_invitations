@@ -18,6 +18,14 @@ import p5807 from './img/CANO5807.JPG'
 import p5762 from './img/CANO5762.JPG'
 import p5842 from './img/CANO5842.JPG'
 import p5825 from './img/CANO5825.JPG'
+// Entrega editada del fotógrafo (prefijo e). Ingeridas con
+// npm run optimize-images -- --desde=src/imagenes_editadas
+// SÓLO las dos que usan las cartelas: un import aquí emite el archivo al
+// bundle aunque nadie lo pinte, y las ocho pesaban 1,6 MB de más en la
+// invitación pública. Las otras seis viven en src/assets/img y las lee
+// cine/ desde disco, que no pasa por este barrel.
+import e6174 from './img/IMG_6174.jpg'
+import e6181 from './img/IMG_6181.jpg'
 import iglesia from './img/iglesia.jpg'
 import casonaSalon from './img/casona_salon.jpeg'
 import logoWedding from './img/logo_a&K.png'
@@ -26,5 +34,6 @@ export {
   p5759, p5783, p5787, p5810, p5841,
   p5847, p5860, p5875, p5887, p5927,
   p5807, p5824, p5762, p5842, p5825,
+  e6174, e6181,
   iglesia, casonaSalon, logoWedding,
 }

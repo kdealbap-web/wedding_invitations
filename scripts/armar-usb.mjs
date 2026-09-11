@@ -4,9 +4,9 @@
  *   npm run usb                        # paleta escenario
  *   npm run usb -- --paleta=invitacion
  *
- * No genera nada: recoge lo que ya produjeron `npm run pantallas`, `npm run cine`
- * y `npm run fiesta`, lo ordena en carpetas numeradas y escribe el LEEME y un
- * inventario con el peso y la duración real de cada archivo.
+ * No genera nada: recoge lo que ya produjeron `npm run pantallas`, `npm run cine`,
+ * `npm run fiesta` y `npm run preboda`, lo ordena en carpetas numeradas y escribe
+ * el LEEME y un inventario con el peso y la duración real de cada archivo.
  *
  * Las carpetas van numeradas porque los reproductores de sala casi siempre
  * ordenan alfabéticamente y así la secuencia queda sola.
@@ -53,26 +53,32 @@ const PLAN = [
     filtro: f => f.startsWith('01_loop-principal'),
   },
   {
-    carpeta: '03_MOMENTOS',
+    carpeta: '03_VIDEO_PREBODA',
+    nota: 'El video del fotógrafo. Una sola pasada, en el momento que indiquen los novios.',
+    origen: CINE,
+    filtro: f => f.startsWith('09_preboda'),
+  },
+  {
+    carpeta: '04_MOMENTOS',
     nota: 'Se disparan en el momento indicado. NO en bucle: una sola pasada.',
     origen: CINE,
     filtro: f => /^0[2-6]_/.test(f) && f.endsWith('.mp4'),
   },
   {
-    carpeta: '04_FIESTA',
+    carpeta: '05_FIESTA',
     nota: 'Piezas dinámicas para la parte alta de la noche. Se pueden repetir.',
     origen: CINE,
     filtro: f => /^0[78]_/.test(f) && f.endsWith('.mp4'),
   },
   {
-    carpeta: '05_REFERENCIA',
+    carpeta: '06_REFERENCIA',
     nota: 'No se proyecta. Es la hoja de contactos para que ustedes vean todo de un vistazo.',
     origen: CINE,
     filtro: f => f.startsWith('00_storyboard'),
   },
 ]
 
-const LEEME = inventario => `CONTENIDO PARA PANTALLAS LED
+const LEEME = (inventario, durLoop) => `CONTENIDO PARA PANTALLAS LED
 Boda de Angely & Kevin — sábado 12 de septiembre de 2026
 Casona del Prado, Barranquilla
 
@@ -84,7 +90,8 @@ ESPECIFICACIÓN TÉCNICA
   Video ............ MP4 · H.264 · perfil high · nivel 4.1
   Fotogramas ....... 29,97 fps (30000/1001)
   Color ............ yuv420p · sRGB
-  Audio ............ ninguno (el sonido lo pone el DJ)
+  Audio ............ ninguno, EXCEPTO 03_VIDEO_PREBODA, que va en dos
+                     versiones: una con la pista original y otra sin ella
   Imágenes ......... PNG sin pérdida, misma resolución
 
   Zona segura ...... todo el texto vive dentro de un margen de 96 px
@@ -98,11 +105,25 @@ CÓMO SE USA CADA CARPETA
                       que haga falta. Sugerencia: 8-10 s cada una.
 
   02_LOOP_RECEPCION   UN SOLO ARCHIVO, en bucle continuo, desde que abre
-                      el salón hasta que empieza la fiesta. Dura 74 s y
-                      abre y cierra en negro, así que el punto de bucle
+                      el salón hasta que empieza la fiesta. Dura ${durLoop}
+                      y abre y cierra en negro, así que el punto de bucle
                       no se nota.
 
-  03_MOMENTOS         Se disparan en vivo cuando ocurre cada cosa.
+  03_VIDEO_PREBODA    El video de la sesión de preboda, trabajo del
+                      fotógrafo. UNA SOLA PASADA, en el momento que
+                      indiquen los novios. Vienen dos archivos:
+
+                        09_preboda ............. con la pista de audio
+                        09_preboda-sin-audio ... sin pista de audio
+
+                      Usar UNO SOLO de los dos, el que se acuerde con el
+                      DJ esa noche. El video es vertical de origen, así
+                      que va centrado sobre un fondo desenfocado de sí
+                      mismo: ESO ES ASÍ A PROPÓSITO. No estirarlo ni
+                      recortarlo para llenar la pantalla — se perdería
+                      el 68 % del encuadre.
+
+  04_MOMENTOS         Se disparan en vivo cuando ocurre cada cosa.
                       Una sola pasada, NO en bucle:
                         02_vals ...... al primer baile
                         03_brindis ... al brindis
@@ -110,10 +131,10 @@ CÓMO SE USA CADA CARPETA
                         05_ramo ...... al lanzamiento del ramo
                         06_horaloca .. al arrancar la hora loca
 
-  04_FIESTA           Piezas de corte rápido para la parte alta de la
+  05_FIESTA           Piezas de corte rápido para la parte alta de la
                       noche. Se pueden repetir e intercalar libremente.
 
-  05_REFERENCIA       NO SE PROYECTA. Es la hoja de contactos con todas
+  06_REFERENCIA       NO SE PROYECTA. Es la hoja de contactos con todas
                       las escenas, para consulta de los novios.
 
 ═══════════════════════════════════════════════════════════════
@@ -148,6 +169,7 @@ async function main() {
 
   const lineas = []
   let totalBytes = 0, totalArchivos = 0
+  let durLoop = null                 // la escribe el LEEME; el guion puede cambiarla
   const faltantes = []
 
   for (const p of PLAN) {
@@ -170,12 +192,16 @@ async function main() {
       const { size } = await stat(src)
       totalBytes += size; totalArchivos++
       const d = a.endsWith('.mp4') ? duracion(src) : null
-      lineas.push(`      ${limpio.padEnd(30)} ${mb(size).padStart(7)} MB${d ? `  ${d.toFixed(2)} s` : ''}`)
+      if (d && p.carpeta.endsWith('LOOP_RECEPCION')) durLoop = d
+      lineas.push(`      ${limpio.padEnd(34)} ${mb(size).padStart(7)} MB${d ? `  ${d.toFixed(2)} s` : ''}`)
     }
     lineas.push('')
   }
 
-  await writeFile(join(DESTINO, 'LEEME.txt'), LEEME(lineas.join('\n')), 'utf8')
+  const rotuloLoop = durLoop
+    ? `${Math.floor(durLoop / 60) ? `${Math.floor(durLoop / 60)} min ` : ''}${Math.round(durLoop % 60)} s`
+    : 'lo que dure el archivo'
+  await writeFile(join(DESTINO, 'LEEME.txt'), LEEME(lineas.join('\n'), rotuloLoop), 'utf8')
 
   console.log(lineas.join('\n'))
   console.log(`  ${totalArchivos} archivos · ${mb(totalBytes)} MB en total\n`)
@@ -183,7 +209,7 @@ async function main() {
   if (faltantes.length) {
     console.warn('  Falta material — genéralo antes de copiar a la USB:')
     for (const f of faltantes) console.warn(`    ! ${f}`)
-    console.warn('    npm run pantallas · npm run cine · npm run fiesta\n')
+    console.warn('    npm run pantallas · npm run cine · npm run fiesta · npm run preboda\n')
   }
 }
 

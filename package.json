@@ -13,6 +13,7 @@
     "videos": "node scripts/export-videos.mjs",
     "cine": "node cine/render.mjs",
     "fiesta": "node cine/fiesta.mjs",
+    "preboda": "node cine/preboda.mjs",
     "usb": "node scripts/armar-usb.mjs",
     "export": "node scripts/export-invitados.mjs",
     "mesas-img": "node scripts/export-mesas-img.mjs",
