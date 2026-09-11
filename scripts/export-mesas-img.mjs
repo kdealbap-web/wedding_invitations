@@ -351,15 +351,23 @@ const BANDERIN = {
   agujero: 3.5,           // Ø del agujero del cuello de la botella
 }
 
-// La hoja: A4 vertical con DOS banderines uno al lado del otro. Antes cada uno
-// salía en su propia hoja de 12,9 × 25 cm y, impreso en A4, dejaba 8 cm de
-// blanco a un lado: once capitanes eran once hojas para lo que caben en seis.
+// Los pliegos donde se imprimen los banderines. El ancho de la pieza (9,4) sale
+// de la cuenta del A4, que es el pliego que se puede imprimir en casa:
 //
-//   2 × 9,4 = 18,8 cm de pieza + 0,8 de calle + 0,7 de margen a cada lado = 21
+//   A4        2 × 9,4 + 0,8 de calle + 0,7 de margen a cada lado = 21 exactos
+//   Tabloide  4 × 9,4 + 3 calles de 1,26 + 0,9 de margen a cada lado = 43,18
 //
-// El ancho de la pieza sale de esa cuenta: con 9,9 cm no quedaba calle por donde
-// meter la tijera ni margen que el impresor pueda sujetar.
-const HOJA_BAN = { w: 21, h: 29.7, margen: 0.7, calle: 0.8, arriba: 2.2 }
+// Antes cada banderín salía en su propia hoja y, impreso en A4, dejaba 8 cm de
+// blanco a un lado: once capitanes eran once hojas para lo que cabe en seis —o
+// en tres, si el pliego es tabloide.
+//
+// El tabloide va APAISADO: la pieza mide 22 cm de alto y en vertical no entran
+// dos filas (serían 44 contra 43,18), así que en vertical se desperdiciaría lo
+// mismo que en A4 y sólo cabrían tres a lo ancho.
+const PLIEGOS_BAN = {
+  a4:       { archivo: 'a4',       w: 21,    h: 29.7,  margen: 0.7, calle: 0.8,  arriba: 2.2, por: 2 },
+  tabloide: { archivo: 'tabloide', w: 43.18, h: 27.94, margen: 0.9, calle: 1.26, arriba: 2.2, por: 4 },
+}
 
 // Confeti repetible: el mismo nombre de mesa da siempre el mismo reparto, así
 // que regenerar no cambia lo que ya se mandó a imprimir.
@@ -390,13 +398,13 @@ function confeti(semilla, n, W, H) {
 // rompería al colgarlo.
 
 /** Una pieza: el banderín más sus marcas, colocado en (x0, y0) de la hoja. */
-function piezaBanderin(mesa, nombreLargo, arte, x0cm) {
+function piezaBanderin(mesa, nombreLargo, arte, x0cm, J) {
   const B = BANDERIN
   const capitan = nombreCorto(nombreLargo)
   const cancion = (mesa.notas || '').trim()
   const numero = (mesa.nombre || '').replace(/^\s*mesa\s*/i, '').trim()
 
-  const x0 = cm(x0cm), y0 = cm(HOJA_BAN.arriba)
+  const x0 = cm(x0cm), y0 = cm(J.arriba)
   const pw = cm(B.w), ph = cm(B.h)
   const yDoblez = y0 + cm(B.doblez)
   const yPunta = y0 + cm(B.h - B.punta)
@@ -445,11 +453,11 @@ function piezaBanderin(mesa, nombreLargo, arte, x0cm) {
   }
 }
 
-/** Una hoja A4 con dos banderines. */
-function htmlBanderines(lote, arte) {
-  const B = BANDERIN, J = HOJA_BAN
+/** Un pliego con los banderines que quepan: dos en A4, cuatro en tabloide. */
+function htmlBanderines(lote, arte, J) {
+  const B = BANDERIN
   const piezas = lote.map((t, i) =>
-    piezaBanderin(t.mesa, t.capitan, arte, J.margen + i * (B.w + J.calle)))
+    piezaBanderin(t.mesa, t.capitan, arte, J.margen + i * (B.w + J.calle), J))
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
@@ -546,7 +554,15 @@ function htmlBanderines(lote, arte) {
 // 6,5 cm y no 8: con tres columnas de 6,5 la hoja se llena (19,5 de 21), y con
 // dos de 8 quedaban 4,4 cm de blanco a los lados y hacían falta nueve hojas para
 // lo que ahora entra en cinco.
-const GRACIAS = { lado: 6.5, cols: 3, filas: 4 }
+const GRACIAS = { lado: 6.5 }
+
+// Los mismos pliegos que los banderines, con la cuenta hecha para 6,5 cm:
+//   A4        3 × 6,5 = 19,5 de 21   · 4 filas = 26 de 29,7  → 12 por hoja
+//   Tabloide  6 × 6,5 = 39 de 43,18  · 4 filas = 26 de 27,94 → 24 por hoja
+const PLIEGOS_GRACIAS = {
+  a4:       { archivo: 'a4',       w: 21,    h: 29.7,  cols: 3, filas: 4, pad: '1.5px 0.6' },
+  tabloide: { archivo: 'tabloide', w: 43.18, h: 27.94, cols: 6, filas: 4, pad: '0.9px 2.0' },
+}
 
 const TEXTO_GRACIAS = {
   plural: 'Que estén aquí no es un detalle: es la razón por la que este día se siente ' +
@@ -621,7 +637,85 @@ function htmlCanciones(filas, arte) {
 </div></body></html>`
 }
 
-function htmlAgradecimientos(lote, arte, hoja, total) {
+// ─── Dónde va cada tarjeta de agradecimiento ───
+//
+// La hoja que se le entrega a la wedding: qué sobre va en qué mesa, en el mismo
+// orden en que las tarjetas salen del pliego. Sin esto, 49 tarjetas cortadas son
+// un montón de papeles sueltos y hay que ir adivinando.
+//
+// Lleva casilla para ir marcando: se reparte de pie, de mesa en mesa.
+function htmlReparto(gracias, mesasPorId, arte) {
+  // Las tarjetas salen numeradas en el mismo orden en que se cortan del pliego
+  const porMesa = new Map()
+  gracias.forEach((t, i) => {
+    const k = t.mesaNombre || '—'
+    if (!porMesa.has(k)) porMesa.set(k, [])
+    porMesa.get(k).push({ ...t, n: i + 1 })
+  })
+
+  const bloques = [...porMesa.entries()].map(([mesa, lista]) => `
+    <section class="m">
+      <h2>${esc(mesa)}<span>${lista.length} tarjeta${lista.length === 1 ? '' : 's'}</span></h2>
+      <ul>${lista.map(t => `
+        <li><i class="box"></i><b>${t.n}</b><span>${esc(t.nombre)}</span>
+        <em>${t.personas} pers.</em></li>`).join('')}</ul>
+    </section>`).join('')
+
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
+  .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#fff;padding:${cm(1.3)}px ${cm(1.2)}px;
+    display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;gap:14px;border-bottom:2px solid #C8A96E;
+    padding-bottom:12px}
+  .top img{height:${cm(1.3)}px;width:auto}
+  .top h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:30px;
+    line-height:1.05;color:#2A1D14}
+  .top p{font-size:11px;letter-spacing:.2em;color:#8A7866;margin-top:3px}
+  .top .der{margin-left:auto;text-align:right;font-size:11px;color:#8A7866;line-height:1.7}
+
+  .cols{columns:2;column-gap:${cm(1)}px;margin-top:14px}
+  .m{break-inside:avoid;margin-bottom:11px}
+  .m h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:21px;
+    color:#9A5B45;border-bottom:1px solid #E3D9CB;padding-bottom:4px;margin-bottom:5px;
+    display:flex;align-items:baseline;justify-content:space-between}
+  .m h2 span{font-family:Jost,system-ui,sans-serif;font-size:10px;letter-spacing:.12em;color:#A2917F}
+  .m ul{list-style:none}
+  .m li{display:flex;align-items:baseline;gap:7px;font-size:12.5px;line-height:1.55;
+    color:#2A1D14}
+  .box{width:11px;height:11px;border:1px solid #C0B3A3;border-radius:2px;flex-shrink:0;
+    transform:translateY(1px)}
+  .m li b{font-weight:500;color:#B08C4F;font-size:11px;min-width:16px;text-align:right}
+  .m li span{flex:1;min-width:0}
+  .m li em{font-style:normal;font-size:10.5px;color:#A2917F;white-space:nowrap}
+
+  .nota{margin-top:auto;border-top:1px solid #EFE7DC;padding-top:12px;font-size:12px;
+    line-height:1.6;color:#6B5B4B}
+  .nota b{color:#2A1D14}
+</style></head><body><div class="hoja">
+  <div class="top">
+    ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
+    <div>
+      <h1>Dónde va cada tarjeta</h1>
+      <p>TARJETAS DE AGRADECIMIENTO · PARA LA WEDDING</p>
+    </div>
+    <div class="der">
+      <div><b>${gracias.length}</b> tarjetas · ${porMesa.size} mesas</div>
+      <div>Angely &amp; Kevin · 12 · IX · 2026</div>
+    </div>
+  </div>
+
+  <div class="cols">${bloques}</div>
+
+  <p class="nota">
+    <b>El número es el orden en que salen del pliego</b>, leyendo cada hoja de izquierda a
+    derecha y de arriba abajo: si se cortan sin desordenarlas, la pila queda en este
+    mismo orden y se reparte de corrido, mesa por mesa. Una tarjeta por sobre —no por
+    persona—, así que una familia de cinco lleva una sola.
+  </p>
+</div></body></html>`
+}
+
+function htmlAgradecimientos(lote, arte, hoja, total, J) {
   const G = GRACIAS
   const tarjetas = lote.map(t => {
     // «Familia Gravini Rodriguez Trujillo» y «Jorge Longa» no entran igual
@@ -643,14 +737,15 @@ function htmlAgradecimientos(lote, arte, hoja, total) {
 
   // Los huecos que sobran en la última hoja se dejan vacíos, con su marca de
   // corte: así las seis posiciones caen siempre en el mismo sitio del pliego.
-  const vacias = Array.from({ length: G.cols * G.filas - lote.length },
+  const vacias = Array.from({ length: J.cols * J.filas - lote.length },
     () => '<div class="t vacia"></div>').join('')
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
-  .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#fff;padding:${cm(1.5)}px ${cm(0.6)}px;
+  .hoja{width:${cm(J.w)}px;height:${cm(J.h)}px;background:#fff;
+    padding:${cm(J.w > 30 ? 0.9 : 1.5)}px ${cm(J.w > 30 ? 2 : 0.6)}px;
     display:flex;flex-direction:column}
-  .rejilla{display:grid;grid-template-columns:repeat(${G.cols},${cm(G.lado)}px);
+  .rejilla{display:grid;grid-template-columns:repeat(${J.cols},${cm(G.lado)}px);
     grid-auto-rows:${cm(G.lado)}px;gap:${cm(0.3)}px;justify-content:center;align-content:start}
   .t{position:relative;background:#FBF5EA;outline:1px dashed #D9C7A8;overflow:hidden}
   .t.vacia{background:none}
@@ -782,13 +877,20 @@ async function main() {
     if (conCapitan.length) {
       await mkdir(join(SALIDA, 'capitanes'), { recursive: true })
       const conQuien = conCapitan.map(m => ({ mesa: m, capitan: nombreDe.get(m.capitan_id) }))
-      for (let h = 0; h * 2 < conQuien.length; h++) {
-        const lote = conQuien.slice(h * 2, h * 2 + 2)
-        const nombre = `hoja-${String(h + 1).padStart(2, '0')}.png`
-        await captura(htmlBanderines(lote, arte), join(SALIDA, 'capitanes', nombre))
-        console.log(`  ✓ capitanes/${nombre}`.padEnd(40),
-          lote.map(t => nombreCorto(t.capitan)).join(' · '))
+      // Los dos pliegos, con los mismos banderines: se imprime UNO de los dos,
+      // el que acepte la imprenta. El tabloide gasta la mitad de papel.
+      for (const J of Object.values(PLIEGOS_BAN)) {
+        await page.setViewport({ width: Math.ceil(cm(J.w)) + 80, height: 1400, deviceScaleFactor: 2 })
+        const hojas = Math.ceil(conQuien.length / J.por)
+        for (let h = 0; h < hojas; h++) {
+          const lote = conQuien.slice(h * J.por, (h + 1) * J.por)
+          const nombre = `${J.archivo}-${String(h + 1).padStart(2, '0')}.png`
+          await captura(htmlBanderines(lote, arte, J), join(SALIDA, 'capitanes', nombre))
+          console.log(`  ✓ capitanes/${nombre}`.padEnd(40),
+            lote.map(t => nombreCorto(t.capitan)).join(' · '))
+        }
       }
+      await page.setViewport({ width: 1600, height: 1200, deviceScaleFactor: 2 })
 
     } else {
       console.log('  · Sin capitanes elegidos todavía: no se generó ningún banderín.')
@@ -828,11 +930,14 @@ ${canciones.map(c =>
     // noche: de a mesa. Un sobre repartido entre dos mesas lleva una sola y va
     // con la primera.
     const ordenMesa = new Map(ms.data.map(m => [m.id, m.orden ?? 0]))
+    const nombreMesa = new Map(ms.data.map(m => [m.id, m.nombre]))
     const sobres = new Map()
     for (const a of as.data) {
-      const s = sobres.get(a.guest_id) || { personas: 0, mesa: Infinity }
+      const s = sobres.get(a.guest_id) || { personas: 0, mesa: Infinity, mesaNombre: '' }
       s.personas++
-      s.mesa = Math.min(s.mesa, ordenMesa.get(a.mesa_id) ?? 0)
+      const o = ordenMesa.get(a.mesa_id) ?? 0
+      // Un sobre repartido entre dos mesas lleva UNA tarjeta y va con la primera
+      if (o < s.mesa) { s.mesa = o; s.mesaNombre = nombreMesa.get(a.mesa_id) || '' }
       sobres.set(a.guest_id, s)
     }
     const gracias = [...sobres.entries()]
@@ -841,14 +946,40 @@ ${canciones.map(c =>
       .sort((a, b) => a.mesa - b.mesa || a.nombre.localeCompare(b.nombre, 'es'))
 
     await mkdir(join(SALIDA, 'agradecimiento'), { recursive: true })
-    const porHoja = GRACIAS.cols * GRACIAS.filas
-    const hojas = Math.ceil(gracias.length / porHoja)
-    for (let h = 0; h < hojas; h++) {
-      const lote = gracias.slice(h * porHoja, (h + 1) * porHoja)
-      const nombre = `hoja-${String(h + 1).padStart(2, '0')}.png`
-      await captura(htmlAgradecimientos(lote, arte, h + 1, hojas), join(SALIDA, 'agradecimiento', nombre))
-      console.log(`  ✓ agradecimiento/${nombre}`.padEnd(40), `${lote.length} sobre(s)`)
+    for (const J of Object.values(PLIEGOS_GRACIAS)) {
+      await page.setViewport({ width: Math.ceil(cm(J.w)) + 80, height: 1400, deviceScaleFactor: 2 })
+      const porHoja = J.cols * J.filas
+      const hojas = Math.ceil(gracias.length / porHoja)
+      for (let h = 0; h < hojas; h++) {
+        const lote = gracias.slice(h * porHoja, (h + 1) * porHoja)
+        const nombre = `${J.archivo}-${String(h + 1).padStart(2, '0')}.png`
+        await captura(htmlAgradecimientos(lote, arte, h + 1, hojas, J), join(SALIDA, 'agradecimiento', nombre))
+        console.log(`  ✓ agradecimiento/${nombre}`.padEnd(40), `${lote.length} sobre(s)`)
+      }
     }
+    await page.setViewport({ width: 1600, height: 1200, deviceScaleFactor: 2 })
+
+    await captura(htmlReparto(gracias, nombreMesa, arte), join(SALIDA, 'agradecimiento', 'reparto.png'))
+    console.log('  ✓ agradecimiento/reparto.png'.padEnd(40), 'dónde va cada tarjeta')
+
+    await writeFile(join(SALIDA, 'agradecimiento', 'reparto.txt'),
+`DÓNDE VA CADA TARJETA DE AGRADECIMIENTO — Angely & Kevin
+Sábado 12 de septiembre de 2026 · Casona del Prado
+
+${gracias.length} tarjetas · una por SOBRE, no por persona.
+El número es el orden en que salen del pliego, leyendo cada hoja de izquierda a
+derecha y de arriba abajo.
+
+${[...new Map(gracias.reduce((acc, t, i) => {
+  const k = t.mesaNombre || '—'
+  acc.set(k, [...(acc.get(k) || []), { ...t, n: i + 1 }])
+  return acc
+}, new Map()))].map(([mesa, lista]) =>
+  `${mesa.toUpperCase()}  (${lista.length})\n` +
+  lista.map(t => `  [ ] ${String(t.n).padStart(2)}  ${t.nombre.padEnd(36)} ${t.personas} pers.`).join('\n')
+).join('\n\n')}
+`, 'utf8')
+    console.log('  ✓ agradecimiento/reparto.txt')
 
     const faltan = [...porMesa.values()].flat().filter(p => p.falta).length
     const sentados = [...porMesa.values()].reduce((s, g) => s + g.length, 0)
@@ -857,9 +988,12 @@ ${canciones.map(c =>
 Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
 Generado el ${cuando}
 
-  capitanes/hoja-NN.png      LOS BANDERINES de los capitanes, DE A DOS POR HOJA
-                             A4, para colgar del cuello de la botella:
-                             9,4 × 22 cm cada uno. Los primeros 4,4 cm son el
+  capitanes/a4-NN.png        LOS BANDERINES de los capitanes, para colgar del
+  capitanes/tabloide-NN.png  cuello de la botella. LOS MISMOS EN DOS PLIEGOS:
+                             de a DOS por A4 (seis hojas) o de a CUATRO por
+                             tabloide (tres hojas). Se imprime uno de los dos.
+                             Cada pieza mide
+                             9,4 × 22 cm. Los primeros 4,4 cm son el
                              doblez —van marcados con la línea de puntos— y
                              abajo termina en punta. Se imprime y se recorta por
                              la figura; lo blanco de alrededor es el descarte.
@@ -867,9 +1001,14 @@ Generado el ${cuando}
   dj/canciones-por-mesa.png  LA LISTA DEL DJ: la canción de cada mesa, su
   dj/canciones-por-mesa.txt  capitán y cuánta gente la va a corear. La misma en
                              hoja para imprimir y en texto para mandarla.
-  agradecimiento/hoja-NN.png Una tarjeta de agradecimiento POR SOBRE INVITADO
-                             —no por capitán—, cuadrada de 6,5 × 6,5 cm, de a
-                             DOCE en una hoja A4 a 300 dpi. Se cortan por la línea de
+  agradecimiento/reparto.png DÓNDE VA CADA TARJETA: el listado por mesa, con
+  agradecimiento/reparto.txt casilla para ir marcando. El número es el orden en
+                             que salen del pliego, así que si se cortan sin
+                             desordenarlas la pila se reparte de corrido.
+  agradecimiento/a4-NN.png   Una tarjeta de agradecimiento POR SOBRE INVITADO
+  agradecimiento/tabloide-NN.png  —no por capitán—, cuadrada de 6,5 × 6,5 cm.
+                             También en dos pliegos: DOCE por A4 (cinco hojas) o
+                             VEINTICUATRO por tabloide (tres hojas). Se cortan por la línea de
                              puntos. Van ordenadas por mesa, que es como se
                              reparten: de a mesa.
   bienvenida-pendon-75x175.png

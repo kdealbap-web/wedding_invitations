@@ -685,11 +685,28 @@ reconocen antes de leerlo.
 #### El banderín del capitán
 
 Uno por capitán. **No es una hoja: cuelga del cuello de la botella**, así que la
-pieza es una tira de **9,4 × 22 cm**, y van **dos por hoja A4**: antes cada uno
-salía en su propia hoja y, impreso en A4, dejaba 8 cm de blanco a un lado — once
-capitanes eran once hojas para lo que cabe en seis. El ancho de la pieza sale de
-esa cuenta: `2 × 9,4 + 0,8 de calle + 0,7 de margen a cada lado = 21`. Con 9,9 no
-quedaba calle por donde meter la tijera. Todo vive en `BANDERIN` y `HOJA_BAN`:
+pieza es una tira de **9,4 × 22 cm**, y sale en **dos pliegos** (`PLIEGOS_BAN`):
+
+```
+  A4         2 × 9,4 + 0,8 de calle + 0,7 de margen a cada lado = 21 exactos
+  Tabloide   4 × 9,4 + 3 calles de 1,26 + 0,9 de margen a cada lado = 43,18
+```
+
+**El ancho de la pieza sale de la cuenta del A4**, que es el pliego que se puede
+imprimir en casa: con 9,9 cm no quedaba calle por donde meter la tijera. Antes
+cada banderín salía en su propia hoja y, impreso en A4, dejaba 8 cm de blanco a
+un lado — once capitanes eran once hojas para lo que cabe en seis, o en tres si
+el pliego es tabloide.
+
+**El tabloide va apaisado**: la pieza mide 22 cm de alto y en vertical no entran
+dos filas (serían 44 contra 43,18), así que se desperdiciaría lo mismo que en A4
+y sólo cabrían tres a lo ancho. Se imprime **uno de los dos pliegos**, no ambos.
+
+Lo que no se puede aprovechar es la franja de abajo: con piezas de 22 cm no hay
+segunda fila en ningún pliego. Llenarla obligaría a mezclar piezas distintas en
+el mismo papel.
+
+El resto de la anatomía:
 
 ```
   ┌ hoja A4 ── 2,2 cm arriba para las marcas; el resto es donde se corta
@@ -737,11 +754,16 @@ quedaba calle por donde meter la tijera. Todo vive en `BANDERIN` y `HOJA_BAN`:
 
 #### Las tarjetas de agradecimiento
 
-Una **por sobre invitado** —no por capitán—, cuadrada de **6,5 × 6,5 cm**, de a
-**doce** en una hoja A4 a 300 dpi con línea de corte. Son 49 sobres, así que salen
-cinco hojas. El lado sale de la hoja y no al revés: con tres columnas de 6,5 se
-llenan 19,5 de los 21 cm, y con dos de 8 quedaban 4,4 cm de blanco a los lados y
-hacían falta nueve hojas para lo que ahora entra en cinco. Van **ordenadas por mesa**, que es como se reparten esa noche; un sobre
+Una **por sobre invitado** —no por capitán—, cuadrada de **6,5 × 6,5 cm**, en los
+mismos dos pliegos que los banderines (`PLIEGOS_GRACIAS`): **doce por A4** (cinco
+hojas) o **veinticuatro por tabloide** (tres). El lado sale de la hoja y no al
+revés: con tres columnas de 6,5 se llenan 19,5 de los 21 cm del A4, y con dos de
+8 quedaban 4,4 cm de blanco a los lados y hacían falta nueve hojas.
+
+**`agradecimiento/reparto.png` dice dónde va cada una**: el listado por mesa, con
+casilla para ir marcando, y cada tarjeta numerada **en el orden en que sale del
+pliego**. Cortadas sin desordenarlas, la pila se reparte de corrido. Sin esa hoja,
+49 tarjetas cortadas son un montón de papeles sueltos. También en `.txt`. Van **ordenadas por mesa**, que es como se reparten esa noche; un sobre
 repartido entre dos mesas lleva una sola tarjeta y va con la primera.
 
 - Sobre **marfil y no sobre el terracota del banderín**, por dos razones: el
