@@ -685,17 +685,19 @@ reconocen antes de leerlo.
 #### El banderín del capitán
 
 Uno por capitán. **No es una hoja: cuelga del cuello de la botella**, así que la
-pieza es una tira de **9,9 × 22 cm** impresa sobre una hoja de **12,9 × 25 cm**.
-Todo vive en la constante `BANDERIN`:
+pieza es una tira de **9,4 × 22 cm**, y van **dos por hoja A4**: antes cada uno
+salía en su propia hoja y, impreso en A4, dejaba 8 cm de blanco a un lado — once
+capitanes eran once hojas para lo que cabe en seis. El ancho de la pieza sale de
+esa cuenta: `2 × 9,4 + 0,8 de calle + 0,7 de margen a cada lado = 21`. Con 9,9 no
+quedaba calle por donde meter la tijera. Todo vive en `BANDERIN` y `HOJA_BAN`:
 
 ```
-  ┌ margen 1,5 cm (2,1 arriba) ── el blanco de donde se agarra para cortar,
-  │                               y donde van TODAS las marcas
-  │ ┌───────── pieza 9,9 × 22 ─────────┐
-  │ │  4,4 cm  doblez, va detrás        │
-  │ ├┈┈┈┈┈┈┈┈  ◯ agujero Ø 3,5 ┈┈┈┈┈┈┈┤  ← el agujero va A CABALLO del doblez
-  │ │ 12,65    el encargo               │
-  │ └ 4,95     la punta ───────────────┘
+  ┌ hoja A4 ── 2,2 cm arriba para las marcas; el resto es donde se corta
+  │ ┌──── pieza 9,4 × 22 ────┐  calle  ┌──── pieza 9,4 × 22 ────┐
+  │ │  4,4 cm  doblez, va detrás │  0,8  │                        │
+  │ ├┈┈┈┈┈  ◯ agujero Ø 3,5 ┈┈┈┈┤       │   ← el agujero va A
+  │ │ 12,65    el encargo        │       │     CABALLO del doblez
+  │ └ 4,95     la punta ────────┘       └────────────────────────┘
 ```
 
 - **El agujero va centrado en la línea del doblez**, mitad arriba y mitad abajo:
@@ -735,9 +737,11 @@ Todo vive en la constante `BANDERIN`:
 
 #### Las tarjetas de agradecimiento
 
-Una **por sobre invitado** —no por capitán—, cuadrada de **8 × 8 cm**, de a seis
-en una hoja A4 a 300 dpi con línea de corte. Son 49 sobres, así que salen nueve
-hojas. Van **ordenadas por mesa**, que es como se reparten esa noche; un sobre
+Una **por sobre invitado** —no por capitán—, cuadrada de **6,5 × 6,5 cm**, de a
+**doce** en una hoja A4 a 300 dpi con línea de corte. Son 49 sobres, así que salen
+cinco hojas. El lado sale de la hoja y no al revés: con tres columnas de 6,5 se
+llenan 19,5 de los 21 cm, y con dos de 8 quedaban 4,4 cm de blanco a los lados y
+hacían falta nueve hojas para lo que ahora entra en cinco. Van **ordenadas por mesa**, que es como se reparten esa noche; un sobre
 repartido entre dos mesas lleva una sola tarjeta y va con la primera.
 
 - Sobre **marfil y no sobre el terracota del banderín**, por dos razones: el

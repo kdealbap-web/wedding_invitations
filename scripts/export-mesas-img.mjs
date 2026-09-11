@@ -345,13 +345,21 @@ const cm = n => +(n * CM).toFixed(1)
 // margen blanco es de donde se agarra para cortar, y ahí van las marcas —fuera
 // de la pieza, porque si se imprimieran encima se quedarían ahí para siempre.
 const BANDERIN = {
-  w: 9.9, h: 22,          // la pieza, un 10 % más que la primera versión
+  w: 9.4, h: 22,          // la pieza
   doblez: 4.4,            // se dobla aquí y este trozo queda detrás del cuello
   punta: 4.95,            // desde aquí abajo, el triángulo
   agujero: 3.5,           // Ø del agujero del cuello de la botella
-  margen: 1.5,            // blanco alrededor, para cortar
-  margenSup: 2.1,         // arriba un poco más: ahí van los dos renglones de marcas
 }
+
+// La hoja: A4 vertical con DOS banderines uno al lado del otro. Antes cada uno
+// salía en su propia hoja de 12,9 × 25 cm y, impreso en A4, dejaba 8 cm de
+// blanco a un lado: once capitanes eran once hojas para lo que caben en seis.
+//
+//   2 × 9,4 = 18,8 cm de pieza + 0,8 de calle + 0,7 de margen a cada lado = 21
+//
+// El ancho de la pieza sale de esa cuenta: con 9,9 cm no quedaba calle por donde
+// meter la tijera ni margen que el impresor pueda sujetar.
+const HOJA_BAN = { w: 21, h: 29.7, margen: 0.7, calle: 0.8, arriba: 2.2 }
 
 // Confeti repetible: el mismo nombre de mesa da siempre el mismo reparto, así
 // que regenerar no cambia lo que ya se mandó a imprimir.
@@ -381,144 +389,143 @@ function confeti(semilla, n, W, H) {
 // Un agujero de 8,5 en una pieza de 9,9 dejaría 7 mm de papel a cada lado y se
 // rompería al colgarlo.
 
-function htmlBanderin(mesa, nombreLargo, arte) {
+/** Una pieza: el banderín más sus marcas, colocado en (x0, y0) de la hoja. */
+function piezaBanderin(mesa, nombreLargo, arte, x0cm) {
   const B = BANDERIN
   const capitan = nombreCorto(nombreLargo)
   const cancion = (mesa.notas || '').trim()
   const numero = (mesa.nombre || '').replace(/^\s*mesa\s*/i, '').trim()
 
-  // Todo en px de CSS sobre la hoja completa, para que las marcas y la pieza
-  // compartan sistema de coordenadas.
-  const H = { w: B.w + B.margen * 2, h: B.h + B.margenSup + B.margen }
-  const x0 = cm(B.margen), y0 = cm(B.margenSup)
+  const x0 = cm(x0cm), y0 = cm(HOJA_BAN.arriba)
   const pw = cm(B.w), ph = cm(B.h)
   const yDoblez = y0 + cm(B.doblez)
   const yPunta = y0 + cm(B.h - B.punta)
   const cxPieza = x0 + pw / 2
   const r = cm(B.agujero / 2)
-
-  // El contorno de la pieza, para la línea de corte
   const contorno = `${x0},${y0} ${x0 + pw},${y0} ${x0 + pw},${yPunta} ${cxPieza},${y0 + ph} ${x0},${yPunta}`
+
+  return {
+    // La pieza y su contenido
+    html: `<div class="ban" style="left:${x0}px;top:${y0}px;width:${pw}px;height:${ph}px">
+      <div class="conf">${confeti(mesa.nombre + capitan, 48, pw, ph)}</div>
+      <div class="doblez"></div>
+      <div class="cuerpo">
+        ${arte.logo ? `<img class="crest" src="${arte.logo}" alt="">` : ''}
+        <p class="quien"><small>QUERIDO</small>
+          <b style="font-size:${capitan.length > 18 ? 31 : 37}px">${esc(capitan.toUpperCase())}</b></p>
+        <p class="cargo">ERES EL CAPITÁN DE LA</p>
+        <p class="num"><small>MESA</small><span>${esc(numero.toUpperCase())}</span></p>
+
+        <p class="por">FUISTE ELEGIDO POR TU HISTORIAL DE SIEMPRE ANIMAR A LAS PERSONAS DE TU ALREDEDOR</p>
+        <p class="lema">HAZ LO TUYO<br>Y COMANDA</p>
+
+        <div class="der">
+          <p><b>TIENES DERECHO A</b>QUE NO QUEDE UN VASO VACÍO EN LA MESA</p>
+          <p><b>Y EL DEBER DE</b>QUE ESTA SEA LA MESA MÁS ANIMADA, POR ESCÁNDALO</p>
+        </div>
+
+        <div class="cancion${cancion ? '' : ' vacia'}">
+          <b>LA CANCIÓN DE TU MESA</b>
+          <span style="font-size:${cancion.length > 26 ? 21 : 25}px">${cancion ? esc(cancion.toUpperCase()) : ''}</span>
+        </div>
+
+        <div class="firma"><i></i><span>ANGELY &amp; KEVIN · 12 · IX · 2026</span><u></u></div>
+      </div>
+    </div>`,
+
+    // Las marcas, siempre fuera de la pieza
+    marcas: `
+      <polygon points="${contorno}" fill="none" stroke="#8A7866" stroke-width="1.2" stroke-dasharray="9 7"/>
+      <circle cx="${cxPieza}" cy="${yDoblez}" r="${r}" fill="none" stroke="#8A7866"
+              stroke-width="1.2" stroke-dasharray="9 7"/>
+      <line x1="${x0}" y1="${yDoblez}" x2="${x0 + pw}" y2="${yDoblez}"
+            stroke="#C0B3A3" stroke-width="1" stroke-dasharray="3 5"/>
+      <text class="chico" x="${cxPieza}" y="${y0 - 10}" text-anchor="middle">${esc(capitan.toUpperCase())} · ${esc(mesa.nombre.toUpperCase())}</text>
+      <text class="chico" x="${cxPieza}" y="${y0 + ph + 26}" text-anchor="middle">9,4 × 22 cm · DOBLEZ A 4,4 · AGUJERO Ø 3,5</text>`,
+  }
+}
+
+/** Una hoja A4 con dos banderines. */
+function htmlBanderines(lote, arte) {
+  const B = BANDERIN, J = HOJA_BAN
+  const piezas = lote.map((t, i) =>
+    piezaBanderin(t.mesa, t.capitan, arte, J.margen + i * (B.w + J.calle)))
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
-  .hoja{width:${cm(H.w)}px;height:${cm(H.h)}px;position:relative;background:#fff}
+  .hoja{width:${cm(J.w)}px;height:${cm(J.h)}px;position:relative;background:#fff}
 
   /* La pieza: terracota de la boda, con la punta recortada abajo y el agujero
      del cuello vaciado. El vaciado se hace con una máscara, no con un borde
      pintado: lo que se ve blanco ahí es el papel que se quita. */
-  .ban{position:absolute;left:${x0}px;top:${y0}px;width:${pw}px;height:${ph}px;
-    color:#FFF3E4;text-align:center;
+  .ban{position:absolute;color:#FFF3E4;text-align:center;
     background:linear-gradient(163deg,#7E2E1B 0%,#A8442A 48%,#8B3620 100%);
     clip-path:polygon(0 0,100% 0,100% ${((B.h - B.punta) / B.h * 100).toFixed(2)}%,50% 100%,0 ${((B.h - B.punta) / B.h * 100).toFixed(2)}%);
-    -webkit-mask:radial-gradient(circle ${r}px at 50% ${cm(B.doblez)}px,transparent 99%,#000 100%);
-    mask:radial-gradient(circle ${r}px at 50% ${cm(B.doblez)}px,transparent 99%,#000 100%);
+    -webkit-mask:radial-gradient(circle ${cm(B.agujero / 2)}px at 50% ${cm(B.doblez)}px,transparent 99%,#000 100%);
+    mask:radial-gradient(circle ${cm(B.agujero / 2)}px at 50% ${cm(B.doblez)}px,transparent 99%,#000 100%);
     display:flex;flex-direction:column;align-items:center;overflow:hidden}
   .conf{position:absolute;inset:0;pointer-events:none}
   .conf i{position:absolute;display:block;background:#F2D79B;border-radius:1px}
   .ban > *:not(.conf){position:relative;z-index:1;width:100%}
 
-  /* Los 4,4 cm que se doblan sobre el cuello: van detrás, así que van limpios */
   .doblez{height:${cm(B.doblez)}px;flex-shrink:0}
-  /* El contenido arranca bajo el agujero y TERMINA ANTES DE LA PUNTA: los
-     lados del triángulo se comen el texto que baje de ahí. Se deja entrar 1,1 cm
-     en la punta, donde todavía mide casi 8 cm de ancho, y ni un milímetro más. */
+  /* El contenido arranca bajo el agujero y TERMINA ANTES DE LA PUNTA: los lados
+     del triángulo se comen el texto que baje de ahí. Entra 1,1 cm, donde todavía
+     mide casi 8 cm de ancho, y ni un milímetro más. */
   .cuerpo{flex:1;display:flex;flex-direction:column;align-items:center;
-    padding:${cm(B.agujero / 2 + 0.42)}px ${cm(0.68)}px ${cm(B.punta - 1.1)}px}
+    padding:${cm(B.agujero / 2 + 0.38)}px ${cm(0.6)}px ${cm(B.punta - 1.1)}px}
   /* El escudo va aquí y no en el doblez: esa franja se dobla hacia atrás y el
      logo quedaría de espaldas. */
-  .crest{height:${cm(1.05)}px;width:auto;margin-bottom:9px;
-    filter:brightness(1.4) saturate(.55)}
+  .crest{height:${cm(1)}px;width:auto;margin-bottom:8px;filter:brightness(1.4) saturate(.55)}
 
-  .quien{margin-top:0}
-  .quien small{display:block;font-size:18px;font-weight:400;letter-spacing:.3em;color:#F2D79B}
+  .quien small{display:block;font-size:17px;font-weight:400;letter-spacing:.3em;color:#F2D79B}
   .quien b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    font-size:${capitan.length > 18 ? 33 : 39}px;letter-spacing:.02em;line-height:1.12;margin-top:5px}
+    letter-spacing:.02em;line-height:1.1;margin-top:4px}
 
-  .cargo{font-size:16px;letter-spacing:.26em;color:rgba(255,243,228,.85);margin-top:${cm(0.3)}px}
-  .num{display:flex;align-items:baseline;justify-content:center;gap:11px;margin-top:4px}
-  .num small{font-family:Jost,system-ui,sans-serif;font-size:21px;font-weight:400;
+  .cargo{font-size:15px;letter-spacing:.26em;color:rgba(255,243,228,.85);margin-top:${cm(0.28)}px}
+  .num{display:flex;align-items:baseline;justify-content:center;gap:10px;margin-top:3px}
+  .num small{font-family:Jost,system-ui,sans-serif;font-size:20px;font-weight:400;
     letter-spacing:.24em;color:#F2D79B}
   .num span{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    font-size:${cm(1.15)}px;line-height:.9;color:#FFF3E4}
+    font-size:${cm(1.1)}px;line-height:.9;color:#FFF3E4}
 
-  .por{font-size:17.5px;font-weight:300;line-height:1.4;letter-spacing:.04em;
-    margin-top:${cm(0.34)}px;color:rgba(255,243,228,.94)}
-  .lema{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:32px;
-    letter-spacing:.04em;color:#F2D79B;margin-top:${cm(0.26)}px;line-height:1.1}
+  .por{font-size:16.5px;font-weight:300;line-height:1.38;letter-spacing:.03em;
+    margin-top:${cm(0.3)}px;color:rgba(255,243,228,.94)}
+  .lema{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:30px;
+    letter-spacing:.04em;color:#F2D79B;margin-top:${cm(0.24)}px;line-height:1.1}
 
-  .der{margin-top:${cm(0.32)}px;display:flex;flex-direction:column;gap:${cm(0.2)}px;width:100%}
-  .der p{font-size:17px;font-weight:400;line-height:1.35;letter-spacing:.04em;
-    padding:${cm(0.17)}px ${cm(0.18)}px;border:1px solid rgba(242,215,155,.45);border-radius:6px;
+  .der{margin-top:${cm(0.3)}px;display:flex;flex-direction:column;gap:${cm(0.18)}px;width:100%}
+  .der p{font-size:16px;font-weight:400;line-height:1.32;letter-spacing:.03em;
+    padding:${cm(0.16)}px ${cm(0.16)}px;border:1px solid rgba(242,215,155,.45);border-radius:6px;
     background:rgba(255,243,228,.07)}
-  .der b{display:block;font-size:13px;letter-spacing:.24em;color:#F2D79B;margin-bottom:4px}
+  .der b{display:block;font-size:12.5px;letter-spacing:.22em;color:#F2D79B;margin-bottom:4px}
 
-  .cancion{margin-top:${cm(0.3)}px;width:100%}
-  .cancion b{display:block;font-size:13px;letter-spacing:.24em;color:#F2D79B;margin-bottom:4px}
+  .cancion{margin-top:${cm(0.28)}px;width:100%}
+  .cancion b{display:block;font-size:12.5px;letter-spacing:.22em;color:#F2D79B;margin-bottom:4px}
   .cancion span{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    font-size:${cancion.length > 26 ? 22 : 27}px;line-height:1.18;color:#FFF3E4}
-  .cancion.vacia span{border-bottom:1px solid rgba(242,215,155,.5);min-height:28px}
+    line-height:1.16;color:#FFF3E4}
+  .cancion.vacia span{border-bottom:1px solid rgba(242,215,155,.5);min-height:26px}
 
   .firma{margin-top:auto}
-  .firma i{display:block;width:${cm(2.4)}px;height:1px;background:rgba(242,215,155,.5);
-    margin:${cm(0.28)}px auto ${cm(0.2)}px}
-  .firma span{font-size:13.5px;letter-spacing:.24em;color:rgba(255,243,228,.72)}
-  .firma u{display:block;width:12px;height:12px;background:#F2D79B;opacity:.75;
-    transform:rotate(45deg);margin:${cm(0.5)}px auto 0}
+  .firma i{display:block;width:${cm(2.2)}px;height:1px;background:rgba(242,215,155,.5);
+    margin:${cm(0.24)}px auto ${cm(0.18)}px}
+  .firma span{font-size:12.5px;letter-spacing:.22em;color:rgba(255,243,228,.72)}
+  .firma u{display:block;width:11px;height:11px;background:#F2D79B;opacity:.75;
+    transform:rotate(45deg);margin:${cm(0.45)}px auto 0}
 
-  /* Las marcas van en una capa aparte, encima de todo, y los rótulos SIEMPRE
-     dentro del margen blanco: lo que se imprima sobre la pieza se queda ahí. */
+  /* Las marcas van en una capa aparte y SIEMPRE fuera de las piezas: lo que se
+     imprima encima se queda ahí para siempre. */
   .marcas{position:absolute;inset:0;pointer-events:none}
-  .marcas text{font-family:Jost,system-ui,sans-serif;font-size:13px;letter-spacing:.12em;fill:#8A7866}
-  .marcas text.chico{font-size:11px;fill:#A2917F}
+  .marcas text{font-family:Jost,system-ui,sans-serif;fill:#8A7866}
+  .marcas text.tit{font-size:13px;letter-spacing:.12em}
+  .marcas text.chico{font-size:10.5px;letter-spacing:.1em;fill:#A2917F}
 </style></head><body><div class="hoja">
-  <div class="ban">
-    <div class="conf">${confeti(mesa.nombre + capitan, 52, pw, ph)}</div>
-    <div class="doblez"></div>
-    <div class="cuerpo">
-      ${arte.logo ? `<img class="crest" src="${arte.logo}" alt="">` : ''}
-      <p class="quien"><small>QUERIDO</small><b>${esc(capitan.toUpperCase())}</b></p>
-      <p class="cargo">ERES EL CAPITÁN DE LA</p>
-      <p class="num"><small>MESA</small><span>${esc(numero.toUpperCase())}</span></p>
-
-      <p class="por">FUISTE ELEGIDO POR TU HISTORIAL DE SIEMPRE ANIMAR A LAS PERSONAS DE TU ALREDEDOR</p>
-      <p class="lema">HAZ LO TUYO<br>Y COMANDA</p>
-
-      <div class="der">
-        <p><b>TIENES DERECHO A</b>QUE NO QUEDE UN VASO VACÍO EN LA MESA</p>
-        <p><b>Y EL DEBER DE</b>QUE ESTA SEA LA MESA MÁS ANIMADA, POR ESCÁNDALO</p>
-      </div>
-
-      <div class="cancion${cancion ? '' : ' vacia'}">
-        <b>LA CANCIÓN DE TU MESA</b>
-        <span>${cancion ? esc(cancion.toUpperCase()) : ''}</span>
-      </div>
-
-      <div class="firma"><i></i><span>ANGELY &amp; KEVIN · 12 · IX · 2026</span><u></u></div>
-    </div>
-  </div>
-
-  <svg class="marcas" viewBox="0 0 ${cm(H.w)} ${cm(H.h)}">
-    <!-- Corte: el contorno de la pieza -->
-    <polygon points="${contorno}" fill="none" stroke="#8A7866" stroke-width="1.2"
-             stroke-dasharray="9 7"/>
-    <!-- Corte: el agujero del cuello, a caballo del doblez -->
-    <circle cx="${cxPieza}" cy="${yDoblez}" r="${r}" fill="none" stroke="#8A7866"
-            stroke-width="1.2" stroke-dasharray="9 7"/>
-    <!-- Doblez: línea de puntos cortos, para no confundirla con el corte -->
-    <line x1="${x0}" y1="${yDoblez}" x2="${x0 + pw}" y2="${yDoblez}"
-          stroke="#C0B3A3" stroke-width="1" stroke-dasharray="3 5"/>
-
-    <!-- Rótulos, todos dentro del margen blanco -->
-    <text x="${x0}" y="${y0 - 32}">CORTAR POR LA LÍNEA DE PUNTOS</text>
-    <text class="chico" x="${x0 + pw}" y="${y0 - 32}" text-anchor="end">9,9 × 22 cm</text>
-    <text class="chico" x="${x0}" y="${y0 - 12}">AGUJERO Ø 3,5 cm, CENTRADO EN EL DOBLEZ · LA FRANJA DE ARRIBA SE DOBLA HACIA ATRÁS</text>
-
-    <text class="chico" x="${x0 - 10}" y="${yDoblez - 8}" text-anchor="end">DOBLEZ</text>
-    <line x1="${x0 - 8}" y1="${yDoblez}" x2="${x0}" y2="${yDoblez}" stroke="#C0B3A3" stroke-width="1"/>
-    <line x1="${x0 + pw}" y1="${yDoblez}" x2="${x0 + pw + 8}" y2="${yDoblez}" stroke="#C0B3A3" stroke-width="1"/>
-
-    <text class="chico" x="${cxPieza}" y="${y0 + ph + 26}" text-anchor="middle">${esc(capitan.toUpperCase())} · ${esc(mesa.nombre.toUpperCase())}</text>
+  ${piezas.map(p => p.html).join('')}
+  <svg class="marcas" viewBox="0 0 ${cm(J.w)} ${cm(J.h)}">
+    <text class="tit" x="${cm(J.margen)}" y="${cm(0.95)}">CORTAR POR LA LÍNEA DE PUNTOS</text>
+    <text class="chico" x="${cm(J.w - J.margen)}" y="${cm(0.95)}" text-anchor="end">ANGELY &amp; KEVIN · BANDERINES DE CAPITÁN</text>
+    <text class="chico" x="${cm(J.margen)}" y="${cm(1.45)}">EL AGUJERO VA CENTRADO EN EL DOBLEZ · LA FRANJA DE ARRIBA SE DOBLA HACIA ATRÁS Y EL AGUJERO QUEDA REDONDO</text>
+    ${piezas.map(p => p.marcas).join('')}
   </svg>
 </div></body></html>`
 }
@@ -536,7 +543,10 @@ function htmlBanderin(mesa, nombreLargo, arte) {
 //
 // El texto trata de usted plural o de tú según cuántos vengan en el sobre: a una
 // familia se le habla distinto que a alguien que viene solo.
-const GRACIAS = { lado: 8, cols: 2, filas: 3 }
+// 6,5 cm y no 8: con tres columnas de 6,5 la hoja se llena (19,5 de 21), y con
+// dos de 8 quedaban 4,4 cm de blanco a los lados y hacían falta nueve hojas para
+// lo que ahora entra en cinco.
+const GRACIAS = { lado: 6.5, cols: 3, filas: 4 }
 
 const TEXTO_GRACIAS = {
   plural: 'Que estén aquí no es un detalle: es la razón por la que este día se siente ' +
@@ -616,7 +626,7 @@ function htmlAgradecimientos(lote, arte, hoja, total) {
   const tarjetas = lote.map(t => {
     // «Familia Gravini Rodriguez Trujillo» y «Jorge Longa» no entran igual
     const n = t.nombre.length
-    const cuerpo = n > 28 ? 19 : n > 22 ? 22 : n > 15 ? 26 : 30
+    const cuerpo = n > 28 ? 15.5 : n > 22 ? 18 : n > 15 ? 21 : 24
     return `<div class="t">
       <div class="marco"></div>
       <div class="in">
@@ -638,29 +648,29 @@ function htmlAgradecimientos(lote, arte, hoja, total) {
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
-  .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#fff;padding:${cm(1.6)}px ${cm(2.2)}px;
+  .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#fff;padding:${cm(1.5)}px ${cm(0.6)}px;
     display:flex;flex-direction:column}
   .rejilla{display:grid;grid-template-columns:repeat(${G.cols},${cm(G.lado)}px);
-    grid-auto-rows:${cm(G.lado)}px;gap:${cm(0.4)}px;justify-content:center;align-content:start}
+    grid-auto-rows:${cm(G.lado)}px;gap:${cm(0.3)}px;justify-content:center;align-content:start}
   .t{position:relative;background:#FBF5EA;outline:1px dashed #D9C7A8;overflow:hidden}
   .t.vacia{background:none}
   /* Filete interior doble, el mismo marco de la participación */
-  .marco{position:absolute;inset:${cm(0.42)}px;border:1px solid #E0CFAE;pointer-events:none}
+  .marco{position:absolute;inset:${cm(0.34)}px;border:1px solid #E0CFAE;pointer-events:none}
   .marco::after{content:'';position:absolute;inset:3px;border:.6px solid rgba(176,140,79,.4)}
 
   .in{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;text-align:center;padding:${cm(0.85)}px}
-  .in img{height:${cm(1.25)}px;width:auto}
-  .g{font-size:12px;letter-spacing:.36em;color:#B08C4F;margin-top:9px}
+    align-items:center;justify-content:center;text-align:center;padding:${cm(0.68)}px}
+  .in img{height:${cm(0.95)}px;width:auto}
+  .g{font-size:10.5px;letter-spacing:.34em;color:#B08C4F;margin-top:7px}
   .n{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;line-height:1.12;
     color:#9A5B45;margin-top:6px}
-  .rule{display:flex;align-items:center;gap:9px;width:62%;margin:9px 0 8px}
+  .rule{display:flex;align-items:center;gap:7px;width:60%;margin:7px 0 6px}
   .rule i{flex:1;height:1px;background:#E0CFAE}
   .rule b{color:#B08C4F;font-size:8px}
-  .msg{font-family:'Cormorant Garamond',Georgia,serif;font-size:15.5px;line-height:1.45;
+  .msg{font-family:'Cormorant Garamond',Georgia,serif;font-size:12.5px;line-height:1.4;
     color:#2A1D14}
-  .ayk{font-family:'Great Vibes',cursive;font-size:24px;color:#9A5B45;margin-top:10px;line-height:1.1}
-  .fecha{font-size:9px;letter-spacing:.26em;color:#A2917F;margin-top:3px}
+  .ayk{font-family:'Great Vibes',cursive;font-size:19px;color:#9A5B45;margin-top:8px;line-height:1.1}
+  .fecha{font-size:8px;letter-spacing:.24em;color:#A2917F;margin-top:3px}
 
   .pie{margin-top:auto;text-align:center;font-size:11px;letter-spacing:.18em;color:#B9AC9C}
 </style></head><body><div class="hoja">
@@ -771,11 +781,13 @@ async function main() {
     const conCapitan = imprimibles.filter(m => m.capitan_id && nombreDe.get(m.capitan_id))
     if (conCapitan.length) {
       await mkdir(join(SALIDA, 'capitanes'), { recursive: true })
-      for (const [i, m] of conCapitan.entries()) {
-        const quien = nombreDe.get(m.capitan_id)
-        const nombre = `${String(i + 1).padStart(2, '0')}_${slug(nombreCorto(quien))}.png`
-        await captura(htmlBanderin(m, quien, arte), join(SALIDA, 'capitanes', nombre))
-        console.log(`  ✓ capitanes/${nombre}`)
+      const conQuien = conCapitan.map(m => ({ mesa: m, capitan: nombreDe.get(m.capitan_id) }))
+      for (let h = 0; h * 2 < conQuien.length; h++) {
+        const lote = conQuien.slice(h * 2, h * 2 + 2)
+        const nombre = `hoja-${String(h + 1).padStart(2, '0')}.png`
+        await captura(htmlBanderines(lote, arte), join(SALIDA, 'capitanes', nombre))
+        console.log(`  ✓ capitanes/${nombre}`.padEnd(40),
+          lote.map(t => nombreCorto(t.capitan)).join(' · '))
       }
 
     } else {
@@ -845,8 +857,9 @@ ${canciones.map(c =>
 Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
 Generado el ${cuando}
 
-  capitanes/NN_*.png         EL BANDERÍN de cada capitán, para colgar del cuello:
-                             9 × 20 cm a 300 dpi. Los primeros 4 cm son el
+  capitanes/hoja-NN.png      LOS BANDERINES de los capitanes, DE A DOS POR HOJA
+                             A4, para colgar del cuello de la botella:
+                             9,4 × 22 cm cada uno. Los primeros 4,4 cm son el
                              doblez —van marcados con la línea de puntos— y
                              abajo termina en punta. Se imprime y se recorta por
                              la figura; lo blanco de alrededor es el descarte.
@@ -855,8 +868,8 @@ Generado el ${cuando}
   dj/canciones-por-mesa.txt  capitán y cuánta gente la va a corear. La misma en
                              hoja para imprimir y en texto para mandarla.
   agradecimiento/hoja-NN.png Una tarjeta de agradecimiento POR SOBRE INVITADO
-                             —no por capitán—, cuadrada de 8 × 8 cm, de a seis
-                             en una hoja A4 a 300 dpi. Se cortan por la línea de
+                             —no por capitán—, cuadrada de 6,5 × 6,5 cm, de a
+                             DOCE en una hoja A4 a 300 dpi. Se cortan por la línea de
                              puntos. Van ordenadas por mesa, que es como se
                              reparten: de a mesa.
   bienvenida-pendon-75x175.png
