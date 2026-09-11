@@ -946,6 +946,27 @@ export default function MesasBoard() {
           )}
         </div>
 
+        {/* La canción de la mesa. Vive en `notas`, que estaba sin usar y es
+            exactamente eso, y la imprime la tarjeta del capitán. Se escribe
+            aquí porque es lo único de la mesa que no se ve en el círculo.
+            `key` la reata a la mesa: sin ella, al pasar a la siguiente con
+            ‹ › React reutiliza el input y se queda la canción anterior. */}
+        <div className="mb-focal-extra">
+          <label>
+            <span>Canción de la mesa</span>
+            <input
+              key={focal.id} defaultValue={focal.notas || ''}
+              placeholder="Título – artista"
+              onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+              onBlur={e => {
+                const v = e.target.value.trim()
+                if (v !== (focal.notas || '')) editarMesa(focal, { notas: v || null })
+              }}
+            />
+          </label>
+          <p>Va en la tarjeta del capitán. Si queda vacía, la tarjeta imprime el renglón para escribirla a mano.</p>
+        </div>
+
         {aviso && <div className="mb-toast">{aviso}</div>}
       </div>
     )
