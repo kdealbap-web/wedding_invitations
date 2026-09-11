@@ -671,8 +671,12 @@ misma participación que el afiche —blanco, escudo, dos esquinas de acuarela�
 - Sólo salen las mesas **con capitán elegido**: una tarjeta con el nombre en
   blanco no se puede entregar.
 - **La canción de la mesa sale de `mesas.notas`**, que estaba sin usar. Se
-  escribe en el panel, en la mesa abierta a pantalla completa: es el único dato
-  de la mesa que no se ve en el círculo. Si está
+  escribe en el panel desde tres sitios: la lista **«Canciones de las mesas»**
+  —la cola para llenarlas todas de una sentada, Enter salta a la siguiente—, el
+  pie de cada mesa en la vista Detalle, y la mesa abierta a pantalla completa.
+  Enter no guarda por su cuenta en ninguna: mueve el foco, y es el `blur` del
+  campo que se deja el que escribe. Guardar en los dos sitios escribiría cada
+  canción dos veces. Si está
   vacía, la tarjeta imprime el renglón rotulado «escribe aquí la canción de la
   mesa» en vez de esconder el punto: es un dato que se completa a mano el mismo
   día, y el LEEME dice cuántas faltan.

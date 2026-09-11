@@ -284,6 +284,29 @@ export default function MesaRedonda({
         </div>
       )}
 
+      {/* La canción de la mesa. Vive en `notas`, que estaba sin usar y es
+          exactamente eso, y la imprime la tarjeta del capitán. `key` la ata a
+          la mesa: sin ella React reutiliza el input al reordenarse la lista y
+          se queda mostrando la canción de otra. */}
+      {!mini && (
+        <div className={`mr-cancion${(mesa.notas || '').trim() ? ' puesta' : ''}`}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+          </svg>
+          <input
+            key={mesa.id} defaultValue={mesa.notas || ''}
+            placeholder="Canción de la mesa"
+            title="Va en la tarjeta del capitán"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+            onBlur={e => {
+              const v = e.target.value.trim()
+              if (v !== (mesa.notas || '')) onEditarMesa(mesa, { notas: v || null })
+            }}
+          />
+        </div>
+      )}
+
       {!mini && <footer className="mr-pie">
         <input
           className="mr-cap" type="number" min="1" max="30" defaultValue={mesa.capacidad}

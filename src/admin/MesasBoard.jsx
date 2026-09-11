@@ -287,6 +287,53 @@ function ColaNombres({ cola, total, editando, onEditar, onGuardar, onCancelar, m
   )
 }
 
+// ─── Las canciones de las mesas ───
+//
+// Una por mesa, la que la tarjeta del capitán le pide al DJ. Van en `notas`, y
+// se pueden escribir mesa por mesa en el detalle — pero son once y se llenan de
+// una sentada, así que esto es la misma cola que «Nombres por completar»: Enter
+// guarda y salta a la siguiente.
+//
+// Arranca plegada, al revés que la de nombres: un nombre sin completar sale mal
+// impreso en una tarjeta de mesa, una canción sin escribir sólo deja un renglón
+// para llenar a mano el mismo día.
+function CancionesMesas({ mesas, onGuardar }) {
+  const faltan = mesas.filter(m => !(m.notas || '').trim()).length
+  const siguiente = i => document.querySelector(`[data-cancion="${i + 1}"]`)?.focus()
+  return (
+    <details className="mbn mbc">
+      <summary className="mbn-hdr">
+        <div>
+          <h3>Canciones de las mesas</h3>
+          <p>La que el DJ le suelta a cada mesa. Va impresa en la tarjeta de su capitán.</p>
+        </div>
+        <div className="mbn-hdr-r">
+          <b className={faltan ? '' : 'ok'}>{faltan ? `faltan ${faltan}` : 'todas'}</b>
+        </div>
+      </summary>
+      <ul className="mbc-lista">
+        {mesas.map((m, i) => (
+          <li key={m.id}>
+            <span className="mbc-mesa">{m.nombre}</span>
+            <input
+              data-cancion={i} defaultValue={m.notas || ''}
+              placeholder="Título – artista"
+              // Enter sólo mueve el foco: el salto dispara el blur del campo
+              // que se deja, y es ese blur el que guarda. Guardar aquí además
+              // escribiría dos veces cada canción.
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); siguiente(i) } }}
+              onBlur={e => {
+                const v = e.target.value.trim()
+                if (v !== (m.notas || '')) onGuardar(m, v)
+              }}
+            />
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}
+
 export default function MesasBoard() {
   const [rows, setRows]         = useState([])
   const [miembros, setMiembros] = useState({})
@@ -1083,6 +1130,13 @@ export default function MesasBoard() {
           onGuardar={guardarNombre}
           onCancelar={cerrarEditor}
           mesaDe={mesaDe}
+        />
+      )}
+
+      {mesas.length > 0 && (
+        <CancionesMesas
+          mesas={mesas.filter(m => !esNovios(m))}
+          onGuardar={(m, v) => editarMesa(m, { notas: v || null })}
         />
       )}
 
