@@ -297,6 +297,37 @@ function htmlAfiche(mesas, porMesa, arte, F) {
 }
 
 
+// ─── El nombre, corto ───
+//
+// En las piezas que se entregan en mano se usa PRIMER NOMBRE + PRIMER APELLIDO:
+// «Fredy Alfonso De Alba Castro» es como lo escribe la base, no como se le
+// habla. Sólo se acorta cuando hay cuatro unidades o más —dos nombres y dos
+// apellidos—; con tres no se puede saber si es «nombre + dos apellidos» o «dos
+// nombres + un apellido», y adivinar mal es peor que dejarlo largo.
+//
+// Las partículas van pegadas a lo que siguen, o «De Alba» se partiría en dos.
+//
+// NO se usa en el afiche ni en las hojas de trabajo, y es a propósito: ahí el
+// nombre sirve para que alguien se encuentre entre 84. Acortado, «Fredy Alfonso
+// De Alba Castro» pasa a «Fredy De Alba», que es OTRO invitado de la Mesa 6.
+const PARTICULAS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'do',
+  'dos', 'van', 'von', 'di', 'du', 'san', 'santa', 'mac', 'mc'])
+
+function unidadesDe(nombre) {
+  const u = [], buf = []
+  for (const w of (nombre || '').trim().split(/\s+/).filter(Boolean)) {
+    buf.push(w)
+    if (!PARTICULAS.has(w.toLowerCase())) { u.push(buf.join(' ')); buf.length = 0 }
+  }
+  if (buf.length) u.push(buf.join(' '))
+  return u
+}
+
+const nombreCorto = n => {
+  const u = unidadesDe(n)
+  return u.length >= 4 ? `${u[0]} ${u[2]}` : (n || '').trim()
+}
+
 // ─── El banderín del capitán ───
 //
 // Cuelga del cuello, así que no es una hoja: es una tira de 9 × 20 cm con los
@@ -328,8 +359,9 @@ function confeti(semilla, n, W, H) {
   return piezas.join('')
 }
 
-function htmlBanderin(mesa, capitan, arte) {
+function htmlBanderin(mesa, nombreLargo, arte) {
   const B = BANDERIN
+  const capitan = nombreCorto(nombreLargo)
   const cancion = (mesa.notas || '').trim()
   const numero = (mesa.nombre || '').replace(/^\s*mesa\s*/i, '').trim()
   // La punta empieza aquí; el clip-path la recorta desde este alto.
@@ -431,54 +463,143 @@ function htmlBanderin(mesa, capitan, arte) {
 
 // ─── Las tarjetas de agradecimiento ───
 //
-// Una por capitán, más chica y más cuadrada que el banderín, y repartidas en
-// una hoja A4 con marcas de corte: se imprimen de a ocho y se cortan.
-const GRACIAS = { w: 9, h: 6.5, cols: 2, filas: 4 }
+// Una por SOBRE invitado —no por capitán—, cuadrada de 8 × 8 cm, de a seis en
+// una hoja A4 a 300 dpi con línea de corte. Son 49 sobres, así que salen nueve
+// hojas; se imprimen, se recortan y se dejan una en cada sitio.
+//
+// Sobre marfil y no sobre el terracota del banderín, por dos razones: el
+// banderín es fiesta y esto es lo otro —se lee despacio, al final de la noche o
+// al día siguiente—, y 49 tarjetas a sangre en terracota son una barbaridad de
+// tinta para algo que se imprime en casa.
+//
+// El texto trata de usted plural o de tú según cuántos vengan en el sobre: a una
+// familia se le habla distinto que a alguien que viene solo.
+const GRACIAS = { lado: 8, cols: 2, filas: 3 }
+
+const TEXTO_GRACIAS = {
+  plural: 'Que estén aquí no es un detalle: es la razón por la que este día se siente ' +
+          'completo. Gracias por el cariño de siempre. Nos lo llevamos para toda la vida.',
+  singular: 'Que estés aquí no es un detalle: es la razón por la que este día se siente ' +
+            'completo. Gracias por el cariño de siempre. Nos lo llevamos para toda la vida.',
+}
+
+// ─── La lista del DJ ───
+//
+// Una hoja con la canción de cada mesa, su capitán y cuánta gente la va a
+// corear. Se imprime y se le entrega al DJ, así que va sobre blanco, en cuerpo
+// grande y sin adornos: se lee en una cabina a oscuras y de reojo.
+//
+// Sale además en .txt, que es lo que se manda por WhatsApp y lo que el DJ pega
+// en su lista de reproducción sin volver a teclearlo.
+function htmlCanciones(filas, arte) {
+  const cuerpo = filas.map((f, i) => `
+    <tr${f.cancion ? '' : ' class="sin"'}>
+      <td class="n">${esc(f.numero)}</td>
+      <td class="c">${f.cancion ? esc(f.cancion.toUpperCase()) : 'SIN CANCIÓN ANOTADA'}</td>
+      <td class="cap">${esc(f.capitan || '—')}<small>${f.gente} personas</small></td>
+    </tr>`).join('')
+
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
+  .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#fff;padding:${cm(1.5)}px ${cm(1.4)}px;
+    display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;gap:16px;border-bottom:2px solid #C8A96E;
+    padding-bottom:14px;margin-bottom:6px}
+  .top img{height:${cm(1.5)}px;width:auto}
+  .top h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:34px;
+    line-height:1.05;color:#2A1D14}
+  .top p{font-size:12px;letter-spacing:.2em;color:#8A7866;margin-top:3px}
+  .top .der{margin-left:auto;text-align:right;font-size:12px;color:#8A7866;line-height:1.7}
+
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  tr{border-bottom:1px solid #EFE7DC}
+  td{padding:13px 6px;vertical-align:middle}
+  .n{width:${cm(2.1)}px;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
+    font-size:30px;color:#9A5B45;white-space:nowrap}
+  .c{font-family:Jost,system-ui,sans-serif;font-weight:500;font-size:19px;letter-spacing:.03em;
+    color:#2A1D14;line-height:1.25}
+  .cap{width:${cm(4.6)}px;text-align:right;font-size:13px;color:#6B5B4B;line-height:1.3}
+  .cap small{display:block;font-size:10.5px;letter-spacing:.1em;color:#A2917F;margin-top:2px}
+  tr.sin .c{color:#B00020}
+
+  .nota{margin-top:auto;border-top:1px solid #EFE7DC;padding-top:14px;font-size:13px;
+    line-height:1.6;color:#6B5B4B}
+  .nota b{color:#2A1D14}
+</style></head><body><div class="hoja">
+  <div class="top">
+    ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
+    <div>
+      <h1>Canciones por mesa</h1>
+      <p>PARA EL DJ</p>
+    </div>
+    <div class="der">
+      <div>Angely &amp; Kevin</div>
+      <div>12 de septiembre de 2026</div>
+      <div>Casona del Prado</div>
+    </div>
+  </div>
+
+  <table>${cuerpo}</table>
+
+  <p class="nota">
+    Cada mesa eligió su canción y su capitán la está esperando. <b>Cuando suene, esa mesa
+    es la que responde</b>: la idea es soltarlas repartidas a lo largo de la noche, no
+    seguidas. Al lado de cada capitán va cuánta gente hay en esa mesa.
+  </p>
+</div></body></html>`
+}
 
 function htmlAgradecimientos(lote, arte, hoja, total) {
   const G = GRACIAS
-  const tarjetas = lote.map(({ mesa, capitan }) => {
-    const numero = (mesa.nombre || '').replace(/^\s*mesa\s*/i, '').trim()
-    // «FREDY ALFONSO DE ALBA CASTRO» no entra al mismo cuerpo que «JOSÉ DE ALBA»
-    const cuerpo = capitan.length > 22 ? 23 : capitan.length > 16 ? 28 : 33
-    return `<div class="t" style="--n:${cuerpo}px">
-      <div class="conf">${confeti('gracias' + capitan, 22, cm(G.w), cm(G.h))}</div>
+  const tarjetas = lote.map(t => {
+    // «Familia Gravini Rodriguez Trujillo» y «Jorge Longa» no entran igual
+    const n = t.nombre.length
+    const cuerpo = n > 28 ? 19 : n > 22 ? 22 : n > 15 ? 26 : 30
+    return `<div class="t">
+      <div class="marco"></div>
       <div class="in">
         ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
-        <p class="g">GRACIAS,</p>
-        <p class="n">${esc(capitan.toUpperCase())}</p>
-        <p class="m">POR COMANDAR LA MESA ${esc(numero.toUpperCase())}</p>
-        <p class="f">ANGELY &amp; KEVIN</p>
+        <p class="g">GRACIAS</p>
+        <p class="n" style="font-size:${cuerpo}px">${esc(t.nombre)}</p>
+        <div class="rule"><i></i><b>&#9670;</b><i></i></div>
+        <p class="msg">${esc(t.personas > 1 ? TEXTO_GRACIAS.plural : TEXTO_GRACIAS.singular)}</p>
+        <p class="ayk">Angely &amp; Kevin</p>
+        <p class="fecha">12 · IX · 2026</p>
       </div>
     </div>`
   }).join('')
 
   // Los huecos que sobran en la última hoja se dejan vacíos, con su marca de
-  // corte: así las ocho posiciones caen siempre en el mismo sitio del pliego.
+  // corte: así las seis posiciones caen siempre en el mismo sitio del pliego.
   const vacias = Array.from({ length: G.cols * G.filas - lote.length },
     () => '<div class="t vacia"></div>').join('')
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
-  .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#fff;padding:${cm(1.35)}px ${cm(1.5)}px;
+  .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#fff;padding:${cm(1.6)}px ${cm(2.2)}px;
     display:flex;flex-direction:column}
-  .rejilla{display:grid;grid-template-columns:repeat(${G.cols},${cm(G.w)}px);
-    grid-auto-rows:${cm(G.h)}px;gap:${cm(0.35)}px;justify-content:center;align-content:start}
-  .t{position:relative;overflow:hidden;color:#FFF3E4;text-align:center;
-    background:linear-gradient(158deg,#7E2E1B 0%,#A8442A 50%,#8B3620 100%);
-    outline:1px dashed #D9C7A8;outline-offset:0}
+  .rejilla{display:grid;grid-template-columns:repeat(${G.cols},${cm(G.lado)}px);
+    grid-auto-rows:${cm(G.lado)}px;gap:${cm(0.4)}px;justify-content:center;align-content:start}
+  .t{position:relative;background:#FBF5EA;outline:1px dashed #D9C7A8;overflow:hidden}
   .t.vacia{background:none}
-  .conf{position:absolute;inset:0}
-  .conf i{position:absolute;display:block;background:#F2D79B;border-radius:1px}
+  /* Filete interior doble, el mismo marco de la participación */
+  .marco{position:absolute;inset:${cm(0.42)}px;border:1px solid #E0CFAE;pointer-events:none}
+  .marco::after{content:'';position:absolute;inset:3px;border:.6px solid rgba(176,140,79,.4)}
+
   .in{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:2px;padding:${cm(0.4)}px}
-  .in img{height:${cm(1.35)}px;width:auto;filter:brightness(1.45) saturate(.6);margin-bottom:6px}
-  .g{font-size:15px;letter-spacing:.32em;color:#F2D79B}
-  .n{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:var(--n);
-    line-height:1.1;color:#FFF3E4}
-  .m{font-size:14px;letter-spacing:.14em;color:rgba(255,243,228,.92);margin-top:5px}
-  .f{font-size:12.5px;letter-spacing:.24em;color:#F2D79B;margin-top:9px;
-    padding-top:8px;border-top:1px solid rgba(242,215,155,.45)}
+    align-items:center;justify-content:center;text-align:center;padding:${cm(0.85)}px}
+  .in img{height:${cm(1.25)}px;width:auto}
+  .g{font-size:12px;letter-spacing:.36em;color:#B08C4F;margin-top:9px}
+  .n{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;line-height:1.12;
+    color:#9A5B45;margin-top:6px}
+  .rule{display:flex;align-items:center;gap:9px;width:62%;margin:9px 0 8px}
+  .rule i{flex:1;height:1px;background:#E0CFAE}
+  .rule b{color:#B08C4F;font-size:8px}
+  .msg{font-family:'Cormorant Garamond',Georgia,serif;font-size:15.5px;line-height:1.45;
+    color:#2A1D14}
+  .ayk{font-family:'Great Vibes',cursive;font-size:24px;color:#9A5B45;margin-top:10px;line-height:1.1}
+  .fecha{font-size:9px;letter-spacing:.26em;color:#A2917F;margin-top:3px}
+
   .pie{margin-top:auto;text-align:center;font-size:11px;letter-spacing:.18em;color:#B9AC9C}
 </style></head><body><div class="hoja">
   <div class="rejilla">${tarjetas}${vacias}</div>
@@ -590,26 +711,70 @@ async function main() {
       await mkdir(join(SALIDA, 'capitanes'), { recursive: true })
       for (const [i, m] of conCapitan.entries()) {
         const quien = nombreDe.get(m.capitan_id)
-        const nombre = `${String(i + 1).padStart(2, '0')}_${slug(quien)}.png`
+        const nombre = `${String(i + 1).padStart(2, '0')}_${slug(nombreCorto(quien))}.png`
         await captura(htmlBanderin(m, quien, arte), join(SALIDA, 'capitanes', nombre))
         console.log(`  ✓ capitanes/${nombre}`)
       }
 
-      // Las de agradecimiento, repartidas de a ocho en hojas A4 con marca de corte
-      await mkdir(join(SALIDA, 'agradecimiento'), { recursive: true })
-      const porHoja = GRACIAS.cols * GRACIAS.filas
-      const todas = conCapitan.map(m => ({ mesa: m, capitan: nombreDe.get(m.capitan_id) }))
-      const hojas = Math.ceil(todas.length / porHoja)
-      for (let h = 0; h < hojas; h++) {
-        const lote = todas.slice(h * porHoja, (h + 1) * porHoja)
-        const nombre = `hoja-${h + 1}.png`
-        await captura(htmlAgradecimientos(lote, arte, h + 1, hojas), join(SALIDA, 'agradecimiento', nombre))
-        console.log(`  ✓ agradecimiento/${nombre}`.padEnd(40), `${lote.length} tarjeta(s)`)
-      }
     } else {
       console.log('  · Sin capitanes elegidos todavía: no se generó ningún banderín.')
     }
     const sinCancion = conCapitan.filter(m => !(m.notas || '').trim()).length
+
+    // ─── La lista del DJ ───
+    const canciones = imprimibles.map(m => ({
+      numero: m.nombre,
+      cancion: (m.notas || '').trim(),
+      capitan: m.capitan_id ? nombreCorto(nombreDe.get(m.capitan_id) || '') : '',
+      gente: (porMesa.get(m.id) || []).length,
+    }))
+    await mkdir(join(SALIDA, 'dj'), { recursive: true })
+    await captura(htmlCanciones(canciones, arte), join(SALIDA, 'dj', 'canciones-por-mesa.png'))
+    const sinCancion2 = canciones.filter(c => !c.cancion).length
+    console.log('  ✓ dj/canciones-por-mesa.png'.padEnd(40),
+      sinCancion2 ? `ojo: ${sinCancion2} sin canción` : 'las ' + canciones.length + ' con canción')
+
+    // El mismo dato en texto: es lo que se manda por WhatsApp y lo que el DJ
+    // pega en su lista sin volver a teclearlo.
+    await writeFile(join(SALIDA, 'dj', 'canciones-por-mesa.txt'),
+`CANCIONES POR MESA — Angely & Kevin
+Sábado 12 de septiembre de 2026 · Casona del Prado
+
+Cada mesa eligió su canción y su capitán la está esperando. Cuando suene,
+esa mesa es la que responde. Mejor repartidas a lo largo de la noche.
+
+${canciones.map(c =>
+  `${c.numero.padEnd(9)}  ${(c.cancion || '— SIN CANCIÓN ANOTADA —').padEnd(38)}  ${c.capitan} (${c.gente} personas)`
+).join('\n')}
+`, 'utf8')
+    console.log('  ✓ dj/canciones-por-mesa.txt')
+
+    // ─── Agradecimiento: una por SOBRE, no por capitán ───
+    // Van ordenadas por mesa y después por nombre, que es como se reparten esa
+    // noche: de a mesa. Un sobre repartido entre dos mesas lleva una sola y va
+    // con la primera.
+    const ordenMesa = new Map(ms.data.map(m => [m.id, m.orden ?? 0]))
+    const sobres = new Map()
+    for (const a of as.data) {
+      const s = sobres.get(a.guest_id) || { personas: 0, mesa: Infinity }
+      s.personas++
+      s.mesa = Math.min(s.mesa, ordenMesa.get(a.mesa_id) ?? 0)
+      sobres.set(a.guest_id, s)
+    }
+    const gracias = [...sobres.entries()]
+      .map(([id, s]) => ({ ...s, nombre: grupoDe.get(id) || '' }))
+      .filter(t => t.nombre)
+      .sort((a, b) => a.mesa - b.mesa || a.nombre.localeCompare(b.nombre, 'es'))
+
+    await mkdir(join(SALIDA, 'agradecimiento'), { recursive: true })
+    const porHoja = GRACIAS.cols * GRACIAS.filas
+    const hojas = Math.ceil(gracias.length / porHoja)
+    for (let h = 0; h < hojas; h++) {
+      const lote = gracias.slice(h * porHoja, (h + 1) * porHoja)
+      const nombre = `hoja-${String(h + 1).padStart(2, '0')}.png`
+      await captura(htmlAgradecimientos(lote, arte, h + 1, hojas), join(SALIDA, 'agradecimiento', nombre))
+      console.log(`  ✓ agradecimiento/${nombre}`.padEnd(40), `${lote.length} sobre(s)`)
+    }
 
     const faltan = [...porMesa.values()].flat().filter(p => p.falta).length
     const sentados = [...porMesa.values()].reduce((s, g) => s + g.length, 0)
@@ -624,9 +789,14 @@ Generado el ${cuando}
                              abajo termina en punta. Se imprime y se recorta por
                              la figura; lo blanco de alrededor es el descarte.
                              La canción sale de la columna «notas» de la mesa.
-  agradecimiento/hoja-N.png  Las tarjetas de agradecimiento, de 9 × 6,5 cm,
-                             repartidas de a ocho en una hoja A4 a 300 dpi.
-                             Se cortan por la línea de puntos.
+  dj/canciones-por-mesa.png  LA LISTA DEL DJ: la canción de cada mesa, su
+  dj/canciones-por-mesa.txt  capitán y cuánta gente la va a corear. La misma en
+                             hoja para imprimir y en texto para mandarla.
+  agradecimiento/hoja-NN.png Una tarjeta de agradecimiento POR SOBRE INVITADO
+                             —no por capitán—, cuadrada de 8 × 8 cm, de a seis
+                             en una hoja A4 a 300 dpi. Se cortan por la línea de
+                             puntos. Van ordenadas por mesa, que es como se
+                             reparten: de a mesa.
   bienvenida-pendon-75x175.png
                              EL MISMO AFICHE EN PENDÓN: 75 × 175 cm exactos a
                              150 dpi (4430 × 10334 px), a dos columnas, con

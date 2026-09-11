@@ -712,17 +712,48 @@ borde del color.
 
 #### Las tarjetas de agradecimiento
 
-Una por capitán, **9 × 6,5 cm**, repartidas de a **ocho en una hoja A4 a 300 dpi**
-con línea de corte punteada. Once capitanes son dos hojas; los huecos que sobran
-en la última se dejan vacíos **con su marca**, para que las ocho posiciones caigan
-siempre en el mismo sitio del pliego y el corte sirva para las dos hojas.
+Una **por sobre invitado** —no por capitán—, cuadrada de **8 × 8 cm**, de a seis
+en una hoja A4 a 300 dpi con línea de corte. Son 49 sobres, así que salen nueve
+hojas. Van **ordenadas por mesa**, que es como se reparten esa noche; un sobre
+repartido entre dos mesas lleva una sola tarjeta y va con la primera.
 
-Mismo fondo que el banderín. El nombre tiene tres cuerpos según su largo, porque
-«FREDY ALFONSO DE ALBA CASTRO» y «JOSÉ DE ALBA» no entran igual.
+- Sobre **marfil y no sobre el terracota del banderín**, por dos razones: el
+  banderín es fiesta y esto es lo otro —se lee despacio, al final de la noche o
+  al día siguiente—, y 49 tarjetas a sangre en terracota son una barbaridad de
+  tinta para algo que se imprime en casa.
+- El texto cambia entre **«estén» y «estés»** según cuánta gente traiga el sobre:
+  a una familia se le habla distinto que a quien viene solo.
+- El nombre tiene cuatro cuerpos según su largo: «Familia Gravini Rodriguez
+  Trujillo» son 34 caracteres y «Jorge Longa» once.
 
-> El texto de agradecimiento —«GRACIAS, [NOMBRE] · POR COMANDAR LA MESA N»— lo
-> escribí yo: es lo único de estas piezas que no salió de los novios. Si lo
-> cambian, está en `htmlAgradecimientos()`.
+> El texto de agradecimiento lo escribí yo: es lo único de estas piezas que no
+> salió de los novios. Está en `TEXTO_GRACIAS`, arriba de `htmlAgradecimientos()`.
+
+#### La lista del DJ
+
+`dj/canciones-por-mesa.png` — una hoja con la canción de cada mesa, su capitán y
+cuánta gente la va a corear. Se imprime y se le entrega al DJ, así que va sobre
+blanco, en cuerpo grande y sin adornos: se lee en una cabina a oscuras y de
+reojo. Una mesa sin canción sale en rojo.
+
+`dj/canciones-por-mesa.txt` — lo mismo en texto, que es lo que se manda por
+WhatsApp y lo que el DJ pega en su lista sin volver a teclearlo.
+
+#### El nombre corto
+
+En las piezas que se **entregan en mano** —banderín y agradecimiento— el nombre
+va como **primer nombre + primer apellido**: «Fredy Alfonso De Alba Castro» es
+como lo escribe la base, no como se le habla. `nombreCorto()` sólo acorta cuando
+hay **cuatro unidades o más** —dos nombres y dos apellidos—; con tres no se puede
+saber si es «nombre + dos apellidos» o «dos nombres + un apellido», y adivinar mal
+es peor que dejarlo largo. Las partículas van pegadas a lo que siguen, o «De Alba»
+se partiría en dos.
+
+> **No se usa en el afiche ni en las hojas de trabajo, y es a propósito.** Ahí el
+> nombre sirve para que alguien se encuentre entre 84: acortado, «Fredy Alfonso
+> De Alba Castro» pasa a «Fredy De Alba», que es **otro invitado**, sentado en la
+> Mesa 6. En un banderín que se entrega en mano no hay ambigüedad posible; en un
+> afiche de entrada, sí.
 
 #### Las dos piezas van sólo por consola
 
