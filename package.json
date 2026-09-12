@@ -10,6 +10,7 @@
     "optimize-images": "node scripts/optimize-images.mjs",
     "favicons": "node scripts/generate-favicons.mjs",
     "logo": "node scripts/export-logo.mjs",
+    "votos": "node scripts/export-votos.mjs",
     "pantallas": "node scripts/export-pantallas.mjs",
     "videos": "node scripts/export-videos.mjs",
     "cine": "node cine/render.mjs",
