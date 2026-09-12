@@ -270,7 +270,12 @@ function htmlAfiche(mesas, porMesa, arte, F) {
     gap:${F.hueco};align-content:space-evenly;padding:26px 0 8px}
   .m h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:${F.titulo}px;
     color:#9A5B45;padding-bottom:12px;margin-bottom:16px;border-bottom:2px solid #E3D9CB}
-  .m ul{list-style:none}
+  .m h3{font-size:9.5px;font-weight:400;letter-spacing:.12em;text-transform:uppercase;
+    color:#B08C4F;margin:6px 0 2px;display:flex;align-items:baseline;gap:7px}
+  .m h3 span{flex:0 1 auto}
+  .m h3 i{font-style:normal;font-size:8.5px;letter-spacing:.06em;color:#C0B3A3;
+    text-transform:none}
+  .m ul{list-style:none;margin-bottom:3px}
   .m li{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:${F.nombre}px;
     line-height:${F.linea};color:#2A1D14}
   .m li.largo{font-size:${F.nombreLargo}px;line-height:${(F.linea * F.nombre / F.nombreLargo).toFixed(2)}}
@@ -818,13 +823,23 @@ function htmlReparto(gracias, arte) {
     porMesa.get(k).push({ ...t, n: i + 1 })
   })
 
-  const bloques = [...porMesa.entries()].map(([mesa, lista]) => `
+  // Dentro de cada mesa, agrupadas por INVITACIÓN: los de un mismo sobre van
+  // juntos y en el orden en que salen del pliego, que es como se reparten.
+  const bloques = [...porMesa.entries()].map(([mesa, lista]) => {
+    const porSobre = new Map()
+    for (const t of lista) {
+      if (!porSobre.has(t.tarjeta)) porSobre.set(t.tarjeta, [])
+      porSobre.get(t.tarjeta).push(t)
+    }
+    return `
     <section class="m">
       <h2>${esc(mesa)}<span>${esc(lista[0].romano)} · ${lista.length} tarjeta${lista.length === 1 ? '' : 's'}</span></h2>
-      <ul>${lista.map(t => `
-        <li><i class="box"></i><b>${t.n}</b><span>${esc(t.nombre)}</span>
-        <em>${esc(t.tarjeta)}</em></li>`).join('')}</ul>
-    </section>`).join('')
+      ${[...porSobre.entries()].map(([sobre, gente]) => `
+        <h3><span>${esc(sobre)}</span>${gente.length > 1 ? `<i>${gente.length} juntos</i>` : ''}</h3>
+        <ul>${gente.map(t => `
+          <li><i class="box"></i><b>${t.n}</b><span>${esc(t.nombre)}</span></li>`).join('')}</ul>`).join('')}
+    </section>`
+  }).join('')
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
@@ -851,7 +866,7 @@ function htmlReparto(gracias, arte) {
     transform:translateY(1px)}
   .m li b{font-weight:500;color:#B08C4F;font-size:11px;min-width:16px;text-align:right}
   .m li span{flex:1;min-width:0}
-  .m li em{font-style:normal;font-size:10.5px;color:#A2917F;white-space:nowrap}
+  .m li span{flex:1;min-width:0}
 
   .nota{margin-top:auto;border-top:1px solid #EFE7DC;padding-top:12px;font-size:12px;
     line-height:1.6;color:#6B5B4B}
@@ -875,7 +890,9 @@ function htmlReparto(gracias, arte) {
     <b>El número es el orden en que salen del pliego</b>, leyendo cada hoja de izquierda a
     derecha y de arriba abajo: si se cortan sin desordenarlas, la pila queda en este
     mismo orden y se reparte de corrido, mesa por mesa. <b>Una tarjeta por puesto</b>, y
-    cada una lleva impreso el romano de su mesa y el nombre de quien se sienta ahí.
+    cada una lleva impreso el romano de su mesa, el nombre de quien se sienta ahí y su
+    invitación. <b>Los de una misma invitación salen seguidos</b>, para poder sentarlos
+    juntos sin buscarlos en el montón.
   </p>
 </div></body></html>`
 }
@@ -888,7 +905,7 @@ function htmlAgradecimientos(lote, arte, hoja, total, J) {
     const y = cm(J.arriba + Math.floor(i / J.cols) * (G.h + J.calleV))
     // El nombre baja de cuerpo cuando es largo: «Heider Joaquín Rivero Vasquez»
     // y «Jorge Longa» no entran igual en 6 cm de ancho.
-    const cuerpo = t.nombre.length > 24 ? 9.5 : t.nombre.length > 17 ? 11 : 12.5
+    const cuerpo = t.nombre.length > 24 ? 8 : t.nombre.length > 17 ? 9 : 10
     return {
       html: `<div class="t" style="left:${x}px;top:${y}px;width:${cm(G.w)}px;height:${cm(G.h)}px">
         <div class="marco"></div>
@@ -906,6 +923,7 @@ function htmlAgradecimientos(lote, arte, hoja, total, J) {
           <div class="ubic">
             <b>${esc(t.romano)}</b>
             <span style="font-size:${cuerpo}px">${esc(t.nombre)}</span>
+            <u>${esc(t.tarjeta)}</u>
           </div>
         </div>
       </div>`,
@@ -946,7 +964,10 @@ function htmlAgradecimientos(lote, arte, hoja, total, J) {
   .ubic{margin-top:auto;width:100%;padding-top:${cm(0.4)}px;border-top:1px solid #E0CFAE}
   .ubic b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
     font-size:34px;line-height:1;color:#9A5B45;letter-spacing:.06em}
-  .ubic span{display:block;letter-spacing:.06em;color:#6B5B4B;line-height:1.3;margin-top:6px}
+  .ubic span{display:block;letter-spacing:.06em;color:#6B5B4B;line-height:1.3;margin-top:7px}
+  /* La invitación, aún más chica: no es para el invitado, es para quien reparte */
+  .ubic u{display:block;text-decoration:none;font-size:7px;letter-spacing:.12em;
+    text-transform:uppercase;color:#C0B3A3;line-height:1.3;margin-top:3px}
 
   /* Las marcas, fuera de las piezas: lo que se imprima encima se queda ahí. */
   .marcas{position:absolute;inset:0;pointer-events:none}
@@ -1168,7 +1189,13 @@ ${canciones.map((c, i) =>
         }
       })
       .filter(t => t.nombre)
-      .sort((a, b) => a.mesa - b.mesa || a.nombre.localeCompare(b.nombre, 'es'))
+      // Por mesa, después por INVITACIÓN y sólo al final por nombre: así los
+      // cuatro de «Familia De Alba Castro» salen del pliego pegados y la
+      // wedding los pone juntos sin tener que buscarlos en el montón. Ordenar
+      // sólo por nombre los repartía por toda la pila.
+      .sort((a, b) => a.mesa - b.mesa
+        || a.tarjeta.localeCompare(b.tarjeta, 'es')
+        || a.nombre.localeCompare(b.nombre, 'es'))
 
     await mkdir(join(SALIDA, 'agradecimiento'), { recursive: true })
     // Mismo pliego que los banderines: 6 × 15 cm, ocho por tabloide vertical
@@ -1201,7 +1228,10 @@ ${[...new Map(gracias.reduce((acc, t, i) => {
   return acc
 }, new Map()))].map(([mesa, lista]) =>
   `${mesa.toUpperCase()}  (${lista.length})\n` +
-  lista.map(t => `  [ ] ${String(t.n).padStart(3)}  ${t.romano.padEnd(5)} ${t.nombre.padEnd(32)} ${t.tarjeta}`).join('\n')
+  [...lista.reduce((m, t) => m.set(t.tarjeta, [...(m.get(t.tarjeta) || []), t]), new Map())]
+    .map(([sobre, gente]) => `  · ${sobre}\n` +
+      gente.map(t => `      [ ] ${String(t.n).padStart(3)}  ${t.romano.padEnd(5)} ${t.nombre}`).join('\n'))
+    .join('\n')
 ).join('\n\n')}
 `, 'utf8')
     console.log('  ✓ agradecimiento/reparto.txt')

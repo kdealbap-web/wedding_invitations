@@ -733,8 +733,14 @@ vertical** (once hojas). Así las dos piezas van a la misma imprenta, en el mism
 papel y con el mismo corte; y de paso la tarjeta deja de ser un cuadrado y pasa a
 ser una tira que se apoya de pie contra la copa o se acuesta sobre el plato.
 
-- Cada tarjeta lleva **al pie** el romano de su mesa —grande, 34 px— y el nombre
-  pequeño de quien se sienta ahí: el romano se ve de lejos al repartirlas y el
+- **Salen ordenadas por mesa, después por INVITACIÓN y sólo al final por nombre.**
+  Así los cuatro de «Familia De Alba Castro» salen del pliego pegados y la wedding
+  los sienta juntos sin buscarlos en el montón; ordenarlas sólo por nombre los
+  repartía por toda la pila. La hoja de reparto va agrupada igual, con el sobre
+  como subtítulo y cuántos van juntos.
+- Cada tarjeta lleva **al pie** el romano de su mesa —grande, 34 px—, el nombre
+  pequeño de quien se sienta ahí y, más pequeña todavía, su invitación: esa última
+  línea no es para el invitado, es para quien reparte. el romano se ve de lejos al repartirlas y el
   nombre es lo que se busca en el puesto. Va al pie porque es la parte que queda
   a la vista si la tira se apoya contra la copa. `romano()` convierte «Mesa 7»
   en «VII».
