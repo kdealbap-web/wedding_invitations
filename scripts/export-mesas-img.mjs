@@ -585,41 +585,88 @@ const TEXTO_GRACIAS = {
 //
 // Está aquí y no en la base porque es criterio, no dato: si mañana la pareja
 // cambia una canción, se cambia esta lista y se vuelve a generar.
+// Cada momento: [hora, qué es, qué pasa, qué necesita el DJ, canciones propuestas].
+//
+// Las horas salen del programa —ceremonia 6:30, recepción 8:30— y son
+// orientativas: lo que importa es el ORDEN y qué viene después de qué. La
+// columna del DJ es lo que se le pide en ese punto, que suele ser lo que se
+// olvida: un micrófono, bajar el volumen, un aviso con dos minutos de antelación.
 const GUION = [
-  ['8:30', 'Llegada de invitados', 'Cóctel, la gente entra y busca su mesa',
-    ['Perfect · Ed Sheeran (acústico)', 'All of Me · John Legend', 'Vallenato romántico de fondo, volumen bajo']],
-  ['9:10', 'Entrada de los novios', 'El momento de más ruido de la noche',
+  ['6:30', 'Ceremonia', 'Parroquia San Luis Beltrán. Dos horas antes de la recepción.',
+    'El DJ no interviene: la música es del coro de la iglesia.', []],
+  ['7:45', 'Salida y fotos', 'Arroz y burbujas en el atrio, fotos con la familia.',
+    'Traslado al salón: los invitados llegan repartidos entre 8:15 y 9:00.', []],
+
+  ['8:30', 'Apertura de puertas', 'Cóctel. La gente entra, busca su nombre en el afiche de la entrada y se sienta.',
+    'Volumen BAJO: se está conversando y buscando mesa.',
+    ['Perfect · Ed Sheeran (acústico)', 'All of Me · John Legend', 'Vallenato romántico de fondo']],
+  ['9:00', 'Los últimos en llegar', 'Ya casi todos sentados. Los capitanes con su banderín puesto.',
+    'Aviso a la pareja: faltan diez minutos. Sube medio punto el volumen.',
+    ['Sigue el fondo, un poco más arriba']],
+  ['9:10', 'ENTRADA DE LOS NOVIOS', 'El momento de más ruido de la noche. Todos de pie.',
+    'Micrófono listo para quien los anuncia. Entrada fuerte desde el primer compás.',
     ['Volví a Nacer · Carlos Vives', 'La Tierra del Olvido · Carlos Vives', 'Marry You · Bruno Mars']],
-  ['9:20', 'Primer baile', 'Angely y Kevin solos en la pista',
+  ['9:20', 'Primer baile', 'Angely y Kevin solos en la pista.',
+    'Luz sobre la pista. Al minuto y medio se invita a los papás a entrar.',
     ['Perfect · Ed Sheeran', 'All of Me · John Legend']],
-  ['9:30', 'Baile con los padres', 'Se suman los papás de los dos',
-    ['Mi Primer Amor · Diomedes Díaz', 'Hijo de Tigre · vallenato clásico', 'A mi Manera · Vicente Fernández']],
-  ['9:40', 'Brindis', 'Copas arriba · «¡Vivan Angely y Kevin!»',
+  ['9:28', 'Baile con los padres', 'Se suman los cuatro papás, y detrás el resto de la familia.',
+    'Enlazar sin cortar: la canción anterior baja y ésta entra encima.',
+    ['Mi Primer Amor · Diomedes Díaz', 'A mi Manera · Vicente Fernández']],
+  ['9:38', 'Palabras de bienvenida', 'Hablan los novios, o quien los acompañe.',
+    'MÚSICA FUERA. Dos micrófonos: uno para cada uno.', []],
+  ['9:45', 'BRINDIS', '«¡Vivan Angely y Kevin!» — los once capitanes levantan su mesa.',
+    'Un tema corto y arriba, y bajar en cuanto empiece el brindis.',
     ['Vivir Mi Vida · Marc Anthony', 'Celebra la Vida · Axel']],
-  ['9:50', 'Cena', 'Fondo, sin competir con las conversaciones',
-    ['Salsa romántica y vallenato suave', 'Nada de pista todavía']],
-  ['10:40', 'Corte de la torta', 'Foto obligada, canción corta y alegre',
+  ['9:50', 'Cena', 'Servicio a la mesa. Es el rato largo de la noche.',
+    'Fondo, sin pista. Nada que invite a levantarse todavía.',
+    ['Salsa romántica y vallenato suave']],
+  ['10:30', 'Ronda de mesas', 'Los novios pasan mesa por mesa con el fotógrafo.',
+    'Sigue el fondo. Es el momento de preparar lo que viene.',
+    ['Más de lo mismo, volumen estable']],
+  ['10:40', 'Corte de la torta', 'Foto obligada, con la familia alrededor.',
+    'Canción corta y alegre; termina cuando termina la foto.',
     ['Sugar · Maroon 5', 'La Vida Es Un Carnaval · Celia Cruz']],
-  ['10:55', 'Arranque de fiesta', 'Se abre la pista y no se cierra más',
+  ['10:50', 'Aviso de pista', 'Se anuncia que se abre la pista.',
+    'Micrófono al maestro de ceremonia. Último aviso antes del cambio de ritmo.', []],
+  ['10:55', 'ARRANQUE DE FIESTA', 'Se abre la pista y ya no se cierra.',
+    'Arrancar con lo que levanta a TODO el mundo, no con lo que levanta a algunos.',
     ['La Rebelión · Joe Arroyo', 'El Pegao · champeta', 'La Vaca y el Toro · Diomedes Díaz']],
-  ['11:15', 'Hora loca', 'Con los accesorios y la comparsa',
+  ['11:15', 'Hora loca', 'Entra la comparsa con los accesorios.',
+    'Lo más arriba de la noche, sin bajar entre tema y tema.',
     ['Mapalé y champeta', 'Ram Pam Pam · Natti Natasha', 'Mix de merengue']],
-  ['11:45', 'LAS CANCIONES DE LAS MESAS', 'Ver el listado de abajo · REPARTIDAS, no seguidas',
-    ['Una cada 15 o 20 minutos', 'El capitán de esa mesa la está esperando']],
-  ['12:45', 'Ramo y liga', 'Solteras primero, solteros después',
+  ['11:45', 'LAS CANCIONES DE LAS MESAS', 'Once canciones que eligieron los invitados. Ver el listado del final.',
+    'REPARTIDAS, no seguidas: una cada quince o veinte minutos, entre lo demás.',
+    ['Su capitán la está esperando y levanta la mesa']],
+  ['12:15', 'Recena', 'Se sirve algo salado para el segundo aire.',
+    'La pista NO para: se come de pie y se sigue bailando.',
+    ['Lo más bailable, sin pausas']],
+  ['12:45', 'Ramo y liga', 'Solteras primero, solteros después.',
+    'Micrófono para llamar. Dos temas cortos, uno para cada tanda.',
     ['Single Ladies · Beyoncé', 'Sexy and I Know It · LMFAO']],
-  ['1:30', 'Cierre', 'La última, con todos en la pista',
+  ['1:00', 'Segunda tanda', 'Queda la gente que se queda hasta el final.',
+    'Aquí se puede ir a lo que pida la pista, sin guion.',
+    ['Lo que esté funcionando esa noche']],
+  ['1:30', 'CIERRE', 'La última, con todos en la pista y los novios en el centro.',
+    'Avisar que es la última: la gente se acerca y la foto sale sola.',
     ['L\'Amour Toujours · Gigi D\'Agostino', 'Time of My Life · Bill Medley & Jennifer Warnes']],
 ]
 
-function htmlGuion(canciones, arte) {
-  const momentos = GUION.map(([hora, que, nota, temas]) => `
+// El guion no cabe en una A4: son veinte momentos y once canciones. Se parte en
+// hojas de catorce momentos —lo que llena la hoja sin apretar— y las canciones
+// van al final de la última.
+const POR_HOJA_GUION = 14
+
+function htmlGuion(canciones, arte, hoja, total, lote) {
+  const momentos = lote.map(([hora, que, nota, dj, temas]) => `
     <tr>
       <td class="h">${hora}</td>
-      <td class="q"><b>${esc(que)}</b><span>${esc(nota)}</span></td>
-      <td class="t">${temas.map(x => `<em>${esc(x)}</em>`).join('')}<i class="linea"></i></td>
+      <td class="q"><b>${esc(que)}</b><span>${esc(nota)}</span>
+        ${dj ? `<i class="dj">${esc(dj)}</i>` : ''}</td>
+      <td class="t">${temas.map(x => `<em>${esc(x)}</em>`).join('')}
+        ${temas.length ? '<i class="linea"></i>' : '<i class="nada">—</i>'}</td>
     </tr>`).join('')
 
+  const ultima = hoja === total
   const mesas = canciones.map((c, i) => `
     <li><b>${i + 1}</b><span>${esc(c.numero)}</span>
       <em class="${c.cancion ? '' : 'sin'}">${esc(c.cancion || 'SIN CANCIÓN ANOTADA')}</em>
@@ -648,8 +695,12 @@ function htmlGuion(canciones, arte) {
   .q{width:${cm(5.4)}px}
   .q b{display:block;font-size:12.5px;font-weight:500;letter-spacing:.04em;color:#2A1D14}
   .q span{display:block;font-size:10px;color:#A2917F;line-height:1.35;margin-top:1px}
+  /* Lo que se le pide al DJ en ese punto: suele ser lo que se olvida */
+  .q .dj{display:block;font-style:normal;font-size:10px;line-height:1.35;color:#9A5B45;
+    margin-top:3px;padding-left:8px;border-left:2px solid #E0CFAE}
   .t em{display:block;font-style:normal;font-size:11.5px;line-height:1.45;color:#6B5B4B}
   .t .linea{display:block;border-bottom:1px dotted #D8C9AE;height:11px;margin-top:2px}
+  .t .nada{font-style:normal;color:#C0B3A3}
 
   h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:21px;
     color:#9A5B45;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #E3D9CB}
@@ -669,7 +720,7 @@ function htmlGuion(canciones, arte) {
     ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
     <div>
       <h1>Guion musical</h1>
-      <p>PARA EL DJ · RECEPCIÓN</p>
+      <p>PARA EL DJ · MINUTO A MINUTO · HOJA ${hoja} DE ${total}</p>
     </div>
     <div class="der">
       <div>Angely &amp; Kevin</div>
@@ -678,15 +729,14 @@ function htmlGuion(canciones, arte) {
     </div>
   </div>
 
-  <p class="aviso"><b>Las canciones de los momentos son una propuesta</b>, no el repertorio:
+  <p class="aviso">${hoja > 1 ? '' : '<b>Las canciones de los momentos son una propuesta</b>, no el repertorio:'}
   cámbialas por lo que funcione en la pista. Lo que sí está cerrado es el ORDEN de los
   momentos y las once canciones de las mesas, que las eligieron los invitados.
   El renglón punteado es para escribir el cambio.</p>
 
   <table>${momentos}</table>
 
-  <h2>Las canciones de las mesas</h2>
-  <ol>${mesas}</ol>
+  ${ultima ? `<h2>Las canciones de las mesas</h2><ol>${mesas}</ol>` : ''}
 
   <p class="nota">
     Cada mesa eligió su canción y su capitán la está esperando. <b>Cuando suene, esa mesa
@@ -1051,8 +1101,13 @@ ${canciones.map(c =>
 `, 'utf8')
     console.log('  ✓ dj/canciones-por-mesa.txt')
 
-    await captura(htmlGuion(canciones, arte), join(SALIDA, 'dj', 'guion-musical.png'))
-    console.log('  ✓ dj/guion-musical.png'.padEnd(40), `${GUION.length} momentos`)
+    const hojasGuion = Math.ceil(GUION.length / POR_HOJA_GUION)
+    for (let h = 0; h < hojasGuion; h++) {
+      const lote = GUION.slice(h * POR_HOJA_GUION, (h + 1) * POR_HOJA_GUION)
+      const nombre = `guion-musical-${h + 1}.png`
+      await captura(htmlGuion(canciones, arte, h + 1, hojasGuion, lote), join(SALIDA, 'dj', nombre))
+      console.log(`  ✓ dj/${nombre}`.padEnd(40), `${lote.length} momentos`)
+    }
 
     await writeFile(join(SALIDA, 'dj', 'guion-musical.txt'),
 `GUION MUSICAL — Angely & Kevin
@@ -1061,9 +1116,10 @@ Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
 Las canciones de los momentos son una PROPUESTA, no el repertorio. Lo que sí
 está cerrado es el orden de los momentos y las once canciones de las mesas.
 
-${GUION.map(([hora, que, nota, temas]) =>
-  `${hora.padStart(5)}  ${que.toUpperCase()}\n         ${nota}\n` +
-  temas.map(t => `         · ${t}`).join('\n')).join('\n\n')}
+${GUION.map(([hora, que, nota, dj, temas]) =>
+  `${hora.padStart(5)}  ${que.toUpperCase()}\n         ${nota}` +
+  (dj ? `\n    DJ · ${dj}` : '') +
+  (temas.length ? '\n' + temas.map(t => `         · ${t}`).join('\n') : '')).join('\n\n')}
 
 
 LAS CANCIONES DE LAS MESAS  —  repartidas, no seguidas
@@ -1152,10 +1208,11 @@ Generado el ${cuando}
                              abajo termina en punta. Se imprime y se recorta por
                              la figura; lo blanco de alrededor es el descarte.
                              La canción sale de la columna «notas» de la mesa.
-  dj/guion-musical.png       EL GUION DE LA NOCHE: los momentos de la recepción
-  dj/guion-musical.txt       en orden, con una PROPUESTA de canción para cada
-                             uno y renglón para escribir el cambio, y al final
-                             las once canciones de las mesas numeradas.
+  dj/guion-musical-N.png     EL GUION DE LA NOCHE, minuto a minuto: veinte
+  dj/guion-musical.txt       momentos en orden, qué pasa en cada uno, QUÉ NECESITA
+                             EL DJ ahí (micrófono, bajar volumen, avisar) y una
+                             PROPUESTA de canción con renglón para el cambio.
+                             Al final, las once canciones de las mesas.
   dj/canciones-por-mesa.png  LA LISTA DEL DJ: la canción de cada mesa, su
   dj/canciones-por-mesa.txt  capitán y cuánta gente la va a corear. La misma en
                              hoja para imprimir y en texto para mandarla.

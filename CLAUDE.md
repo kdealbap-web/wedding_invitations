@@ -748,10 +748,15 @@ Cuadrada de **6,5 × 6,5 cm**, en dos pliegos (`PLIEGOS_GRACIAS`): **doce por A4
 
 #### El guion musical del DJ
 
-`dj/guion-musical.png` — los momentos de la recepción en orden, con hora
-orientativa, qué pasa en cada uno y **una propuesta de canción**, más un renglón
-punteado para escribir el cambio. Al final, las once canciones de las mesas
-numeradas.
+`dj/guion-musical-N.png` — **el minuto a minuto**: veinte momentos desde la
+ceremonia hasta la última canción, cada uno con hora orientativa, **qué pasa**,
+**qué necesita el DJ ahí** —micrófono, bajar volumen, avisar con dos minutos— y
+una propuesta de canción con renglón punteado para escribir el cambio. Al final
+de la última hoja, las once canciones de las mesas numeradas.
+
+Son dos hojas A4: `POR_HOJA_GUION` es 14, que es lo que llena una hoja sin
+apretar. Las horas salen del programa —ceremonia 6:30, recepción 8:30— y son
+orientativas: lo que importa es el ORDEN y qué viene después de qué.
 
 > **Las canciones de los momentos son una propuesta mía, no el repertorio.** Van
 > impresas marcadas como tal: el DJ conoce su pista y los novios su gusto. Lo que
