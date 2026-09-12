@@ -5,15 +5,17 @@
  *   npm run votos
  *
  * Genera, en entrega/votos/:
- *   votos-1.png … votos-4.png   cuatro hojas A4 verticales a 300 dpi
- *   tarjeta-flores.png          A5, para el ramo de la mañana
+ *   votos-1.png, votos-2.png   dos hojas A4 verticales a 300 dpi
+ *   tarjeta-flores.png          A6 apaisada, para el ramo de la mañana
  *   COMO-IMPRIMIR.txt           las instrucciones, para no adivinar
  *
  * POR QUÉ ASÍ Y NO DE OTRA FORMA
  *
- * Tres hojas A4 sueltas, a una sola cara, y se doblan juntas en tres: quedan
- * 21 × 9,9 cm, que es exactamente lo que entra en el bolsillo interno de un
- * saco. No es un tríptico ni un cuadernillo a propósito: esos necesitan
+ * Dos hojas A4 sueltas, a una sola cara y A DOS COLUMNAS, y se doblan juntas en
+ * tres: quedan 21 × 9,9 cm, que es exactamente lo que entra en el bolsillo
+ * interno de un saco. Dos columnas y no una porque a todo el ancho el renglón
+ * sale de 85 caracteres y leyendo en voz alta el ojo no lo encuentra de vuelta;
+ * partido en dos son 47, que es medida de libro, y de paso la hoja se llena. No es un tríptico ni un cuadernillo a propósito: esos necesitan
  * imprimir por las dos caras y acertar el volteo, y esto se imprime mañana,
  * con prisa y sin margen para una prueba fallida.
  *
@@ -23,10 +25,9 @@
  * nervioso y con la iglesia mirando, no se lee—. Por eso sólo aparece en la
  * firma.
  *
- * El cuerpo va a 25 px de CSS ≈ 11,8 pt y la línea a 1,62: más suelto que un
+ * El cuerpo va a 28 px de CSS ≈ 13,3 pt y la línea a 1,52: más suelto que un
  * libro, porque leer en voz alta es ir saltando de renglón y hay que poder
- * volver a encontrar el sitio. La columna mide 11 cm —unos 58 caracteres— por
- * lo mismo: más ancha, el ojo se pierde al volver.
+ * volver a encontrar el sitio.
  *
  * Lo que va en redonda (sin cursiva) es lo que tiene que saltar a la vista para
  * reencontrar el punto: las promesas, la cita y el cierre.
@@ -65,18 +66,18 @@ const VOTOS = [
   { pag: 1, tipo: 'p', texto: 'Después vinieron las canciones. Esas que empezaron siendo dedicadas y terminaron siendo nuestras. Las miradas que nadie entendía. Los secretos que solo sabíamos los dos.' },
   { pag: 1, tipo: 'p', texto: 'Yo llegué a ti con veintiún años y con las manos vacías. No sabía amar. De verdad, no sabía. Lo único que tenía era las ganas: yo decía que estaba listo para entregar y para dar amor, aunque no tuviera ni idea de cómo se hacía. Y me puse a aprender contigo. Con detalles. Con atención. Un día y otro y otro, hasta que me diste la oportunidad. Esa oportunidad es lo más grande que me ha pasado, y no ha habido un solo día en que no la agradezca.' },
 
-  { pag: 2, tipo: 'fuerte', texto: 'Y de ahí en adelante, lo que arriesgamos.' },
-  { pag: 2, tipo: 'p', texto: 'Nuestro primer viaje juntos. Las escapadas. La pandemia, cuando estaba prohibido todo y yo igual cruzaba a verte a escondidas, porque no verte no era una opción. Los viajes que hicimos sin decirle a nadie, a otra ciudad, inventando cualquier cosa. Las veces que cogí el primer avión de la mañana nada más para estar contigo un día. Las rodadas. Los viajes. Las noches de vino. Las noches de cine. Las risas que nos dejaron sin aire. Lo que nos escondimos, lo que nos inventamos, lo que nos costó.' },
-  { pag: 2, tipo: 'p', texto: 'Todo eso lo hicimos para llegar hasta aquí. Y volvería a hacerlo todo otra vez.' },
-  { pag: 2, tipo: 'p', texto: 'Pero si tengo que decir de verdad qué es lo que más te agradezco, no son los viajes. Es lo que hiciste conmigo.' },
-  { pag: 2, tipo: 'p', texto: 'Tú me enseñaste a cocinar. Me enseñaste a resolver. Me enseñaste a ser hombre de hogar. Me cuidaste cada vez que estuve enfermo, sin quejarte ni una vez. Me aconsejaste hasta en lo profesional, me guiaste, confiaste en mí cuando yo mismo no confiaba, y me sacaste de donde yo estaba cómodo. Porque yo estaba tranquilo en mi casa, con mi familia, en ese hogar hermoso donde crecí — y tú me empujaste a salir. A crecer. A dar el paso de construir el nuestro.' },
-  { pag: 3, tipo: 'p', texto: 'Tú viste a este hombre nacer. Me conociste de veintiuno; hoy tengo veintiocho. Y todo lo que hay de más en mí — el carácter, la madurez, las ganas de responder — lo viste crecer tú y lo hiciste crecer tú. Por dentro sigo siendo el mismo niño enamorado de la primera vez. Ese no se fue. Ese sigue aquí, con las mismas ganas de hacerte feliz toda una vida.' },
+  { pag: 1, tipo: 'fuerte', texto: 'Y de ahí en adelante, lo que arriesgamos.' },
+  { pag: 1, tipo: 'p', texto: 'Nuestro primer viaje juntos. Las escapadas. La pandemia, cuando estaba prohibido todo y yo igual cruzaba a verte a escondidas, porque no verte no era una opción. Los viajes que hicimos sin decirle a nadie, a otra ciudad, inventando cualquier cosa. Las veces que cogí el primer avión de la mañana nada más para estar contigo un día. Las rodadas. Los viajes. Las noches de vino. Las noches de cine. Las risas que nos dejaron sin aire. Lo que nos escondimos, lo que nos inventamos, lo que nos costó.' },
+  { pag: 1, tipo: 'p', texto: 'Todo eso lo hicimos para llegar hasta aquí. Y volvería a hacerlo todo otra vez.' },
+  { pag: 1, tipo: 'p', texto: 'Pero si tengo que decir de verdad qué es lo que más te agradezco, no son los viajes. Es lo que hiciste conmigo.' },
+  { pag: 1, tipo: 'p', texto: 'Tú me enseñaste a cocinar. Me enseñaste a resolver. Me enseñaste a ser hombre de hogar. Me cuidaste cada vez que estuve enfermo, sin quejarte ni una vez. Me aconsejaste hasta en lo profesional, me guiaste, confiaste en mí cuando yo mismo no confiaba, y me sacaste de donde yo estaba cómodo. Porque yo estaba tranquilo en mi casa, con mi familia, en ese hogar hermoso donde crecí — y tú me empujaste a salir. A crecer. A dar el paso de construir el nuestro.' },
+  { pag: 2, tipo: 'p', texto: 'Tú viste a este hombre nacer. Me conociste de veintiuno; hoy tengo veintiocho. Y todo lo que hay de más en mí — el carácter, la madurez, las ganas de responder — lo viste crecer tú y lo hiciste crecer tú. Por dentro sigo siendo el mismo niño enamorado de la primera vez. Ese no se fue. Ese sigue aquí, con las mismas ganas de hacerte feliz toda una vida.' },
 
-  { pag: 3, tipo: 'p', texto: 'No todo fue bonito, y lo digo aquí porque es verdad. Hubo días grises. Días en que quisimos rendirnos, los dos. Días en que parecía más fácil soltar. Y no soltamos. Eso es lo que hoy nos tiene parados frente a este altar, y por eso también le doy gracias a Dios: porque en esos días Él nos sostuvo cuando nosotros ya no podíamos.' },
-  { pag: 3, tipo: 'p', texto: 'Sé que hay gente que se pregunta por qué casarse tan joven. Que piensa que uno se está perdiendo la vida. Yo no me estoy perdiendo nada. Yo encontré con quién vivirla, y decidí no esperar más para empezar.' },
-  { pag: 3, tipo: 'p', texto: 'Nosotros nos parecemos en muchísimo, pero somos distintos. Vemos la vida distinto, tenemos genios distintos, venimos de casas distintas. Y yo aprendí — me costó, pero aprendí — que es justo ahí donde nace la unión. No en ser iguales: en encajar.' },
-  { pag: 4, tipo: 'fuerte', texto: 'Por eso hoy, delante de Dios y delante de nuestras familias, no te prometo palabras bonitas. Te prometo hechos.' },
-  { pag: 4, tipo: 'lista', texto: [
+  { pag: 2, tipo: 'p', texto: 'No todo fue bonito, y lo digo aquí porque es verdad. Hubo días grises. Días en que quisimos rendirnos, los dos. Días en que parecía más fácil soltar. Y no soltamos. Eso es lo que hoy nos tiene parados frente a este altar, y por eso también le doy gracias a Dios: porque en esos días Él nos sostuvo cuando nosotros ya no podíamos.' },
+  { pag: 2, tipo: 'p', texto: 'Sé que hay gente que se pregunta por qué casarse tan joven. Que piensa que uno se está perdiendo la vida. Yo no me estoy perdiendo nada. Yo encontré con quién vivirla, y decidí no esperar más para empezar.' },
+  { pag: 2, tipo: 'p', texto: 'Nosotros nos parecemos en muchísimo, pero somos distintos. Vemos la vida distinto, tenemos genios distintos, venimos de casas distintas. Y yo aprendí — me costó, pero aprendí — que es justo ahí donde nace la unión. No en ser iguales: en encajar.' },
+  { pag: 2, tipo: 'fuerte', texto: 'Por eso hoy, delante de Dios y delante de nuestras familias, no te prometo palabras bonitas. Te prometo hechos.' },
+  { pag: 2, tipo: 'lista', texto: [
     'Escucharte de verdad, aunque esté cansado.',
     'Pedirte perdón rápido y sin excusas, que es lo que más me cuesta.',
     'Cuidarte en lo pequeño, que es donde el amor se comprueba.',
@@ -85,14 +86,14 @@ const VOTOS = [
     'No soltarte nunca. Ni en los días grises.',
   ] },
 
-  { pag: 4, tipo: 'p', texto: 'Y le pido a Dios la gracia de amarte mejor de lo que puedo solo. Porque solo no puedo, y ya lo sé. Que me enseñe a perdonar más rápido, a hablar con verdad y a tratarte siempre con ternura. Que nos dé sabiduría para saber cuándo hablar y cuándo callar, cuándo insistir y cuándo simplemente abrazar. Que nos guarde los años que vienen, los buenos y los otros.' },
-  { pag: 4, tipo: 'p', texto: 'En la tarjeta que les llegó a todos ustedes escribimos una frase:' },
-  { pag: 4, tipo: 'cita', texto: '«Sobre todo, vístanse de amor,<br>que es el vínculo perfecto.»' },
-  { pag: 4, tipo: 'p', texto: 'La digo hoy en voz alta, porque es lo que le pido a nuestro matrimonio: que sea eso lo que nos vista cada día.' },
-  { pag: 4, tipo: 'p', texto: 'Hoy no nos unimos solo tú y yo. Hoy, en el nombre de Dios, se unen oficialmente dos familias. Y todos los caminos raros, escondidos y arriesgados que tomamos eran, al final, los caminos de Él para traernos hasta este momento.' },
-  { pag: 4, tipo: 'p', texto: 'Siete años, mi amor. Tantas aventuras, tantos capítulos. Y esto apenas está empezando.' },
-  { pag: 4, tipo: 'fuerte', texto: 'Hoy, sabiendo todo lo que sé de ti y todo lo que sabes tú de mí, te vuelvo a escoger.' },
-  { pag: 4, tipo: 'firma', texto: 'Hoy, mañana y siempre.<br>Te amo.' },
+  { pag: 2, tipo: 'p', texto: 'Y le pido a Dios la gracia de amarte mejor de lo que puedo solo. Porque solo no puedo, y ya lo sé. Que me enseñe a perdonar más rápido, a hablar con verdad y a tratarte siempre con ternura. Que nos dé sabiduría para saber cuándo hablar y cuándo callar, cuándo insistir y cuándo simplemente abrazar. Que nos guarde los años que vienen, los buenos y los otros.' },
+  { pag: 2, tipo: 'p', texto: 'En la tarjeta que les llegó a todos ustedes escribimos una frase:' },
+  { pag: 2, tipo: 'cita', texto: '«Sobre todo, vístanse de amor,<br>que es el vínculo perfecto.»' },
+  { pag: 2, tipo: 'p', texto: 'La digo hoy en voz alta, porque es lo que le pido a nuestro matrimonio: que sea eso lo que nos vista cada día.' },
+  { pag: 2, tipo: 'p', texto: 'Hoy no nos unimos solo tú y yo. Hoy, en el nombre de Dios, se unen oficialmente dos familias. Y todos los caminos raros, escondidos y arriesgados que tomamos eran, al final, los caminos de Él para traernos hasta este momento.' },
+  { pag: 2, tipo: 'p', texto: 'Siete años, mi amor. Tantas aventuras, tantos capítulos. Y esto apenas está empezando.' },
+  { pag: 2, tipo: 'fuerte', texto: 'Hoy, sabiendo todo lo que sé de ti y todo lo que sabes tú de mí, te vuelvo a escoger.' },
+  { pag: 2, tipo: 'firma', texto: 'Hoy, mañana y siempre.<br>Te amo.' },
 ]
 
 const PAGINAS = [...new Set(VOTOS.map(b => b.pag))].sort((a, b) => a - b)
@@ -104,31 +105,26 @@ const PAGINAS = [...new Set(VOTOS.map(b => b.pag))].sort((a, b) => a - b)
 // calma, y se lee sola, en bata, con las amigas alrededor y los nervios
 // encima. Por eso termina diciéndole qué NO tiene que hacer hoy.
 //
-// Y no lleva la plantilla de la boda —ni marco doble, ni esquinas, ni escudo
-// arriba—: si llega con el mismo vestido que todo lo demás, se lee como una
-// pieza más de la papelería. Va al revés: papel limpio, un VII gigante en
-// terracota clarísima detrás del texto, la columna corrida a la izquierda y el
-// nombre de él escrito a mano al final. Se parece más a una carta que a una
-// tarjeta, que es lo que es.
-// A5 (14,8 × 21): es medida estándar, así que la florista la imprime y la
-// corta sin inventar nada, y el texto entra sin apretarse.
+// A6 APAISADA (14,8 × 10,5) —un cuarto de A4—, a dos columnas: cabe en la mano
+// y en el sobre de una floristería, y no deja media tarjeta en blanco.
+//
+// No lleva la plantilla de la boda —ni marco doble, ni esquinas, ni escudo—: si
+// llega con el mismo vestido que el resto de la papelería se lee como una pieza
+// más. Va al revés: papel limpio, un siete gigante en terracota clarísima
+// detrás del texto y el nombre de él escrito a mano al final. Se parece más a
+// una carta que a una tarjeta, que es lo que es.
 const FLORES = {
-  w: 14.8, h: 21,
+  w: 14.8, h: 10.5,
   titulo: 'SIETE AÑOS',
   fecha: '12 · IX · 2026',
   bloques: [
     { tipo: 'saludo', texto: 'Angely,' },
-    { tipo: 'p', texto: 'Hoy, antes que cualquier otra cosa: feliz aniversario. Siete años.' },
-    { tipo: 'p', texto: 'Y mira qué cosa tan bonita, que el día en que cumplimos siete sea también el día en que nos casamos.' },
-    { tipo: 'p', texto: 'Mientras te arreglas quiero que te acuerdes de algunas cosas. De que hace siete años éramos dos aprendices y yo te dije que no te conocía pero que me provocaba abrazarte. De los viajes que hicimos sin decirle a nadie. De las veces que crucé la ciudad a escondidas en plena pandemia, porque no verte no era una opción. Del primer avión de la mañana, solo para pasar un día contigo. De las noches de vino, de las rodadas, de las risas que nos dejaron sin aire. Y de los días grises, los que quisimos rendirnos y no lo hicimos.' },
-    { tipo: 'p', texto: 'Todo eso era para llegar a hoy.' },
-    { tipo: 'p', texto: 'No es la primera vez que te mando flores. Pero estas son distintas.' },
-    { tipo: 'p', texto: 'Porque hoy no celebramos solamente siete años juntos. El siete, en la Biblia, es el número de la plenitud: lo que queda completo, lo que ya está en su punto. Y es exactamente lo que siento hoy. Esto no es un aniversario más, mi amor: es una etapa que se cierra entera para que empiece la que sigue.' },
+    { tipo: 'p', texto: 'Feliz aniversario, mi amor. Siete años. Y mira qué cosa tan bonita, que el día en que cumplimos siete sea el día en que nos casamos.' },
+    { tipo: 'p', texto: 'Mientras te arreglas, acuérdate. De los dos aprendices que éramos. De que te dije que no te conocía pero me provocaba abrazarte. De los viajes que hicimos sin decirle a nadie. De cruzar la ciudad a escondidas en plena pandemia. Del primer avión de la mañana solo para pasar un día contigo. De las noches de vino y de las risas que nos dejaron sin aire. Y de los días grises, los que quisimos rendirnos y no lo hicimos. Todo eso era para llegar a hoy.' },
+    { tipo: 'p', texto: 'No es la primera vez que te mando flores. Pero estas son distintas: hoy no celebramos solamente siete años. El siete, en la Biblia, es el número de la plenitud, lo que queda completo. Esto no es un aniversario más: es una etapa que se cierra entera para que empiece la que sigue.' },
     { tipo: 'fuerte', texto: 'Siete años para llegar hasta acá. Ni uno de más, ni uno de menos.' },
-    { tipo: 'fuerte', texto: 'Y hoy no tienes que estar perfecta.' },
-    { tipo: 'p', texto: 'No tienes que apurarte, ni salir bien en todas las fotos, ni estar pendiente de nada. Ya está todo hecho, mi amor. Lo único que tienes que hacer hoy es ser tú, que es lo que llevo siete años admirando.' },
-    { tipo: 'p', texto: 'Respira. Ríete con las tuyas. Déjate consentir.' },
-    { tipo: 'p', texto: 'Y cuando estés lista, abre la puerta y camina tranquila: al final del pasillo voy a estar yo, con la misma cara de bobo del primer día.' },
+    { tipo: 'p', texto: 'Hoy no tienes que estar perfecta. Ya está todo hecho. Lo único que tienes que hacer hoy es ser tú, que es lo que llevo siete años admirando. Respira. Ríete con las tuyas. Déjate consentir.' },
+    { tipo: 'p', texto: 'Y cuando estés lista, camina tranquila: al final del pasillo voy a estar yo, con la misma cara de bobo del primer día.' },
     { tipo: 'cierre', texto: 'Nos vemos en un rato.' },
   ],
 }
@@ -145,40 +141,46 @@ function htmlFlores() {
 <link rel="stylesheet" href="${FUENTES}"><style>
   *{margin:0;padding:0;box-sizing:border-box}
   .hoja{width:${cm(F.w)}px;height:${cm(F.h)}px;background:#FDF8F1;color:#221610;
-    position:relative;overflow:hidden;padding:${cm(1.6)}px ${cm(1.6)}px ${cm(1.3)}px;
+    position:relative;overflow:hidden;padding:${cm(0.8)}px ${cm(0.9)}px ${cm(0.7)}px;
     display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
 
   /* El siete, enorme y clarísimo, detrás de todo. Es la única decoración: la
      tarjeta no lleva marco ni flores ni escudo a propósito. */
   /* El siete completo, no un trozo: es la única pieza gráfica de la tarjeta y
      tiene que leerse como un siete. */
-  .siete{position:absolute;right:${cm(0.7)}px;bottom:${cm(-1.3)}px;
+  .siete{position:absolute;right:${cm(0.3)}px;bottom:${cm(-0.9)}px;
     font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    font-size:${cm(8.5)}px;line-height:.78;color:#9A5B45;opacity:.08;letter-spacing:-.04em}
+    font-size:${cm(5.4)}px;line-height:.78;color:#9A5B45;opacity:.085;letter-spacing:-.04em}
 
   .hoja > *:not(.siete){position:relative;z-index:1}
 
   .cab{display:flex;align-items:baseline;gap:${cm(0.4)}px;
-    font-family:Jost,system-ui,sans-serif;font-size:10px;letter-spacing:.34em;
-    color:#B08C4F;padding-bottom:${cm(0.35)}px;border-bottom:1px solid #E6D8BE;
-    margin-bottom:${cm(0.8)}px}
+    font-family:Jost,system-ui,sans-serif;font-size:9px;letter-spacing:.3em;
+    color:#B08C4F;padding-bottom:${cm(0.22)}px;border-bottom:1px solid #E6D8BE;
+    margin-bottom:${cm(0.35)}px}
   .cab b{font-weight:400}
   .cab span{margin-left:auto;color:#C0B3A3;letter-spacing:.2em}
 
-  .txt{flex:1;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;
-    font-size:18px;line-height:1.58}
-  .txt p{margin-bottom:${cm(0.3)}px}
-  .saludo{font-style:normal;font-weight:600;font-size:25px;color:#9A5B45;
-    margin-bottom:${cm(0.36)}px !important}
-  .fuerte{font-style:normal;font-weight:500;font-size:19px;color:#7E2E1B;
-    line-height:1.38}
-  .cierre{font-style:italic;font-size:19px;color:#7E2E1B;margin-top:${cm(0.2)}px}
+  /* Dos columnas: apaisada y a una sola, el renglón sale de 120 caracteres.
+     Se balancean las dos: con column-fill auto se llena la primera y la
+     segunda queda vacía, que es media tarjeta en blanco. */
+  .txt{flex:1;min-height:0;column-count:2;column-gap:${cm(0.7)}px;column-fill:balance;
+    font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;
+    font-size:17px;line-height:1.5}
+  .txt p{margin-bottom:${cm(0.24)}px}
+  .saludo{font-style:normal;font-weight:600;font-size:22px;color:#9A5B45;
+    margin-bottom:${cm(0.22)}px !important}
+  .fuerte{font-style:normal;font-weight:500;font-size:18px;color:#7E2E1B;
+    line-height:1.34;break-inside:avoid}
+  .cierre{font-style:italic;font-size:18px;color:#7E2E1B;margin-top:${cm(0.12)}px;
+    break-inside:avoid}
 
-  .firma{text-align:right;margin-top:${cm(0.3)}px}
-  .firma b{display:block;font-family:'Great Vibes',cursive;font-weight:400;
-    font-size:32px;color:#9A5B45;line-height:1.15}
-  .firma span{display:block;font-family:Jost,system-ui,sans-serif;font-size:9px;
-    letter-spacing:.26em;color:#C0B3A3;margin-top:5px}
+  .firma{display:flex;align-items:baseline;justify-content:flex-end;gap:${cm(0.4)}px;
+    margin-top:${cm(0.15)}px}
+  .firma b{font-family:'Great Vibes',cursive;font-weight:400;
+    font-size:26px;color:#9A5B45;line-height:1.1}
+  .firma span{font-family:Jost,system-ui,sans-serif;font-size:8px;
+    letter-spacing:.24em;color:#C0B3A3}
 </style></head><body><div class="hoja">
   <div class="siete">7</div>
   <div class="cab"><b>${F.titulo}</b><span>${F.fecha}</span></div>
@@ -205,40 +207,47 @@ function htmlPagina(pag, total, logo) {
 <link rel="stylesheet" href="${FUENTES}"><style>
   *{margin:0;padding:0;box-sizing:border-box}
   .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#FBF5EA;color:#221610;
-    padding:${cm(2.4)}px ${cm(5)}px ${cm(2)}px;position:relative;
+    padding:${cm(1.3)}px ${cm(1.3)}px ${cm(1)}px;position:relative;
     display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
-  /* Filete interior, el mismo marco de la participación */
-  .marco{position:absolute;inset:${cm(1.1)}px;border:1px solid #E0CFAE;pointer-events:none}
-  .marco::after{content:'';position:absolute;inset:4px;border:.6px solid rgba(176,140,79,.35)}
+  /* Filete interior, el mismo marco de la participación, pegado al borde */
+  .marco{position:absolute;inset:${cm(0.55)}px;border:1px solid #E0CFAE;pointer-events:none}
 
-  .cab{text-align:center;margin-bottom:${cm(1)}px}
-  .cab img{height:${cm(1.5)}px;width:auto}
+  .cab{display:flex;align-items:center;gap:${cm(0.5)}px;padding-bottom:${cm(0.35)}px;
+    border-bottom:1px solid #E6D8BE;margin-bottom:${cm(0.45)}px}
+  .cab img{height:${cm(1)}px;width:auto}
   .cab p{font-family:Jost,system-ui,sans-serif;font-size:11px;letter-spacing:.3em;
-    color:#A2917F;margin-top:9px}
+    color:#A2917F}
 
-  /* El cuerpo: Cormorant en CURSIVA, suelto, con la columna corta a propósito */
-  .txt{flex:1;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;
-    font-weight:400;font-size:25px;line-height:1.62;text-align:left}
-  .txt p{margin-bottom:${cm(0.42)}px}
-  .saludo{font-style:normal;font-weight:600;font-size:30px;letter-spacing:.02em;
-    color:#9A5B45;margin-bottom:${cm(0.5)}px !important}
+  /* DOS COLUMNAS: es lo que llena la hoja sin estirar el renglón. Una sola
+     columna a todo el ancho serían 85 caracteres y leyendo en voz alta el ojo
+     no encuentra el renglón de vuelta; así son 47, que es medida de libro. */
+  .txt{flex:1;min-height:0;column-count:2;column-gap:${cm(0.9)}px;column-fill:balance;
+    font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;
+    font-weight:400;font-size:28px;line-height:1.52;text-align:left}
+  .txt p{margin-bottom:${cm(0.3)}px}
+  .saludo{font-style:normal;font-weight:600;font-size:33px;letter-spacing:.02em;
+    color:#9A5B45;margin-bottom:${cm(0.35)}px !important}
   /* En redonda y un punto más grande: es lo que hay que reencontrar de un
      vistazo cuando uno levanta la vista para mirarla. */
-  .fuerte{font-style:normal;font-weight:500;font-size:26px;color:#7E2E1B;
-    line-height:1.5}
-  .lista{list-style:none;font-style:normal;font-size:24px;line-height:1.45;
-    margin-bottom:${cm(0.42)}px}
-  .lista li{padding-left:${cm(0.6)}px;position:relative;margin-bottom:${cm(0.24)}px}
-  .lista li::before{content:'·';position:absolute;left:${cm(0.22)}px;color:#B08C4F;
-    font-size:28px;line-height:1.2}
-  .cita{font-style:normal;font-size:26px;line-height:1.4;text-align:center;
-    color:#9A5B45;padding:${cm(0.3)}px 0;margin-bottom:${cm(0.42)}px !important}
-  .firma{font-style:normal;text-align:center;font-size:27px;line-height:1.45;
-    color:#7E2E1B;margin-top:${cm(0.6)}px}
+  /* En redonda: los puntos de reenganche al levantar la vista. El break-inside
+     evita que una promesa quede partida entre dos columnas. */
+  .fuerte{font-style:normal;font-weight:500;font-size:29px;color:#7E2E1B;
+    line-height:1.38;break-inside:avoid}
+  .lista{list-style:none;font-style:normal;font-size:26px;line-height:1.34;
+    margin-bottom:${cm(0.3)}px}
+  .lista li{padding-left:${cm(0.5)}px;position:relative;margin-bottom:${cm(0.18)}px;
+    break-inside:avoid}
+  .lista li::before{content:'·';position:absolute;left:${cm(0.18)}px;color:#B08C4F;
+    font-size:26px;line-height:1.15}
+  .cita{font-style:normal;font-size:29px;line-height:1.32;text-align:center;
+    color:#9A5B45;padding:${cm(0.2)}px 0;margin-bottom:${cm(0.3)}px !important;
+    break-inside:avoid}
+  .firma{font-style:normal;text-align:center;font-size:30px;line-height:1.36;
+    color:#7E2E1B;margin-top:${cm(0.4)}px;break-inside:avoid}
 
   .pie{display:flex;align-items:baseline;justify-content:space-between;
     font-family:Jost,system-ui,sans-serif;font-size:10px;letter-spacing:.2em;
-    color:#C0B3A3;padding-top:${cm(0.5)}px}
+    color:#C0B3A3;padding-top:${cm(0.3)}px}
 
   /* Marcas de doblez: los dos tercios del alto. Se doblan las tres hojas juntas
      y quedan 21 × 9,9 cm, que es lo que entra en el bolsillo del saco. */
@@ -253,7 +262,7 @@ function htmlPagina(pag, total, logo) {
 
   ${primera ? `<div class="cab">
     ${logo ? `<img src="${logo}" alt="">` : ''}
-    <p>MIS VOTOS</p>
+    <p>MIS VOTOS · ANGELY &amp; KEVIN</p>
   </div>` : ''}
 
   <div class="txt">${cuerpo}</div>
@@ -288,9 +297,11 @@ try {
     await page.evaluate(() => document.fonts.ready)
     // Si el texto se sale de la hoja hay que repartirlo distinto: la caja tiene
     // alto fijo, así que un desborde no se ve en el PNG. Se avisa por consola.
+    // El texto que no cabe se sale por la derecha (una columna de más) o por
+    // abajo, según cómo caiga el reparto: se miran las dos.
     const sobra = await page.evaluate(() => {
       const t = document.querySelector('.txt')
-      return Math.max(0, t.scrollHeight - t.clientHeight)
+      return Math.round(Math.max(0, t.scrollWidth - t.clientWidth, t.scrollHeight - t.clientHeight))
     })
     const hoja = await page.$('.hoja')
     await hoja.screenshot({ path: join(SALIDA, `votos-${p}.png`), type: 'png' })
@@ -303,9 +314,12 @@ try {
   // scrollHeight de .hoja —que cuenta el siete del fondo, que sobresale a
   // propósito— ni el de .txt, que con flex:1 nunca se declara desbordado.
   const sobraF = await page.evaluate(() => {
+    const t = document.querySelector('.txt')
     const h = document.querySelector('.hoja').getBoundingClientRect()
     const f = document.querySelector('.firma').getBoundingClientRect()
-    return Math.round(Math.max(0, f.bottom - h.bottom))
+    // Por ancho (el texto que no cabe se sale de la segunda columna) y por alto
+    // (la firma empujada fuera de la tarjeta).
+    return Math.round(Math.max(0, t.scrollWidth - t.clientWidth, f.bottom - h.bottom))
   })
   const caja = await page.$('.hoja')
   await caja.screenshot({ path: join(SALIDA, 'tarjeta-flores.png'), type: 'png' })
@@ -347,10 +361,9 @@ CÓMO DOBLARLO
 
 LA TARJETA DE LAS FLORES
 
-  tarjeta-flores.png — A5 (14,8 × 21 cm). Va con el ramo que le llega en la
-  mañana, mientras se arregla. Imprímela en A4 al 100 % y recórtala por el
-  borde, o mándasela a la floristería: A5 es medida estándar y la imprimen en
-  cartulina sin inventar nada.
+  tarjeta-flores.png — A6 apaisada (14,8 × 10,5 cm), o sea un cuarto de A4.
+  Va con el ramo que le llega en la mañana, mientras se arregla. Imprímela en
+  A4 al 100 % y recórtala por el borde del color: de una hoja salen cuatro.
 
   No lleva el marco ni las flores de la papelería de la boda, y es a propósito:
   si llega vestida igual que todo lo demás, se lee como una pieza más. Ésta
