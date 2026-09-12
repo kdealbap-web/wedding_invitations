@@ -6,7 +6,7 @@
  *
  * Genera, en entrega/votos/:
  *   votos-1.png … votos-4.png   cuatro hojas A4 verticales a 300 dpi
- *   tarjeta-flores.png          12 × 19 cm, para el ramo de la mañana
+ *   tarjeta-flores.png          A5, para el ramo de la mañana
  *   COMO-IMPRIMIR.txt           las instrucciones, para no adivinar
  *
  * POR QUÉ ASÍ Y NO DE OTRA FORMA
@@ -110,8 +110,10 @@ const PAGINAS = [...new Set(VOTOS.map(b => b.pag))].sort((a, b) => a - b)
 // terracota clarísima detrás del texto, la columna corrida a la izquierda y el
 // nombre de él escrito a mano al final. Se parece más a una carta que a una
 // tarjeta, que es lo que es.
+// A5 (14,8 × 21): es medida estándar, así que la florista la imprime y la
+// corta sin inventar nada, y el texto entra sin apretarse.
 const FLORES = {
-  w: 12, h: 19,
+  w: 14.8, h: 21,
   titulo: 'SIETE AÑOS',
   fecha: '12 · IX · 2026',
   bloques: [
@@ -120,7 +122,10 @@ const FLORES = {
     { tipo: 'p', texto: 'Y mira qué cosa tan bonita, que el día en que cumplimos siete sea también el día en que nos casamos.' },
     { tipo: 'p', texto: 'Mientras te arreglas quiero que te acuerdes de algunas cosas. De que hace siete años éramos dos aprendices y yo te dije que no te conocía pero que me provocaba abrazarte. De los viajes que hicimos sin decirle a nadie. De las veces que crucé la ciudad a escondidas en plena pandemia, porque no verte no era una opción. Del primer avión de la mañana, solo para pasar un día contigo. De las noches de vino, de las rodadas, de las risas que nos dejaron sin aire. Y de los días grises, los que quisimos rendirnos y no lo hicimos.' },
     { tipo: 'p', texto: 'Todo eso era para llegar a hoy.' },
-    { tipo: 'fuerte', texto: 'Hoy no tienes que estar perfecta.' },
+    { tipo: 'p', texto: 'No es la primera vez que te mando flores. Pero estas son distintas.' },
+    { tipo: 'p', texto: 'Porque hoy no celebramos solamente siete años juntos. El siete, en la Biblia, es el número de la plenitud: lo que queda completo, lo que ya está en su punto. Y es exactamente lo que siento hoy. Esto no es un aniversario más, mi amor: es una etapa que se cierra entera para que empiece la que sigue.' },
+    { tipo: 'fuerte', texto: 'Siete años para llegar hasta acá. Ni uno de más, ni uno de menos.' },
+    { tipo: 'fuerte', texto: 'Y hoy no tienes que estar perfecta.' },
     { tipo: 'p', texto: 'No tienes que apurarte, ni salir bien en todas las fotos, ni estar pendiente de nada. Ya está todo hecho, mi amor. Lo único que tienes que hacer hoy es ser tú, que es lo que llevo siete años admirando.' },
     { tipo: 'p', texto: 'Respira. Ríete con las tuyas. Déjate consentir.' },
     { tipo: 'p', texto: 'Y cuando estés lista, abre la puerta y camina tranquila: al final del pasillo voy a estar yo, con la misma cara de bobo del primer día.' },
@@ -140,14 +145,14 @@ function htmlFlores() {
 <link rel="stylesheet" href="${FUENTES}"><style>
   *{margin:0;padding:0;box-sizing:border-box}
   .hoja{width:${cm(F.w)}px;height:${cm(F.h)}px;background:#FDF8F1;color:#221610;
-    position:relative;overflow:hidden;padding:${cm(1.5)}px ${cm(1.3)}px ${cm(1.2)}px;
+    position:relative;overflow:hidden;padding:${cm(1.6)}px ${cm(1.6)}px ${cm(1.3)}px;
     display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
 
   /* El siete, enorme y clarísimo, detrás de todo. Es la única decoración: la
      tarjeta no lleva marco ni flores ni escudo a propósito. */
   /* El siete completo, no un trozo: es la única pieza gráfica de la tarjeta y
      tiene que leerse como un siete. */
-  .siete{position:absolute;right:${cm(0.5)}px;bottom:${cm(-1.1)}px;
+  .siete{position:absolute;right:${cm(0.7)}px;bottom:${cm(-1.3)}px;
     font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
     font-size:${cm(8.5)}px;line-height:.78;color:#9A5B45;opacity:.08;letter-spacing:-.04em}
 
@@ -161,17 +166,17 @@ function htmlFlores() {
   .cab span{margin-left:auto;color:#C0B3A3;letter-spacing:.2em}
 
   .txt{flex:1;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;
-    font-size:18px;line-height:1.62}
-  .txt p{margin-bottom:${cm(0.34)}px}
-  .saludo{font-style:normal;font-weight:600;font-size:26px;color:#9A5B45;
-    margin-bottom:${cm(0.42)}px !important}
-  .fuerte{font-style:normal;font-weight:500;font-size:20px;color:#7E2E1B;
-    line-height:1.4}
+    font-size:18px;line-height:1.58}
+  .txt p{margin-bottom:${cm(0.3)}px}
+  .saludo{font-style:normal;font-weight:600;font-size:25px;color:#9A5B45;
+    margin-bottom:${cm(0.36)}px !important}
+  .fuerte{font-style:normal;font-weight:500;font-size:19px;color:#7E2E1B;
+    line-height:1.38}
   .cierre{font-style:italic;font-size:19px;color:#7E2E1B;margin-top:${cm(0.2)}px}
 
   .firma{text-align:right;margin-top:${cm(0.3)}px}
   .firma b{display:block;font-family:'Great Vibes',cursive;font-weight:400;
-    font-size:34px;color:#9A5B45;line-height:1.1}
+    font-size:32px;color:#9A5B45;line-height:1.15}
   .firma span{display:block;font-family:Jost,system-ui,sans-serif;font-size:9px;
     letter-spacing:.26em;color:#C0B3A3;margin-top:5px}
 </style></head><body><div class="hoja">
@@ -294,13 +299,17 @@ try {
 
   await page.setContent(htmlFlores(), { waitUntil: 'load', timeout: 60000 })
   await page.evaluate(() => document.fonts.ready)
+  // Se mide dónde termina LA FIRMA contra el borde interior de la tarjeta. Ni
+  // scrollHeight de .hoja —que cuenta el siete del fondo, que sobresale a
+  // propósito— ni el de .txt, que con flex:1 nunca se declara desbordado.
   const sobraF = await page.evaluate(() => {
-    const t = document.querySelector('.txt')
-    return Math.max(0, t.scrollHeight - t.clientHeight)
+    const h = document.querySelector('.hoja').getBoundingClientRect()
+    const f = document.querySelector('.firma').getBoundingClientRect()
+    return Math.round(Math.max(0, f.bottom - h.bottom))
   })
   const caja = await page.$('.hoja')
   await caja.screenshot({ path: join(SALIDA, 'tarjeta-flores.png'), type: 'png' })
-  console.log('  ✓ tarjeta-flores.png'.padEnd(24), sobraF ? `⚠ SE DESBORDA ${sobraF} px` : '12 × 19 cm')
+  console.log('  ✓ tarjeta-flores.png'.padEnd(24), sobraF ? `⚠ SE DESBORDA ${sobraF} px` : `${FLORES.w} × ${FLORES.h} cm`)
 } finally {
   await browser.close()
 }
@@ -338,9 +347,10 @@ CÓMO DOBLARLO
 
 LA TARJETA DE LAS FLORES
 
-  tarjeta-flores.png — 12 × 19 cm. Va con el ramo que le llega en la mañana,
-  mientras se arregla. Imprímela en A4 al 100 % y recórtala por el borde del
-  color, o pídele a la floristería que la imprima en cartulina.
+  tarjeta-flores.png — A5 (14,8 × 21 cm). Va con el ramo que le llega en la
+  mañana, mientras se arregla. Imprímela en A4 al 100 % y recórtala por el
+  borde, o mándasela a la floristería: A5 es medida estándar y la imprimen en
+  cartulina sin inventar nada.
 
   No lleva el marco ni las flores de la papelería de la boda, y es a propósito:
   si llega vestida igual que todo lo demás, se lee como una pieza más. Ésta
