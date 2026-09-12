@@ -543,29 +543,19 @@ function romano(n) {
 
 // ─── Las tarjetas de agradecimiento ───
 //
-// Una por SOBRE invitado —no por capitán—, cuadrada de 8 × 8 cm, de a seis en
-// una hoja A4 a 300 dpi con línea de corte. Son 49 sobres, así que salen nueve
-// hojas; se imprimen, se recortan y se dejan una en cada sitio.
+// Una por PUESTO —82 en total—, no por sobre: la wedding las ubica en cada silla,
+// así que hacen falta tantas como personas sentadas. Sin la mesa de los novios,
+// que no se imprime, son 82 de las 84 sentadas.
 //
-// Sobre marfil y no sobre el terracota del banderín, por dos razones: el
-// banderín es fiesta y esto es lo otro —se lee despacio, al final de la noche o
-// al día siguiente—, y 49 tarjetas a sangre en terracota son una barbaridad de
-// tinta para algo que se imprime en casa.
+// Misma medida y MISMO PLIEGO que el banderín: 6 × 15 cm, ocho por tabloide
+// vertical. Así las dos piezas van a la misma imprenta, en el mismo papel y con
+// el mismo corte; y de paso la tarjeta deja de ser un cuadrado y pasa a ser una
+// tira que se apoya de pie contra la copa o se acuesta sobre el plato.
 //
-// El texto trata de usted plural o de tú según cuántos vengan en el sobre: a una
-// familia se le habla distinto que a alguien que viene solo.
-// 6,5 cm y no 8: con tres columnas de 6,5 la hoja se llena (19,5 de 21), y con
-// dos de 8 quedaban 4,4 cm de blanco a los lados y hacían falta nueve hojas para
-// lo que ahora entra en cinco.
-const GRACIAS = { lado: 6.5 }
-
-// Los mismos pliegos que los banderines, con la cuenta hecha para 6,5 cm:
-//   A4        3 × 6,5 = 19,5 de 21   · 4 filas = 26 de 29,7  → 12 por hoja
-//   Tabloide  6 × 6,5 = 39 de 43,18  · 4 filas = 26 de 27,94 → 24 por hoja
-const PLIEGOS_GRACIAS = {
-  a4:       { archivo: 'a4',       w: 21,    h: 29.7,  cols: 3, filas: 4, pad: '1.5px 0.6' },
-  tabloide: { archivo: 'tabloide', w: 43.18, h: 27.94, cols: 6, filas: 4, pad: '0.9px 2.0' },
-}
+// Sobre marfil y no sobre el terracota del banderín: el banderín es fiesta y esto
+// se lee despacio, al final de la noche o al día siguiente. Y 82 tarjetas a
+// sangre en terracota son una barbaridad de tinta.
+const GRACIAS = { w: 6, h: 15 }
 
 const TEXTO_GRACIAS = {
   plural: 'Que estén aquí no es un detalle: es la razón por la que este día se siente ' +
@@ -892,60 +882,85 @@ function htmlReparto(gracias, arte) {
 
 function htmlAgradecimientos(lote, arte, hoja, total, J) {
   const G = GRACIAS
-  const tarjetas = lote.map(t => `<div class="t">
-      <div class="marco"></div>
-      <div class="in">
-        ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
-        <p class="g">GRACIAS</p>
-        <div class="rule"><i></i><b>&#9670;</b><i></i></div>
-        <p class="msg">${esc(TEXTO_GRACIAS.singular)}</p>
-        <p class="ayk">Angely &amp; Kevin</p>
-        <p class="ubic"><b>${esc(t.romano)}</b><span>${esc(t.nombre)}</span></p>
-      </div>
-    </div>`).join('')
 
-  // Los huecos que sobran en la última hoja se dejan vacíos, con su marca de
-  // corte: así las seis posiciones caen siempre en el mismo sitio del pliego.
-  const vacias = Array.from({ length: J.cols * J.filas - lote.length },
-    () => '<div class="t vacia"></div>').join('')
+  const tarjetas = lote.map((t, i) => {
+    const x = cm(J.margen + (i % J.cols) * (G.w + J.calle))
+    const y = cm(J.arriba + Math.floor(i / J.cols) * (G.h + J.calleV))
+    // El nombre baja de cuerpo cuando es largo: «Heider Joaquín Rivero Vasquez»
+    // y «Jorge Longa» no entran igual en 6 cm de ancho.
+    const cuerpo = t.nombre.length > 24 ? 9.5 : t.nombre.length > 17 ? 11 : 12.5
+    return {
+      html: `<div class="t" style="left:${x}px;top:${y}px;width:${cm(G.w)}px;height:${cm(G.h)}px">
+        <div class="marco"></div>
+        <div class="in">
+          <div class="arriba">
+            ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
+            <p class="g">GRACIAS</p>
+            <div class="rule"><i></i><b>&#9670;</b><i></i></div>
+          </div>
+          <div class="medio">
+            <p class="msg">${esc(TEXTO_GRACIAS.singular)}</p>
+            <p class="ayk">Angely &amp; Kevin</p>
+            <p class="fecha">12 · IX · 2026</p>
+          </div>
+          <div class="ubic">
+            <b>${esc(t.romano)}</b>
+            <span style="font-size:${cuerpo}px">${esc(t.nombre)}</span>
+          </div>
+        </div>
+      </div>`,
+      marca: `<rect x="${x}" y="${y}" width="${cm(G.w)}" height="${cm(G.h)}" fill="none"
+                stroke="#C0B3A3" stroke-width="1" stroke-dasharray="7 6"/>`,
+    }
+  })
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
-  .hoja{width:${cm(J.w)}px;height:${cm(J.h)}px;background:#fff;
-    padding:${cm(J.w > 30 ? 0.9 : 1.5)}px ${cm(J.w > 30 ? 2 : 0.6)}px;
-    display:flex;flex-direction:column}
-  .rejilla{display:grid;grid-template-columns:repeat(${J.cols},${cm(G.lado)}px);
-    grid-auto-rows:${cm(G.lado)}px;gap:${cm(0.3)}px;justify-content:center;align-content:start}
-  .t{position:relative;background:#FBF5EA;outline:1px dashed #D9C7A8;overflow:hidden}
-  .t.vacia{background:none}
+  .hoja{width:${cm(J.w)}px;height:${cm(J.h)}px;background:#fff;position:relative}
+  .t{position:absolute;background:#FBF5EA;overflow:hidden}
   /* Filete interior doble, el mismo marco de la participación */
   .marco{position:absolute;inset:${cm(0.34)}px;border:1px solid #E0CFAE;pointer-events:none}
   .marco::after{content:'';position:absolute;inset:3px;border:.6px solid rgba(176,140,79,.4)}
 
   .in{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;text-align:center;padding:${cm(0.68)}px}
-  .in img{height:${cm(0.95)}px;width:auto}
-  .g{font-size:10.5px;letter-spacing:.34em;color:#B08C4F;margin-top:7px}
-  .n{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;line-height:1.12;
-    color:#9A5B45;margin-top:6px}
-  .rule{display:flex;align-items:center;gap:7px;width:60%;margin:7px 0 6px}
+    align-items:center;text-align:center;padding:${cm(0.85)}px ${cm(0.5)}px ${cm(0.7)}px}
+  /* Tres bloques repartidos a lo alto: el escudo arriba, el mensaje en el medio
+     —que es donde cae la vista— y la ubicación al pie. Apilados de corrido
+     dejaban 6 cm de tira vacía debajo de la firma. */
+  .arriba,.medio{width:100%;display:flex;flex-direction:column;align-items:center}
+  .medio{margin:auto 0}
+  .in img{height:${cm(1.35)}px;width:auto}
+  .g{font-size:11.5px;letter-spacing:.34em;color:#B08C4F;margin-top:11px}
+  .rule{display:flex;align-items:center;gap:8px;width:70%;margin:10px 0 14px}
   .rule i{flex:1;height:1px;background:#E0CFAE}
-  .rule b{color:#B08C4F;font-size:8px}
-  .msg{font-family:'Cormorant Garamond',Georgia,serif;font-size:12.5px;line-height:1.4;
+  .rule b{color:#B08C4F;font-size:9px}
+  .msg{font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;line-height:1.52;
     color:#2A1D14}
-  .ayk{font-family:'Great Vibes',cursive;font-size:19px;color:#9A5B45;margin-top:8px;line-height:1.1}
-  /* El pie es lo que usa la wedding para ubicarla: el romano de la mesa manda y
-     el nombre del invitado va pequeño, que es como se busca en el puesto. */
-  .ubic{display:flex;align-items:baseline;justify-content:center;gap:7px;margin-top:9px;
-    padding-top:7px;border-top:1px solid #E0CFAE;width:78%}
-  .ubic b{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:16px;
-    color:#9A5B45;letter-spacing:.04em;line-height:1}
-  .ubic span{font-size:8.5px;letter-spacing:.08em;color:#8A7866;text-align:left;line-height:1.25}
+  .ayk{font-family:'Great Vibes',cursive;font-size:26px;color:#9A5B45;margin-top:16px;
+    line-height:1.1}
+  .fecha{font-size:8.5px;letter-spacing:.24em;color:#A2917F;margin-top:4px}
 
-  .pie{margin-top:auto;text-align:center;font-size:11px;letter-spacing:.18em;color:#B9AC9C}
+  /* Lo que usa la wedding para ubicarla: el romano de la mesa se ve de lejos al
+     repartir, y el nombre es lo que se busca en el puesto. Va al pie de la tira,
+     que es la parte que queda a la vista si se apoya contra la copa. */
+  .ubic{margin-top:auto;width:100%;padding-top:${cm(0.4)}px;border-top:1px solid #E0CFAE}
+  .ubic b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
+    font-size:34px;line-height:1;color:#9A5B45;letter-spacing:.06em}
+  .ubic span{display:block;letter-spacing:.06em;color:#6B5B4B;line-height:1.3;margin-top:6px}
+
+  /* Las marcas, fuera de las piezas: lo que se imprima encima se queda ahí. */
+  .marcas{position:absolute;inset:0;pointer-events:none}
+  .marcas text{font-family:Jost,system-ui,sans-serif;fill:#8A7866}
+  .marcas text.tit{font-size:13px;letter-spacing:.12em}
+  .marcas text.chico{font-size:9px;letter-spacing:.08em;fill:#A2917F}
 </style></head><body><div class="hoja">
-  <div class="rejilla">${tarjetas}${vacias}</div>
-  <p class="pie">ANGELY &amp; KEVIN · TARJETAS DE AGRADECIMIENTO · HOJA ${hoja} DE ${total} · CORTAR POR LA LÍNEA</p>
+  ${tarjetas.map(t => t.html).join('')}
+  <svg class="marcas" viewBox="0 0 ${cm(J.w)} ${cm(J.h)}">
+    <text class="tit" x="${cm(J.margen)}" y="${cm(1.1)}">CORTAR POR LA LÍNEA DE PUNTOS</text>
+    <text class="chico" x="${cm(J.w - J.margen)}" y="${cm(1.1)}" text-anchor="end">ANGELY &amp; KEVIN · AGRADECIMIENTO · 6 × 15 cm · HOJA ${hoja} DE ${total}</text>
+    <text class="chico" x="${cm(J.margen)}" y="${cm(1.7)}">EL ROMANO ES LA MESA · UNA POR PUESTO, EN EL ORDEN DE LA HOJA «REPARTO»</text>
+    ${tarjetas.map(t => t.marca).join('')}
+  </svg>
 </div></body></html>`
 }
 
@@ -1156,16 +1171,16 @@ ${canciones.map((c, i) =>
       .sort((a, b) => a.mesa - b.mesa || a.nombre.localeCompare(b.nombre, 'es'))
 
     await mkdir(join(SALIDA, 'agradecimiento'), { recursive: true })
-    for (const J of Object.values(PLIEGOS_GRACIAS)) {
-      await page.setViewport({ width: Math.ceil(cm(J.w)) + 80, height: 1400, deviceScaleFactor: 2 })
-      const porHoja = J.cols * J.filas
-      const hojas = Math.ceil(gracias.length / porHoja)
-      for (let h = 0; h < hojas; h++) {
-        const lote = gracias.slice(h * porHoja, (h + 1) * porHoja)
-        const nombre = `${J.archivo}-${String(h + 1).padStart(2, '0')}.png`
-        await captura(htmlAgradecimientos(lote, arte, h + 1, hojas, J), join(SALIDA, 'agradecimiento', nombre))
-        console.log(`  ✓ agradecimiento/${nombre}`.padEnd(40), `${lote.length} sobre(s)`)
-      }
+    // Mismo pliego que los banderines: 6 × 15 cm, ocho por tabloide vertical
+    const JG = PLIEGOS_BAN.tabloide
+    await page.setViewport({ width: Math.ceil(cm(JG.w)) + 80, height: 1400, deviceScaleFactor: 2 })
+    const porHojaG = JG.cols * JG.filas
+    const hojasG = Math.ceil(gracias.length / porHojaG)
+    for (let h = 0; h < hojasG; h++) {
+      const lote = gracias.slice(h * porHojaG, (h + 1) * porHojaG)
+      const nombre = `tabloide-${String(h + 1).padStart(2, '0')}.png`
+      await captura(htmlAgradecimientos(lote, arte, h + 1, hojasG, JG), join(SALIDA, 'agradecimiento', nombre))
+      console.log(`  ✓ agradecimiento/${nombre}`.padEnd(40), `${lote.length} tarjeta(s)`)
     }
     await page.setViewport({ width: 1600, height: 1200, deviceScaleFactor: 2 })
 
@@ -1220,9 +1235,11 @@ Generado el ${cuando}
   agradecimiento/reparto.txt casilla para ir marcando. El número es el orden en
                              que salen del pliego, así que si se cortan sin
                              desordenarlas la pila se reparte de corrido.
-  agradecimiento/a4-NN.png   Una tarjeta de agradecimiento POR PUESTO —82 en
-  agradecimiento/tabloide-NN.png  total—, cuadrada de 6,5 × 6,5 cm, con el
-                             romano de su mesa y el nombre de quien se sienta.
+  agradecimiento/tabloide-NN.png  Una tarjeta de agradecimiento POR PUESTO —82
+                             en total—, de 6 × 15 cm, ocho por pliego tabloide:
+                             LA MISMA MEDIDA Y EL MISMO PLIEGO QUE EL BANDERÍN.
+                             Cada una lleva el romano de su mesa y el nombre de
+                             quien se sienta ahí.
                              También en dos pliegos: DOCE por A4 (cinco hojas) o
                              VEINTICUATRO por tabloide (tres hojas). Se cortan por la línea de
                              puntos. Van ordenadas por mesa, que es como se

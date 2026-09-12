@@ -728,13 +728,19 @@ día hace falta A4, es añadir una entrada a `PLIEGOS_BAN`.
 silla, así que hacen falta tantas como personas sentadas. Sin la mesa de los
 novios, que no se imprime, son 82 de las 84 sentadas.
 
-Cuadrada de **6,5 × 6,5 cm**, en dos pliegos (`PLIEGOS_GRACIAS`): **doce por A4**
-(siete hojas) o **veinticuatro por tabloide** (cuatro).
+**Misma medida y mismo pliego que el banderín: 6 × 15 cm, ocho por tabloide
+vertical** (once hojas). Así las dos piezas van a la misma imprenta, en el mismo
+papel y con el mismo corte; y de paso la tarjeta deja de ser un cuadrado y pasa a
+ser una tira que se apoya de pie contra la copa o se acuesta sobre el plato.
 
-- Cada tarjeta lleva al pie **el romano de su mesa y el nombre pequeño** de quien
-  se sienta ahí: el romano se ve de lejos al repartirlas y no se confunde con el
-  número de mesa impreso en ningún otro sitio; el nombre es lo que se busca en el
-  puesto. `romano()` convierte «Mesa 7» en «VII».
+- Cada tarjeta lleva **al pie** el romano de su mesa —grande, 34 px— y el nombre
+  pequeño de quien se sienta ahí: el romano se ve de lejos al repartirlas y el
+  nombre es lo que se busca en el puesto. Va al pie porque es la parte que queda
+  a la vista si la tira se apoya contra la copa. `romano()` convierte «Mesa 7»
+  en «VII».
+- El contenido se reparte en **tres bloques a lo alto** —escudo arriba, mensaje
+  en el medio, ubicación al pie—: apilados de corrido dejaban 6 cm de tira vacía
+  debajo de la firma.
 - Sobre **marfil y no sobre el terracota del banderín**: el banderín es fiesta y
   esto se lee despacio, al final de la noche. Y 82 tarjetas a sangre en terracota
   son una barbaridad de tinta.
