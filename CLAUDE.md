@@ -850,7 +850,10 @@ A4 **horizontales**, más las mismas en PNG.
 
 > **Las once suenan TODAS EN EL MISMO MOMENTO**: en la entrega de las botellas a
 > los capitanes, a las **9:10 p. m.**, una detrás de otra y en desorden, con el
-> novio dirigiendo. Hasta el 12·IX·2026 el código las repartía por la noche a
+> novio dirigiendo. Y **no completas**: sólo el pedazo clave de cada una, máximo
+> minuto y medio. Por eso las once caben en la ventana que les da el cronograma
+> —son unos quince minutos, no cuarenta— y por eso el dato va escrito en las
+> tres salidas: sin él, el DJ programa once pistas enteras y se le va una hora. Hasta el 12·IX·2026 el código las repartía por la noche a
 > intervalos con una hora sugerida para cada una — era una suposición mía, y la
 > dinámica real la decidieron los novios con el DJ. **Se quitó la columna de
 > horas entera** en vez de dejarla «por si acaso»: una hora escrita en una hoja

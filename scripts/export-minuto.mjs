@@ -154,10 +154,11 @@ function hojaDJ(mesas, arte) {
 
     <div class="lado">
       <div class="bloque">
-        <h3>Las once de las mesas &mdash; suenan en la entrega de botellas, 9:10</h3>
+        <h3>Las once de las mesas &mdash; 9:10, en la entrega de botellas &mdash; máx. 1:30 cada una</h3>
         <ol class="once">${once}</ol>
-        <p class="pie2"><b>En desorden y una detrás de otra</b>, sin dejar caer la pista.
-        La dinámica la dirige <b>el novio</b>: él marca cuándo cambias. Cuando suena la suya,
+        <p class="pie2"><b>NO COMPLETAS: el pedazo clave de cada una, máximo minuto y medio.</b>
+        En desorden, una detrás de otra y sin dejar caer la pista &mdash; las once se van en unos
+        quince minutos. La dirige <b>el novio</b>: él marca cuándo cortas. Cuando suena la suya,
         esa mesa se levanta con su botella.</p>
       </div>
       <div class="bloque no">
@@ -360,7 +361,7 @@ ${hojaDJ(mesas, arte)}
   <div class="top">
     ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
     <h1>Las canciones de las mesas<span>LAS ELIGIERON LOS INVITADOS · EL DJ LAS TIENE QUE TENER CARGADAS ANTES DE LAS 9:10 P. M.</span></h1>
-    <div class="der"><div><b>${mesas.length}</b> pistas</div><div>Se ponen <b>en desorden</b></div></div>
+    <div class="der"><div><b>${mesas.length}</b> pistas &middot; en <b>desorden</b></div><div>Un pedazo de cada una, <b>máx. 1:30</b></div></div>
   </div>
 
   <div class="mesas">${mesasHtml}</div>
@@ -369,7 +370,8 @@ ${hojaDJ(mesas, arte)}
     <div class="caja">
       <h3>Cómo funciona la dinámica</h3>
       <p>A las <b>9:10 p. m.</b> se entregan las botellas a los once capitanes. La dinámica <b>la dirige el novio</b>.</p>
-      <p>Desde ahí y durante toda la noche el DJ va soltando estas once pistas <b>en desorden y repartidas</b>, no seguidas. Cuando suena la suya, <b>esa mesa es la que responde</b> y su capitán la levanta.</p>
+      <p><b>No se pone la canción completa:</b> sólo el pedazo clave de cada una, <b>máximo minuto y medio</b>. Van una detrás de otra y en desorden, sin dejar caer la pista: las once se van en unos quince minutos. El novio marca cuándo se corta.</p>
+      <p>Cuando suena la suya, <b>esa mesa es la que responde</b> y su capitán la levanta con su botella.</p>
       <p>El romano grande es el número de la mesa: es el mismo que va impreso en la tarjeta de cada puesto y en el banderín del capitán.</p>
     </div>
     <div class="caja">

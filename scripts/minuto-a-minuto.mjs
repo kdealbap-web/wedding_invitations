@@ -98,7 +98,7 @@ export const PROGRAMA = [
       { momento: 'Entrega de capitanes', cancion: 'Stereo Love', artista: 'original mix', quien: DJ,
         nota: 'Entra mientras se reparten las once botellas con su cinta.' },
       { momento: 'LAS ONCE CANCIONES DE LAS MESAS', cancion: 'Ver la última hoja', quien: DJ,
-        nota: 'AQUÍ VAN. Una detrás de otra y EN DESORDEN, sin dejar caer la pista. La dinámica la dirige el novio: él marca cuándo cambias. Cuando suena la suya, esa mesa es la que responde y su capitán la levanta con la botella.' },
+        nota: 'AQUÍ VAN, y NO COMPLETAS: sólo el pedazo clave de cada una, MÁXIMO MINUTO Y MEDIO. Una detrás de otra y en desorden, sin dejar caer la pista. Las once se van en unos quince minutos. La dinámica la dirige el novio: él marca cuándo cortas. Cuando suena la suya, esa mesa responde y su capitán la levanta con la botella.' },
     ] },
   { ini: '9:20 p. m.', fin: '9:30 p. m.', dur: '0:10', bloque: 'recepcion',
     que: 'Fotos con los invitados en la pista. Pasan al buffet.',

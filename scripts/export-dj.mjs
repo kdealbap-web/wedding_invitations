@@ -82,7 +82,10 @@ const nombreCorto = n => {
 // ─── Cuándo suenan las canciones de las mesas ───
 //
 // TODAS EN EL MISMO MOMENTO: en la entrega de las botellas a los capitanes, a
-// las 9:10 p. m. Una detrás de otra y en desorden, con el novio dirigiendo.
+// las 9:10 p. m. Una detrás de otra y en desorden, con el novio dirigiendo, y
+// NO COMPLETAS: un pedazo de máximo minuto y medio de cada una. Por eso las once
+// caben en los diez minutos que les da el cronograma más lo que se estire: son
+// unos quince, no cuarenta.
 //
 // Hasta el 12·IX·2026 este módulo las repartía por la noche a intervalos, con
 // una hora sugerida para cada una. Era una suposición mía; la dinámica real es
@@ -304,7 +307,7 @@ function construir(mesas) {
 
   const notas = [
     `TODAS SUENAN EN EL MISMO MOMENTO: ${MOMENTO_MESAS}.`,
-    'UNA DETRÁS DE OTRA Y EN DESORDEN, sin dejar caer la pista. La dinámica la dirige el novio: él marca cuándo se cambia.',
+    'NO SE PONE LA CANCIÓN COMPLETA: sólo el pedazo clave de cada una, MÁXIMO MINUTO Y MEDIO. Una detrás de otra y en desorden, sin dejar caer la pista: las once se van en unos quince minutos. El novio marca cuándo se corta.',
     'Cuando suena la suya, esa mesa es la que responde y su capitán la levanta con su botella.',
     'Estas once son las únicas canciones que NO se cambian: las eligieron los invitados y su capitán ya lo sabe.',
   ]
@@ -355,7 +358,7 @@ function construir(mesas) {
   const reglas = [
     'CÓMO SE USA — se escribe en la hoja «Playlist», columna «Canción definitiva». Lo que está en «Canción propuesta» no se borra: es el respaldo si al final nadie la cambia.',
     'LA COLUMNA QUE MANDA es «LA QUE SUENA». Es una fórmula: coge la definitiva si la hay y la propuesta si no. Es la que se lleva a la cabina.',
-    'LAS ONCE DE LAS MESAS NO SE TOCAN, y suenan TODAS SEGUIDAS Y EN DESORDEN en la entrega de botellas a los capitanes, a las 9:10 p. m. Están en la hoja «Mesas» y otra vez dentro de la Playlist, en ese momento.',
+    'LAS ONCE DE LAS MESAS NO SE CAMBIAN, y suenan TODAS SEGUIDAS Y EN DESORDEN en la entrega de botellas a los capitanes, a las 9:10 p. m. No completas: un pedazo de máximo minuto y medio de cada una. Están en la hoja «Mesas» y otra vez dentro de la Playlist, en ese momento.',
     'LAS PROPUESTAS SON UNA PROPUESTA, no el repertorio. El DJ conoce su pista y los novios su gusto. Lo que sí está cerrado es el ORDEN de los momentos y qué viene después de qué.',
     'SI UNA CANCIÓN SALE DOS VECES la columna «Ojo» de la Playlist la marca sola y la nota lo dice. Hoy hay tres cruces: «All of Me» está propuesta en el cóctel y en el primer baile, y dos mesas eligieron la del arranque y la del cierre. Se cambia la del GUION, nunca la de la mesa.',
     'LA COLUMNA «MICRO» de «Minuto a minuto» marca los momentos en los que hace falta un micrófono en la mano. Son los que se olvidan.',
