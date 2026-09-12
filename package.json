@@ -21,6 +21,7 @@
     "mesas-img": "node scripts/export-mesas-img.mjs",
     "dj": "node scripts/export-dj.mjs",
     "ceremonia": "node scripts/export-ceremonia.mjs",
+    "minuto": "node scripts/export-minuto.mjs",
     "export-todo": "npm run export && npm run mesas-img && npm run dj"
   },
   "dependencies": {

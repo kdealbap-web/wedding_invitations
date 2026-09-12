@@ -30,6 +30,7 @@ npm run export           # invitados + cupos + mesas a Excel con fórmulas vivas
 npm run export -- --demo # el mismo Excel con datos de ejemplo, sin tocar la base
 npm run mesas-img        # plano del salón + una hoja por mesa, en PNG
 npm run dj               # la playlist del DJ en Excel, con fórmulas vivas
+npm run minuto           # el minuto a minuto con la música dentro, en PDF
 npm run export-todo      # el Excel, las imágenes y la playlist de una vez
 ```
 
@@ -801,28 +802,50 @@ imprimen una sola vez y para una sola persona — `htmlHojaMixta()`.
 > Hasta esta hoja ninguna pieza usaba cursiva y la fuente se pedía sin él; sin
 > eso el navegador inclina la redonda por software y los votos salen sintéticos.
 
-#### El guion musical del DJ
+#### El minuto a minuto y la música — una sola fuente
 
-`dj/guion-musical-N.png` — **el minuto a minuto**: veinte momentos desde la
-ceremonia hasta la última canción, cada uno con hora orientativa, **qué pasa**,
-**qué necesita el DJ ahí** —micrófono, bajar volumen, avisar con dos minutos— y
-una propuesta de canción con renglón punteado para escribir el cambio. Al final
-de la última hoja, las once canciones de las mesas numeradas.
+**`scripts/minuto-a-minuto.mjs` es la única fuente de verdad de la noche.** Trae
+el cronograma de la wedding planner (`Minuto a minuto 12 septiembre.xlsx`)
+**copiado tal cual** —sus horas, sus tiempos, sus comentarios— y, dentro de cada
+línea, la música que cerraron los novios con el DJ.
 
-Son dos hojas A4: `POR_HOJA_GUION` es 14, que es lo que llena una hoja sin
-apretar. Las horas salen del programa —ceremonia 6:30, recepción 8:30— y son
-orientativas: lo que importa es el ORDEN y qué viene después de qué.
+> **El cronograma no se corrige ni se reordena.** Ese papel ya está en manos del
+> salón, del catering y de protocolo: dos versiones distintas del mismo
+> cronograma el día de la boda es peor que cualquier error que pueda tener. Lo
+> que sí se hace es **señalarlo**: las dos picadas se cruzan en el tiempo y van
+> marcadas en rojo con una nota al pie.
 
-> **Las canciones de los momentos son una propuesta mía, no el repertorio.** Van
-> impresas marcadas como tal: el DJ conoce su pista y los novios su gusto. Lo que
-> sí está cerrado es el orden de los momentos y las canciones de las mesas, que
-> las eligieron los invitados. Viven en `GUION`, arriba de `htmlGuion()`, porque
-> son criterio y no dato: si cambian una, se cambia esa lista y se regenera.
+Lo único que añade el módulo es el dato que no estaba en ninguno de los dos
+papeles: **en qué línea del cronograma suena cada canción**. `musica: []` no es
+un olvido, es una línea sin canción marcada, y se imprime vacía a propósito para
+que se vea que se miró.
 
-`dj/canciones-por-mesa.png` sigue existiendo aparte, para la cabina: sólo las
-once, en cuerpo grande y sin nada más.
+> **Hasta el 11·IX·2026 aquí vivía un guion PROPUESTO por mí**, con la ceremonia
+> a las 6:30 y canciones sugeridas. El 12 llegó la lista de verdad y el
+> cronograma de la wedding, y esa propuesta pasó a ser un segundo papel que decía
+> cosas distintas sobre la misma noche. Se borró entera. `guion-dj.mjs` ya no
+> tiene datos propios: deriva de `PROGRAMA` y nada más.
 
-#### La playlist del DJ, en Excel
+`npm run minuto` → **`entrega/dj/minuto-a-minuto-y-canciones.pdf`**, tres hojas
+A4 **horizontales**, más las mismas en PNG.
+
+- **Horizontal y no vertical**: en vertical la columna de música salía de tres
+  palabras por renglón y había que leerla en diagonal.
+- **La música es una columna de la tabla**, no un anexo al final. Un anexo obliga
+  a cruzar dos papeles a la una de la mañana.
+- El rótulo del momento y **quién pone la canción van en la misma línea**, uno a
+  cada lado: en renglones separados eran dos líneas por canción, y con dieciséis
+  canciones eso es media hoja de más. Igual el bloque de la hora, que pasó de
+  tres renglones a dos —la de inicio grande y el fin con la duración detrás—:
+  era lo que marcaba el alto de casi todas las filas.
+- `thead{display:table-header-group}` es lo que hace que la cabecera se repita
+  sola en la segunda hoja, y `tr{break-inside:avoid}` que ninguna fila se parta
+  por la mitad al saltar de página.
+- **Tercera hoja: las once canciones de las mesas**, que se traen de la base. El
+  DJ las tiene que tener cargadas **antes de las 9:10 p. m.**, que es cuando se
+  entregan las botellas y arranca la dinámica.
+
+#### La playlist del DJ, en Excel#### La playlist del DJ, en Excel
 
 `npm run dj` → `entrega/dj/playlist-DJ.xlsx` — `scripts/export-dj.mjs`. Cuatro
 hojas: **Playlist** (una fila por canción), **Minuto a minuto**, **Mesas** y
@@ -840,7 +863,14 @@ de invitados: se toca una celda y los conteos se rehacen solos.
   algo**, que es lo que hace que se use en vez de abandonarse.
 - **El momento de las canciones de las mesas se abre en once filas** dentro de
   la Playlist, con su hora repartida —no la del momento—: van sueltas por la
-  noche y no seguidas. Son las únicas que no se cambian, y van marcadas.
+  noche y no seguidas. Son las únicas que no se cambian, y van marcadas. Se
+  reconoce **por la pista que lleva dentro**, no por cómo se llame la línea del
+  cronograma (que es «Música y pista abierta»).
+- **El reparto sugerido va de 10:20 a 12:00, una cada diez minutos.** La dinámica
+  empieza a las 9:10 con las botellas, pero entre las 9:20 y las 10:20 el
+  cronograma manda fotos, cena y el ramo: ahí la gente está sentada y una canción
+  de mesa no levanta a nadie. La ventana de verdad del DJ son esos cien minutos,
+  y se acaba cuando entra la papayera.
 - **Detecta canciones repetidas de dos maneras.** En JavaScript, comparando sin
   tildes, sin signos y en minúscula (`claveCancion()`), porque «L'AMOUR
   TOUJOURS - GIGI D'AGOSTINO» y «L'Amour Toujours · Gigi D'Agostino» son la
@@ -861,11 +891,14 @@ de invitados: se toca una celda y los conteos se rehacen solos.
   en lo que se le pide al DJ. Es una columna para no leerse veinte frases
   buscando dónde hace falta un micrófono en la mano, que es lo que se olvida.
 
-> El guion vive en **`scripts/guion-dj.mjs`**, no dentro de un generador: lo usan
-> el Excel y las hojas impresas. `minutosDe()` pone las horas en la misma recta
-> —de 6 a 11 se les suman 12 horas, las 12 son las 24 y de 1 a 5 ya es de
-> madrugada—, porque si no «1:00» vendría antes que «12:45» y todos los bloques
-> saldrían en negativo a partir de la medianoche.
+> **`scripts/guion-dj.mjs` no tiene datos propios**: mastica `PROGRAMA` para las
+> dos salidas que lo consumen —el Excel y las hojas A4 de la cabina—. Los
+> preparativos de la mañana se filtran: son del cronograma de la wedding, no del
+> guion del DJ. `minutosDe()` lee el «a. m. / p. m.» de la wedding y pone la
+> madrugada detrás de la noche anterior, porque si no «1:00 a. m.» vendría antes
+> que «12:45 a. m.». La duración de cada bloque sale del **fin** que escribió
+> ella y no de la hora del siguiente: hay dos líneas suyas que se solapan y
+> restando contra la siguiente salían en negativo.
 
 ### La entrada a la iglesia
 

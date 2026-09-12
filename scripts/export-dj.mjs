@@ -81,17 +81,18 @@ const nombreCorto = n => {
 
 // ─── Cuándo suena cada canción de mesa ───
 //
-// El guion dice «repartidas, no seguidas»: una cada quince o veinte minutos,
-// entre lo demás. Once mesas de a quince minutos desde que se abre la pista
-// —10:55— terminan a la 1:25, cinco minutos antes del CIERRE, que es la única
-// canción de la noche que tiene que sonar sí o sí a su hora.
+// La lista que cerraron los novios con el DJ dice: tener las once pistas listas
+// y ponerlas EN DESORDEN. Así que la hora de aquí es una SUGERENCIA de reparto y
+// no un orden: sirve para ver que no se amontonan y que ninguna cae donde la
+// pista deja de ser del DJ. Por eso al lado va la columna «Hora real», vacía.
 //
-// Es una SUGERENCIA y la hoja lo dice: a las 11:15 entra la hora loca y a las
-// 12:45 el ramo y la liga, así que las que caigan ahí hay que correrlas. Un
-// reparto perfecto no se puede calcular —depende de cómo esté la pista esa
-// noche—, y por eso la hoja trae también una columna «Hora real» en blanco.
-const ARRANQUE_MESAS = 22 * 60 + 55
-const CADA = 15
+// La dinámica empieza a las 9:10 con las botellas, pero entre las 9:20 y las
+// 10:20 el cronograma manda fotos, cena y el ramo: ahí la gente está sentada y
+// una canción de mesa no levanta a nadie. La ventana de verdad del DJ empieza a
+// las 10:20 —«música y pista abierta»— y se acaba a las 12:00, cuando entra la
+// papayera. Once pistas en esos cien minutos son una cada diez.
+const ARRANQUE_MESAS = 22 * 60 + 20
+const CADA = 10
 const reloj = min => {
   const h = Math.floor(min / 60) % 24, m = min % 60
   const h12 = h % 12 === 0 ? 12 : h % 12
@@ -150,8 +151,9 @@ function construir(mesas) {
   const pl = wb.addWorksheet('Playlist', { views: [{ state: 'frozen', ySplit: 1 }] })
   // Cuántas filas va a tener: las canciones de cada momento, la de las mesas
   // abierta en once, y una fila en blanco por momento para añadir.
-  const ultimaFila = 1 + ms.reduce((a, m) =>
-    a + (/CANCIONES DE LAS MESAS/i.test(m.momento) ? mesas.length : m.canciones.length) + 1, 0)
+  const ultimaFila = 1 + ms.reduce((a, m) => a + 1 +
+    ((m.pistas || []).some(x => /CANCIONES DE LAS MESAS/i.test(x.momento))
+      ? mesas.length : m.canciones.length), 0)
   pl.addRow(['#', 'Hora', 'Momento', 'Orden', 'Canción propuesta', 'Canción definitiva',
     'LA QUE SUENA', 'Artista', 'Duración (min)', 'Enlace o nota', '✔', 'Ojo'])
   cabecera(pl.getRow(1))
@@ -165,14 +167,22 @@ function construir(mesas) {
     // eligieron los invitados y son las únicas que no se pueden cambiar. Aquí
     // dentro llevan su hora repartida, no la del momento, porque van sueltas a
     // lo largo de la noche y no seguidas.
-    const lista = /CANCIONES DE LAS MESAS/i.test(m.momento)
+    // El cronograma llama a esa línea «Música y pista abierta»; lo que la
+    // identifica es la pista que lleva dentro, no cómo se llame la línea.
+    const lista = (m.pistas || []).some(x => /CANCIONES DE LAS MESAS/i.test(x.momento))
       ? mesas.map((t, i) => ({
           cancion: t.cancion,
           hora: reloj(ARRANQUE_MESAS + i * CADA),
           nota: `${t.nombre} · capitán ${t.capitan || '—'} · ${t.personas} personas`,
           fija: true,
         }))
-      : m.canciones.map(c => ({ cancion: c, hora: m.hora, nota: '' }))
+      : (m.pistas || []).map(x => ({
+          cancion: `${x.cancion}${x.artista ? ` · ${x.artista}` : ''}`,
+          hora: m.hora,
+          // Quién la pone va delante de la nota: en la iglesia toca el violín y
+          // en el salón el DJ, y confundirlos es el error caro de la noche.
+          nota: [x.quien, x.nota].filter(Boolean).join(' — '),
+        }))
 
     lista.forEach((c, i) => entradas.push({ m, orden: i + 1, ...c }))
     // La fila para añadir. Si el momento no lleva música es la única que sale.
@@ -301,7 +311,7 @@ function construir(mesas) {
     const dentro = momentoEn(min)
     // La hora loca y el ramo se comen la pista: una canción de mesa ahí no la
     // oye nadie. El cierre tiene dueño.
-    const estorba = dentro && /HORA LOCA|RAMO|CIERRE/i.test(dentro.momento)
+    const estorba = dentro && /papayera|ramo|liga|despedida|cierre/i.test(dentro.momento)
     me.addRow([t.nombre, t.romano, t.cancion || 'SIN CANCIÓN ANOTADA', t.capitan || '',
       t.personas, reloj(min), dentro ? dentro.momento : '', '', ''])
     const fila = me.getRow(f)
@@ -316,7 +326,7 @@ function construir(mesas) {
 
   const notas = [
     'REPARTIDAS, NO SEGUIDAS: una cada quince minutos, entre lo demás. Cuando suena, esa mesa es la que responde y su capitán la levanta.',
-    'LAS AMARILLAS HAY QUE CORRERLAS: caen dentro de la hora loca o del ramo y la liga, que se comen la pista. Ahí una canción de mesa no la oye nadie.',
+    'LAS AMARILLAS HAY QUE CORRERLAS: caen en un momento en el que la pista no es del DJ —la hora loca, el ramo y la liga—. Ahí una canción de mesa no la oye nadie.',
     'La hora sugerida es eso, una sugerencia. Un reparto perfecto depende de cómo esté la pista esa noche, y por eso está la columna «Hora real» en blanco.',
     'Estas once son las únicas canciones que NO se cambian: las eligieron los invitados y su capitán ya lo sabe.',
   ]
@@ -344,7 +354,7 @@ function construir(mesas) {
     ['Cambiadas por el DJ', { formula: `SUMPRODUCT(--(Playlist!$F$2:$F$${ultPl}<>""))` },
       'Las que alguien escribió en «Canción definitiva». El resto van con la propuesta.'],
     ['Momentos sin una sola canción', { formula: `COUNTIF(${MM}!$J$2:$J$${ultMm},0)` },
-      'Salen en rojo en «Minuto a minuto». Tres son a propósito: las fotos del atrio, las palabras de bienvenida y el aviso de pista. La ceremonia sí lleva música —el violín—, aunque no la ponga el DJ.'],
+      'Salen en rojo en «Minuto a minuto». Son momentos del cronograma de la wedding sin canción marcada: el brindis, la cena, las fotos en la pista, el snack y las picadas.'],
     ['Mesas con canción', { formula: `SUMPRODUCT(--(Mesas!$C$2:$C$${mesas.length + 1}<>"SIN CANCIÓN ANOTADA"))` },
       `De ${mesas.length}. Las eligieron los invitados y no se cambian.`],
     ['Canciones repetidas', { formula: `SUMPRODUCT(--(Playlist!$L$2:$L$${ultPl}<>""))` },
