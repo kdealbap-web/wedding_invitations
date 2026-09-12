@@ -22,6 +22,7 @@ npm run optimize-images  # recomprime src/assets/img/*.jpg (respalda en _origina
 npm run optimize-images -- --desde=src/imagenes_editadas   # ingiere fotos de fuera
 npm run favicons         # regenera public/favicon* desde el logo de la boda
 npm run logo             # el logo a 1000/2000/4000 px + un .svg, para impresores
+npm run votos            # los votos en A4 + la tarjeta de las flores, para imprimir
 
 npm run usb              # arma entrega/USB_BODA_AyK/ para el proveedor de las LED
 npm run export           # invitados + cupos + mesas a Excel con fórmulas vivas
@@ -757,6 +758,46 @@ ser una tira que se apoya de pie contra la copa o se acuesta sobre el plato.
 
 > El texto de agradecimiento lo escribí yo: es lo único de estas piezas que no
 > salió de los novios. Está en `TEXTO_GRACIAS`.
+
+#### La última hoja del pliego es mixta
+
+Ochenta y dos tarjetas de a ocho dejan **dos en la última hoja y seis casillas en
+blanco**: media hoja tabloide que se paga igual. Ahí van las dos piezas que se
+imprimen una sola vez y para una sola persona — `htmlHojaMixta()`.
+
+- **La tarjeta de las flores, de canto.** Apaisada mide 14,8 de ancho y en el
+  hueco de arriba caben 12,85; girada un cuarto de vuelta son 10,5 × 14,8 y entra
+  con sitio de sobra. Se recorta y se saca del pliego, así que cómo esté puesta
+  en la hoja da igual. El giro es `rotate(-90deg)` con el origen en la esquina,
+  que manda la pieza **hacia arriba**: por eso el `top` que se escribe es el de
+  la caja final **más el ancho** de la tarjeta sin girar.
+- **Los votos enteros abajo**, en una sola pieza de 26,5 × 22,9 cm **a cuatro
+  columnas**. Cuatro y no tres para que el doblez del medio caiga en una calle y
+  no encima de un renglón. Se dobla en cruz por las cuatro marquitas de los
+  bordes y queda de 13,2 × 11,4 cm, que es lo que entra en el bolsillo.
+- **El cuerpo es 22 px ≈ 10,5 pt, y es el tope**: a 23 el texto se sale 373 px.
+  En el hueco caben ~505 cm² de texto contra los ~1000 de las dos hojas A4 de
+  `npm run votos`, así que la letra baja de 13,3 pt a 10,5. **No se recorta ni
+  una palabra**: ésta es la copia de bolsillo y la A4 es la de leer de pie.
+- La hoja lleva **su propio guardia de desborde**, porque las dos cajas tienen
+  alto fijo y lo que no cabe no se ve en el PNG. La tarjeta de flores va girada,
+  así que su rectángulo en pantalla ya no coincide con sus bordes: se mide por
+  `offsetTop + offsetHeight` contra el alto de la caja, no por `getBoundingClientRect`.
+- **Cuándo se usa**: si en la última hoja sobran **dos tarjetas o menos**, esa
+  hoja se convierte en la mixta. Si sobran más, la hoja se queda normal y la
+  mixta se añade detrás. En las dos ramas el orden de reparto no se toca: las
+  últimas tarjetas siguen en las casillas 1 y 2, que es por donde se lee el pliego.
+
+> **El texto vive en `scripts/votos-texto.mjs`, no en el generador.** Lo usan dos
+> —`export-votos` lo maqueta en A4 y `export-mesas-img` lo vuelve a maquetar
+> apretado en el hueco—, y la maqueta de la tarjeta de flores también se comparte
+> (`estiloFlores(sel, cm)` emite sus reglas con el selector del contenedor por
+> delante, para montarla en cualquier caja). Duplicarlo era garantizar que un día
+> se corrigiera una coma en uno y no en el otro.
+
+> **`FUENTES` en `export-mesas-img.mjs` pide ahora el eje `ital` de Cormorant.**
+> Hasta esta hoja ninguna pieza usaba cursiva y la fuente se pedía sin él; sin
+> eso el navegador inclina la redonda por software y los votos salen sintéticos.
 
 #### El guion musical del DJ
 

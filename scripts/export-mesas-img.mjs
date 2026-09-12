@@ -26,6 +26,7 @@ import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { nombreIncompleto } from '../src/admin/nombres.js'
+import { VOTOS, FLORES, estiloFlores, cuerpoFlores, bloqueVoto } from './votos-texto.mjs'
 
 const SALIDA = resolve('entrega/mesas')
 // El escudo y las cuatro esquinas de acuarela, recortadas de la participación.
@@ -44,7 +45,7 @@ const CHROME = [
   'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
 ]
 
-const FUENTES = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Great+Vibes&family=Jost:wght@300;400;500&display=swap'
+const FUENTES = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500;1,600&family=Great+Vibes&family=Jost:wght@300;400;500&display=swap'
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 // La mesa de los novios no entra en NINGUNA imagen: en el afiche porque ellos
@@ -897,44 +898,46 @@ function htmlReparto(gracias, arte) {
 </div></body></html>`
 }
 
-function htmlAgradecimientos(lote, arte, hoja, total, J) {
+// Una tarjeta suelta, colocada en (x, y) del pliego. Está aparte porque la
+// dibujan dos hojas: el pliego normal de ocho y la hoja mixta del final.
+function piezaGracias(t, x, y, arte) {
   const G = GRACIAS
-
-  const tarjetas = lote.map((t, i) => {
-    const x = cm(J.margen + (i % J.cols) * (G.w + J.calle))
-    const y = cm(J.arriba + Math.floor(i / J.cols) * (G.h + J.calleV))
-    // El nombre baja de cuerpo cuando es largo: «Heider Joaquín Rivero Vasquez»
-    // y «Jorge Longa» no entran igual en 6 cm de ancho.
-    const cuerpo = t.nombre.length > 24 ? 8 : t.nombre.length > 17 ? 9 : 10
-    return {
-      html: `<div class="t" style="left:${x}px;top:${y}px;width:${cm(G.w)}px;height:${cm(G.h)}px">
-        <div class="marco"></div>
-        <div class="in">
-          <div class="arriba">
-            ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
-            <p class="g">GRACIAS</p>
-            <div class="rule"><i></i><b>&#9670;</b><i></i></div>
-          </div>
-          <div class="medio">
-            <p class="msg">${esc(TEXTO_GRACIAS.singular)}</p>
-            <p class="ayk">Angely &amp; Kevin</p>
-            <p class="fecha">12 · IX · 2026</p>
-          </div>
-          <div class="ubic">
-            <b>${esc(t.romano)}</b>
-            <span style="font-size:${cuerpo}px">${esc(t.nombre)}</span>
-            <u>${esc(t.tarjeta)}</u>
-          </div>
+  // El nombre baja de cuerpo cuando es largo: «Heider Joaquín Rivero Vasquez»
+  // y «Jorge Longa» no entran igual en 6 cm de ancho.
+  const cuerpo = t.nombre.length > 24 ? 8 : t.nombre.length > 17 ? 9 : 10
+  return {
+    html: `<div class="t" style="left:${x}px;top:${y}px;width:${cm(G.w)}px;height:${cm(G.h)}px">
+      <div class="marco"></div>
+      <div class="in">
+        <div class="arriba">
+          ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
+          <p class="g">GRACIAS</p>
+          <div class="rule"><i></i><b>&#9670;</b><i></i></div>
         </div>
-      </div>`,
-      marca: `<rect x="${x}" y="${y}" width="${cm(G.w)}" height="${cm(G.h)}" fill="none"
-                stroke="#C0B3A3" stroke-width="1" stroke-dasharray="7 6"/>`,
-    }
-  })
+        <div class="medio">
+          <p class="msg">${esc(TEXTO_GRACIAS.singular)}</p>
+          <p class="ayk">Angely &amp; Kevin</p>
+          <p class="fecha">12 · IX · 2026</p>
+        </div>
+        <div class="ubic">
+          <b>${esc(t.romano)}</b>
+          <span style="font-size:${cuerpo}px">${esc(t.nombre)}</span>
+          <u>${esc(t.tarjeta)}</u>
+        </div>
+      </div>
+    </div>`,
+    marca: `<rect x="${x}" y="${y}" width="${cm(G.w)}" height="${cm(G.h)}" fill="none"
+              stroke="#C0B3A3" stroke-width="1" stroke-dasharray="7 6"/>`,
+  }
+}
 
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
-  .hoja{width:${cm(J.w)}px;height:${cm(J.h)}px;background:#fff;position:relative}
+// Dónde cae la tarjeta número i del pliego, leyendo de izquierda a derecha
+const casilla = (J, i) => [
+  cm(J.margen + (i % J.cols) * (GRACIAS.w + J.calle)),
+  cm(J.arriba + Math.floor(i / J.cols) * (GRACIAS.h + J.calleV)),
+]
+
+const CSS_GRACIAS = `
   .t{position:absolute;background:#FBF5EA;overflow:hidden}
   /* Filete interior doble, el mismo marco de la participación */
   .marco{position:absolute;inset:${cm(0.34)}px;border:1px solid #E0CFAE;pointer-events:none}
@@ -974,6 +977,15 @@ function htmlAgradecimientos(lote, arte, hoja, total, J) {
   .marcas text{font-family:Jost,system-ui,sans-serif;fill:#8A7866}
   .marcas text.tit{font-size:13px;letter-spacing:.12em}
   .marcas text.chico{font-size:9px;letter-spacing:.08em;fill:#A2917F}
+`
+
+function htmlAgradecimientos(lote, arte, hoja, total, J) {
+  const tarjetas = lote.map((t, i) => piezaGracias(t, ...casilla(J, i), arte))
+
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
+  .hoja{width:${cm(J.w)}px;height:${cm(J.h)}px;background:#fff;position:relative}
+  ${CSS_GRACIAS}
 </style></head><body><div class="hoja">
   ${tarjetas.map(t => t.html).join('')}
   <svg class="marcas" viewBox="0 0 ${cm(J.w)} ${cm(J.h)}">
@@ -981,6 +993,123 @@ function htmlAgradecimientos(lote, arte, hoja, total, J) {
     <text class="chico" x="${cm(J.w - J.margen)}" y="${cm(1.1)}" text-anchor="end">ANGELY &amp; KEVIN · AGRADECIMIENTO · 6 × 15 cm · HOJA ${hoja} DE ${total}</text>
     <text class="chico" x="${cm(J.margen)}" y="${cm(1.7)}">EL ROMANO ES LA MESA · UNA POR PUESTO, EN EL ORDEN DE LA HOJA «REPARTO»</text>
     ${tarjetas.map(t => t.marca).join('')}
+  </svg>
+</div></body></html>`
+}
+
+// ─── La hoja mixta: lo que sobraba del último pliego ───
+//
+// Con 82 tarjetas de a ocho, la última hoja lleva DOS y deja seis huecos: media
+// hoja tabloide en blanco que se paga igual. Ahí caben, justas, las dos piezas
+// que se imprimen una sola vez y para una sola persona:
+//
+//   arriba   las dos tarjetas que sobran, en sus casillas de siempre, y la
+//            tarjeta de las flores GIRADA un cuarto de vuelta: apaisada mide
+//            14,8 de ancho y en el hueco caben 12,85, pero de canto son 10,5 y
+//            entra con sitio de sobra. Se recorta y se saca, así que da igual
+//            cómo esté puesta en el pliego.
+//   abajo    los votos enteros en UNA sola pieza de 26,5 × 22,9, a cuatro
+//            columnas, que se dobla en cruz y queda de 13,2 × 11,4 cm.
+//
+// Los votos van aquí MÁS APRETADOS que en las dos hojas A4 de `npm run votos`,
+// y es a propósito: en el hueco caben ~505 cm² de texto contra los ~1000 de las
+// dos A4, así que el cuerpo baja de 13,3 pt a 9,5. Ésta es la copia de bolsillo
+// —la que se lleva encima por si acaso—; la de leer de pie sigue siendo la A4.
+// No se recorta ni una palabra: lo que cambia es el tamaño, no el texto.
+const HOJA_MIXTA = {
+  flores: { x: 15.57, y: 3.3 },                  // girada ocupa 10,5 × 14,8
+  votos:  { x: 0.72, y: 19.5, w: 26.5, h: 22.9 },
+}
+
+function htmlHojaMixta(lote, arte, hoja, total, J) {
+  const M = HOJA_MIXTA, V = M.votos
+  const tarjetas = lote.map((t, i) => piezaGracias(t, ...casilla(J, i), arte))
+
+  // Girar −90° con el origen en la esquina manda la pieza HACIA ARRIBA: el
+  // borde de abajo queda donde estaba el de arriba. Por eso el `top` que se
+  // escribe es el de la caja final más el ancho de la tarjeta sin girar.
+  const fx = cm(M.flores.x), fy = cm(M.flores.y)
+  const anchoF = cm(FLORES.w), altoF = cm(FLORES.h)
+
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
+  .hoja{width:${cm(J.w)}px;height:${cm(J.h)}px;background:#fff;position:relative}
+  ${CSS_GRACIAS}
+
+  ${estiloFlores('.fl', cm)}
+  .fl{position:absolute;transform:rotate(-90deg);transform-origin:0 0}
+
+  /* Los votos: misma pieza que la A4 pero a cuatro columnas y un tercio más
+     chica. Cuatro y no tres para que el doblez del medio caiga en una calle y
+     no encima de un renglón. */
+  .vt{position:absolute;background:#FBF5EA;color:#221610;overflow:hidden;
+    padding:${cm(0.78)}px ${cm(0.9)}px ${cm(0.6)}px;display:flex;flex-direction:column}
+  .vt-marco{position:absolute;inset:${cm(0.4)}px;border:1px solid #E0CFAE;pointer-events:none}
+  .vt > *:not(.vt-marco):not(.dob){position:relative;z-index:1}
+
+  .vt .cab{display:flex;align-items:center;gap:${cm(0.38)}px;padding-bottom:${cm(0.2)}px;
+    border-bottom:1px solid #E6D8BE;margin-bottom:${cm(0.28)}px}
+  .vt .cab img{height:${cm(0.78)}px;width:auto}
+  .vt .cab p{font-size:9px;letter-spacing:.3em;color:#B08C4F}
+  .vt .cab span{margin-left:auto;font-size:9px;letter-spacing:.2em;color:#C0B3A3}
+
+  /* 22 px ≈ 10,5 pt: es el tope. A 23 el texto se sale 373 px por abajo,
+     y lo comprueba el guardia de desborde cada vez que se genera la hoja. */
+  .vt .txt{flex:1;min-height:0;column-count:4;column-gap:${cm(0.55)}px;column-fill:balance;
+    font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:400;
+    font-size:22px;line-height:1.42;text-align:left}
+  .vt .txt p{margin-bottom:${cm(0.2)}px}
+  .vt .saludo{font-style:normal;font-weight:600;font-size:26px;letter-spacing:.02em;
+    color:#9A5B45;margin-bottom:${cm(0.24)}px !important}
+  /* En redonda: los puntos de reenganche al levantar la vista */
+  .vt .fuerte{font-style:normal;font-weight:500;font-size:23px;color:#7E2E1B;
+    line-height:1.34;break-inside:avoid}
+  .vt .lista{list-style:none;font-style:normal;font-size:21px;line-height:1.3;
+    margin-bottom:${cm(0.2)}px}
+  .vt .lista li{padding-left:${cm(0.38)}px;position:relative;margin-bottom:${cm(0.12)}px;
+    break-inside:avoid}
+  .vt .lista li::before{content:'·';position:absolute;left:${cm(0.13)}px;color:#B08C4F;
+    font-size:21px;line-height:1.15}
+  .vt .cita{font-style:normal;font-size:23px;line-height:1.3;text-align:center;
+    color:#9A5B45;padding:${cm(0.14)}px 0;margin-bottom:${cm(0.2)}px !important;
+    break-inside:avoid}
+  .vt .firma{font-style:normal;text-align:center;font-size:24px;line-height:1.34;
+    color:#7E2E1B;margin-top:${cm(0.28)}px;break-inside:avoid}
+
+  /* Marcas de doblez, dentro de la pieza y pegadas al borde: son dos, en cruz */
+  .vt .dob{position:absolute;background:#D8C9AE;z-index:2}
+</style></head><body><div class="hoja">
+  ${tarjetas.map(t => t.html).join('')}
+
+  <div class="fl" style="left:${fx}px;top:${(fy + anchoF).toFixed(1)}px">${cuerpoFlores(esc)}</div>
+
+  <div class="vt" style="left:${cm(V.x)}px;top:${cm(V.y)}px;width:${cm(V.w)}px;height:${cm(V.h)}px">
+    <div class="vt-marco"></div>
+    <span class="dob" style="left:${cm(V.w / 2)}px;top:0;width:1px;height:${cm(0.35)}px"></span>
+    <span class="dob" style="left:${cm(V.w / 2)}px;bottom:0;width:1px;height:${cm(0.35)}px"></span>
+    <span class="dob" style="left:0;top:${cm(V.h / 2)}px;height:1px;width:${cm(0.35)}px"></span>
+    <span class="dob" style="right:0;top:${cm(V.h / 2)}px;height:1px;width:${cm(0.35)}px"></span>
+    <div class="cab">
+      ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
+      <p>MIS VOTOS · ANGELY &amp; KEVIN</p><span>12 · IX · 2026</span>
+    </div>
+    <div class="txt">${VOTOS.map(b => bloqueVoto(b, esc)).join('')}</div>
+  </div>
+
+  <svg class="marcas" viewBox="0 0 ${cm(J.w)} ${cm(J.h)}">
+    <text class="tit" x="${cm(J.margen)}" y="${cm(1.1)}">CORTAR POR LA LÍNEA DE PUNTOS</text>
+    <text class="chico" x="${cm(J.w - J.margen)}" y="${cm(1.1)}" text-anchor="end">ANGELY &amp; KEVIN · HOJA ${hoja} DE ${total} · LO QUE SOBRABA DEL PLIEGO</text>
+    <text class="chico" x="${cm(J.margen)}" y="${cm(1.7)}">ARRIBA LAS ÚLTIMAS TARJETAS Y LA DE LAS FLORES · ABAJO LOS VOTOS</text>
+
+    ${tarjetas.map(t => t.marca).join('')}
+
+    <rect x="${fx}" y="${fy}" width="${altoF}" height="${anchoF}" fill="none"
+          stroke="#C0B3A3" stroke-width="1" stroke-dasharray="7 6"/>
+    <text class="chico" x="${fx}" y="${cm(2.95)}">TARJETA DE LAS FLORES · 14,8 × 10,5 cm · IMPRESA DE CANTO</text>
+
+    <rect x="${cm(V.x)}" y="${cm(V.y)}" width="${cm(V.w)}" height="${cm(V.h)}" fill="none"
+          stroke="#C0B3A3" stroke-width="1" stroke-dasharray="7 6"/>
+    <text class="chico" x="${cm(V.x)}" y="${cm(19.15)}">LOS VOTOS · 26,5 × 22,9 cm · SE DOBLA EN CRUZ POR LAS MARQUITAS Y QUEDA DE 13,2 × 11,4 cm</text>
   </svg>
 </div></body></html>`
 }
@@ -1202,13 +1331,50 @@ ${canciones.map((c, i) =>
     const JG = PLIEGOS_BAN.tabloide
     await page.setViewport({ width: Math.ceil(cm(JG.w)) + 80, height: 1400, deviceScaleFactor: 2 })
     const porHojaG = JG.cols * JG.filas
-    const hojasG = Math.ceil(gracias.length / porHojaG)
-    for (let h = 0; h < hojasG; h++) {
+    // La última hoja casi nunca sale llena. Si lo que sobra cabe en las dos
+    // primeras casillas, esa hoja se convierte en la HOJA MIXTA y las otras seis
+    // casillas se llenan con los votos y la tarjeta de las flores. Si sobran
+    // más de dos, la hoja se queda normal y la mixta se añade detrás: en las dos
+    // ramas sale el mismo número de hojas que antes, o una más.
+    const resto = gracias.length % porHojaG
+    const enMixta = resto > 0 && resto <= JG.cols - 2 ? resto : 0
+    const normales = Math.ceil((gracias.length - enMixta) / porHojaG)
+    const hojasG = normales + 1
+    const nombreG = h => `tabloide-${String(h).padStart(2, '0')}.png`
+
+    for (let h = 0; h < normales; h++) {
       const lote = gracias.slice(h * porHojaG, (h + 1) * porHojaG)
-      const nombre = `tabloide-${String(h + 1).padStart(2, '0')}.png`
-      await captura(htmlAgradecimientos(lote, arte, h + 1, hojasG, JG), join(SALIDA, 'agradecimiento', nombre))
-      console.log(`  ✓ agradecimiento/${nombre}`.padEnd(40), `${lote.length} tarjeta(s)`)
+      await captura(htmlAgradecimientos(lote, arte, h + 1, hojasG, JG), join(SALIDA, 'agradecimiento', nombreG(h + 1)))
+      console.log(`  ✓ agradecimiento/${nombreG(h + 1)}`.padEnd(40), `${lote.length} tarjeta(s)`)
     }
+
+    // La hoja mixta va con su propio guardia de desborde: la caja de los votos
+    // tiene alto fijo, así que el texto que no cabe no se ve en el PNG. La
+    // tarjeta de las flores va girada y su rectángulo en pantalla ya no coincide
+    // con sus bordes, así que se mide por posiciones de caja y no por la vista.
+    const ultimas = gracias.slice(gracias.length - enMixta)
+    const htmlM = htmlHojaMixta(ultimas, arte, hojasG, hojasG, JG)
+    await page.setContent(htmlM, { waitUntil: 'load', timeout: 60000 })
+    await page.evaluate(() => document.fonts.ready)
+    const sobra = await page.evaluate(() => {
+      const desborde = el => Math.round(Math.max(0, el.scrollWidth - el.clientWidth,
+        el.scrollHeight - el.clientHeight))
+      const ficha = (caja, ultimo) => {
+        if (!caja) return 0
+        const pad = parseFloat(getComputedStyle(caja).paddingBottom) || 0
+        return Math.round(Math.max(desborde(caja.querySelector('.txt')),
+          ultimo.offsetTop + ultimo.offsetHeight - (caja.clientHeight - pad)))
+      }
+      return {
+        votos: ficha(document.querySelector('.vt'), document.querySelector('.vt .txt')),
+        flores: ficha(document.querySelector('.fl'), document.querySelector('.fl .firma')),
+      }
+    })
+    await (await page.$('.hoja')).screenshot({ path: join(SALIDA, 'agradecimiento', nombreG(hojasG)), type: 'png' })
+    console.log(`  ✓ agradecimiento/${nombreG(hojasG)}`.padEnd(40),
+      sobra.votos || sobra.flores
+        ? `⚠ SE DESBORDA — votos ${sobra.votos} px, flores ${sobra.flores} px`
+        : `${ultimas.length} tarjeta(s) + los votos + la de las flores`)
     await page.setViewport({ width: 1600, height: 1200, deviceScaleFactor: 2 })
 
     await captura(htmlReparto(gracias, arte), join(SALIDA, 'agradecimiento', 'reparto.png'))
@@ -1269,11 +1435,28 @@ Generado el ${cuando}
                              en total—, de 6 × 15 cm, ocho por pliego tabloide:
                              LA MISMA MEDIDA Y EL MISMO PLIEGO QUE EL BANDERÍN.
                              Cada una lleva el romano de su mesa y el nombre de
-                             quien se sienta ahí.
-                             También en dos pliegos: DOCE por A4 (cinco hojas) o
-                             VEINTICUATRO por tabloide (tres hojas). Se cortan por la línea de
+                             quien se sienta ahí. Se cortan por la línea de
                              puntos. Van ordenadas por mesa, que es como se
                              reparten: de a mesa.
+
+                             LA ÚLTIMA HOJA ES DISTINTA. Sobraban dos tarjetas
+                             y seis casillas en blanco —media hoja tabloide que
+                             se paga igual—, así que ahí van las dos piezas que
+                             se imprimen una sola vez:
+
+                               · LA TARJETA DE LAS FLORES, 14,8 × 10,5 cm,
+                                 impresa DE CANTO arriba a la derecha. Se
+                                 recorta y se gira; no está torcida, está
+                                 aprovechando el hueco.
+                               · LOS VOTOS enteros, 26,5 × 22,9 cm, abajo, a
+                                 cuatro columnas. Se dobla en cruz por las
+                                 cuatro marquitas doradas de los bordes y queda
+                                 de 13,2 × 11,4 cm: entra en el bolsillo.
+
+                             Los votos van aquí a 10,5 pt y en entrega/votos/
+                             van a 13,3 pt en dos hojas A4. MISMO TEXTO, sin
+                             quitar una palabra: ésta es la copia de bolsillo y
+                             aquélla es la de leer de pie en el altar.
   bienvenida-pendon-75x175.png
                              EL MISMO AFICHE EN PENDÓN: 75 × 175 cm exactos a
                              150 dpi (4430 × 10334 px), a dos columnas, con
