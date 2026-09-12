@@ -841,9 +841,22 @@ A4 **horizontales**, más las mismas en PNG.
 - `thead{display:table-header-group}` es lo que hace que la cabecera se repita
   sola en la segunda hoja, y `tr{break-inside:avoid}` que ninguna fila se parta
   por la mitad al saltar de página.
-- **Tercera hoja: las once canciones de las mesas**, que se traen de la base. El
-  DJ las tiene que tener cargadas **antes de las 9:10 p. m.**, que es cuando se
-  entregan las botellas y arranca la dinámica.
+- **Hoja 1: la hoja del DJ.** Una sola página con los doce momentos en los que
+  él hace algo, y nada más. El cronograma completo son veinticinco líneas y el
+  resto es catering, fotos y protocolo: en una cabina a oscuras, buscar tu línea
+  entre veinticinco es perderla. Sale de los mismos datos que el cronograma, así
+  que **no puede contradecirlo**: es un resumen, no una segunda versión.
+- **Última hoja: las once canciones de las mesas**, que se traen de la base.
+
+> **Las once suenan TODAS EN EL MISMO MOMENTO**: en la entrega de las botellas a
+> los capitanes, a las **9:10 p. m.**, una detrás de otra y en desorden, con el
+> novio dirigiendo. Hasta el 12·IX·2026 el código las repartía por la noche a
+> intervalos con una hora sugerida para cada una — era una suposición mía, y la
+> dinámica real la decidieron los novios con el DJ. **Se quitó la columna de
+> horas entera** en vez de dejarla «por si acaso»: una hora escrita en una hoja
+> que alguien lee en una cabina a oscuras se obedece, no se interpreta. Es el
+> único momento de la noche en el que el DJ tiene que hacer once cosas seguidas,
+> y por eso en su hoja va sobre el terracota de la boda y no en una línea más.
 
 #### La playlist del DJ, en Excel#### La playlist del DJ, en Excel
 
@@ -866,11 +879,9 @@ de invitados: se toca una celda y los conteos se rehacen solos.
   noche y no seguidas. Son las únicas que no se cambian, y van marcadas. Se
   reconoce **por la pista que lleva dentro**, no por cómo se llame la línea del
   cronograma (que es «Música y pista abierta»).
-- **El reparto sugerido va de 10:20 a 12:00, una cada diez minutos.** La dinámica
-  empieza a las 9:10 con las botellas, pero entre las 9:20 y las 10:20 el
-  cronograma manda fotos, cena y el ramo: ahí la gente está sentada y una canción
-  de mesa no levanta a nadie. La ventana de verdad del DJ son esos cien minutos,
-  y se acaba cuando entra la papayera.
+- La hoja **Mesas** no tiene columna de horas: las once suenan seguidas en la
+  entrega de botellas. El número de la primera columna es el orden en que salen
+  de la base —para ir marcando—, no el orden en que suenan.
 - **Detecta canciones repetidas de dos maneras.** En JavaScript, comparando sin
   tildes, sin signos y en minúscula (`claveCancion()`), porque «L'AMOUR
   TOUJOURS - GIGI D'AGOSTINO» y «L'Amour Toujours · Gigi D'Agostino» son la

@@ -94,6 +94,82 @@ function pista(m) {
   </div>`
 }
 
+// ─── La hoja del DJ ───
+//
+// Una sola página, y es la PRIMERA del PDF. El cronograma completo son dos hojas
+// con veinticinco líneas, y de esas el DJ actúa en doce: el resto es catering,
+// fotos y protocolo. En una cabina a oscuras, buscar tu línea entre veinticinco
+// es perderla.
+//
+// Sale de los mismos datos que el cronograma, así que no puede contradecirlo: es
+// un resumen, no una segunda versión. Lo que se filtra son las líneas en las que
+// él no hace nada.
+function hojaDJ(mesas, arte) {
+  const cues = []
+  for (const f of PROGRAMA) {
+    if (!['recepcion', 'horaloca', 'cierre'].includes(f.bloque)) continue
+    if (!f.musica.length && !f.cue) continue
+    // Sólo la primera línea de cada momento lleva la hora: las de después van
+    // seguidas, y repetir la hora tres veces hace creer que son tres momentos.
+    let primera = true
+    if (f.cue) {
+      cues.push({ hora: f.ini, momento: f.que.replace(/\.$/, ''), aviso: f.cue })
+      primera = false
+    }
+    for (const m of f.musica) {
+      cues.push({
+        hora: primera ? f.ini : '',
+        momento: m.momento,
+        cancion: m.cancion + (m.artista ? ` · ${m.artista}` : ''),
+        nota: m.nota,
+        suave: m.suave,
+        ajeno: m.quien !== DJ,
+        estrella: /CANCIONES DE LAS MESAS/i.test(m.momento),
+      })
+      primera = false
+    }
+  }
+
+  const filas = cues.map(c => `<div class="cue ${c.estrella ? 'star' : ''} ${c.ajeno ? 'ajeno' : ''} ${c.suave ? 'suave' : ''}">
+    <div class="h">${esc(c.hora)}</div>
+    <div class="c">
+      <b>${esc(c.momento)}</b>
+      ${c.cancion ? `<p>${esc(c.cancion)}</p>` : ''}
+      ${c.aviso ? `<p class="av">${esc(c.aviso)}</p>` : ''}
+      ${c.nota ? `<span>${esc(c.nota)}</span>` : ''}
+    </div>
+  </div>`).join('')
+
+  const once = mesas.map((m, i) => `<li><u>${i + 1}</u><div><b>${esc(m.cancion || 'SIN CANCIÓN')}</b><span>${esc(m.nombre)} · ${esc(m.capitan || '—')}</span></div></li>`).join('')
+
+  return `<div class="hoja dj">
+  <div class="top">
+    ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
+    <h1>Hoja del DJ<span>ANGELY &amp; KEVIN · SÁBADO 12 DE SEPTIEMBRE DE 2026 · CASONA DEL PRADO</span></h1>
+    <div class="der"><div>Para <b>DJ Farru</b></div><div>De arriba abajo, en este orden</div></div>
+  </div>
+
+  <div class="dos">
+    <div class="cues">${filas}</div>
+
+    <div class="lado">
+      <div class="bloque">
+        <h3>Las once de las mesas &mdash; suenan en la entrega de botellas, 9:10</h3>
+        <ol class="once">${once}</ol>
+        <p class="pie2"><b>En desorden y una detrás de otra</b>, sin dejar caer la pista.
+        La dinámica la dirige <b>el novio</b>: él marca cuándo cambias. Cuando suena la suya,
+        esa mesa se levanta con su botella.</p>
+      </div>
+      <div class="bloque no">
+        <h3>Lo que no pones tú</h3>
+        <p><b>En la iglesia</b> (7:00 p. m.) toca el violín &mdash; ${esc(VIOLIN.split(' · ')[0])}. Tú empiezas en el salón, a las 8:00.</p>
+        <p><b>La hora loca</b> (12:00) la traen ellos: papayera &amp; millo y enseguida el Turbo Show de DJ Bendecido. Les dejas la pista y vuelves a entrar entre acto y acto.</p>
+      </div>
+    </div>
+  </div>
+</div>`
+}
+
 function html(mesas, arte) {
   let bloqueActual = null
   const filas = PROGRAMA.map((f, i) => {
@@ -212,7 +288,47 @@ function html(mesas, arte) {
   .caja p{font-size:7.8pt;line-height:1.45;color:#3A2A1E}
   .caja p + p{margin-top:4px}
   .caja b{color:#7E2E1B}
+
+  /* ── La hoja del DJ ── */
+  .dj .dos{display:grid;grid-template-columns:1fr 10.4cm;gap:0.5cm}
+  .cue{display:flex;gap:0.3cm;border-bottom:1px solid #EFE7DC;padding:2.5px 0}
+  .cue .h{width:1.85cm;flex-shrink:0;font-family:'Cormorant Garamond',Georgia,serif;
+    font-weight:600;font-size:11.5pt;line-height:1.15;color:#2A1D14;white-space:nowrap}
+  .cue .c{flex:1}
+  .cue b{display:block;font-size:7.4pt;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;color:#B08C4F;line-height:1.2}
+  .cue p{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:14pt;
+    line-height:1.1;color:#7E2E1B}
+  .cue span{display:block;font-size:7pt;line-height:1.32;color:#6B5B4B;margin-top:1px}
+  .cue .av{font-family:Jost,sans-serif;font-size:9pt;font-weight:500;color:#B00020}
+  .cue.suave p{font-family:Jost,sans-serif;font-size:9.5pt;font-weight:400;color:#8A7866}
+  .cue.ajeno{background:#F4F1EC}
+  .cue.ajeno p{color:#6B5B4B}
+  /* La dinámica de las botellas es el único momento de la noche en el que el DJ
+     tiene que hacer once cosas seguidas. Se ve desde el otro lado de la cabina. */
+  .cue.star{background:#7E2E1B;color:#FFF3E4;padding:5px 7px;margin:3px 0;border:0}
+  .cue.star .h,.cue.star b{color:#F2D79B}
+  .cue.star p{color:#fff;font-size:15pt}
+  .cue.star span{color:rgba(255,243,228,.88)}
+
+  .lado{display:flex;flex-direction:column;gap:0.4cm}
+  .bloque{border:1px solid #E0CFAE;background:#FDF8F1;padding:6px 9px}
+  .bloque h3{font-size:7pt;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+    color:#9A5B45;margin-bottom:4px;border-bottom:1px solid #E6D8BE;padding-bottom:3px}
+  .once{list-style:none;columns:2;column-gap:0.45cm}
+  .once li{break-inside:avoid;display:flex;gap:5px;align-items:baseline;padding:2.5px 0}
+  .once u{text-decoration:none;font-size:7pt;color:#B08C4F;min-width:0.4cm}
+  .once b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
+    font-size:10pt;line-height:1.1;color:#2A1D14}
+  .once span{display:block;font-size:6.3pt;color:#A2917F;line-height:1.2}
+  .pie2{font-size:7pt;line-height:1.4;color:#3A2A1E;margin-top:5px;border-top:1px solid #E6D8BE;
+    padding-top:4px}
+  .bloque.no p{font-size:7.4pt;line-height:1.45;color:#3A2A1E}
+  .bloque.no p + p{margin-top:4px}
+  .bloque b{color:#7E2E1B}
 </style></head><body>
+
+${hojaDJ(mesas, arte)}
 
 <div class="hoja">
   <div class="top">
@@ -311,10 +427,13 @@ async function main() {
     // que de verdad viaja el día de la boda es una foto por WhatsApp al DJ y a
     // protocolo, y un PDF en un celular se abre con otra aplicación.
     await page.setViewport({ width: 1123, height: 900, deviceScaleFactor: 2 })
+    const NOMBRES = ['hoja-del-dj', 'cronograma', 'canciones-de-las-mesas']
+    const ROTULO = ['una sola pagina: lo que hace el', 'el cronograma completo', 'las once de las mesas']
     const hojas = await page.$$('.hoja')
     for (let i = 0; i < hojas.length; i++) {
-      await hojas[i].screenshot({ path: join(SALIDA, `minuto-${i + 1}.png`), type: 'png' })
-      console.log(`  ✓ dj/minuto-${i + 1}.png`.padEnd(44), i ? 'las once de las mesas' : 'el minuto a minuto')
+      const n = `minuto-${i + 1}-${NOMBRES[i] || 'hoja'}.png`
+      await hojas[i].screenshot({ path: join(SALIDA, n), type: 'png' })
+      console.log(`  ✓ dj/${n}`.padEnd(46), ROTULO[i] || '')
     }
   } finally {
     await browser.close()

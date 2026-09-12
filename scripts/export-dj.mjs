@@ -79,25 +79,17 @@ const nombreCorto = n => {
   return u.length >= 4 ? `${u[0]} ${u[2]}` : (n || '').trim()
 }
 
-// ─── Cuándo suena cada canción de mesa ───
+// ─── Cuándo suenan las canciones de las mesas ───
 //
-// La lista que cerraron los novios con el DJ dice: tener las once pistas listas
-// y ponerlas EN DESORDEN. Así que la hora de aquí es una SUGERENCIA de reparto y
-// no un orden: sirve para ver que no se amontonan y que ninguna cae donde la
-// pista deja de ser del DJ. Por eso al lado va la columna «Hora real», vacía.
+// TODAS EN EL MISMO MOMENTO: en la entrega de las botellas a los capitanes, a
+// las 9:10 p. m. Una detrás de otra y en desorden, con el novio dirigiendo.
 //
-// La dinámica empieza a las 9:10 con las botellas, pero entre las 9:20 y las
-// 10:20 el cronograma manda fotos, cena y el ramo: ahí la gente está sentada y
-// una canción de mesa no levanta a nadie. La ventana de verdad del DJ empieza a
-// las 10:20 —«música y pista abierta»— y se acaba a las 12:00, cuando entra la
-// papayera. Once pistas en esos cien minutos son una cada diez.
-const ARRANQUE_MESAS = 22 * 60 + 20
-const CADA = 10
-const reloj = min => {
-  const h = Math.floor(min / 60) % 24, m = min % 60
-  const h12 = h % 12 === 0 ? 12 : h % 12
-  return `${h12}:${String(m).padStart(2, '0')}`
-}
+// Hasta el 12·IX·2026 este módulo las repartía por la noche a intervalos, con
+// una hora sugerida para cada una. Era una suposición mía; la dinámica real es
+// seguida y la decidieron los novios con el DJ. Se quitó la columna de horas
+// entera en vez de dejarla «por si acaso»: una hora escrita en una hoja que
+// alguien va a leer en una cabina a oscuras se obedece, no se interpreta.
+const MOMENTO_MESAS = '9:10 p. m. · entrega de botellas a los capitanes'
 
 // ─── Canciones repetidas ───
 //
@@ -170,9 +162,9 @@ function construir(mesas) {
     // El cronograma llama a esa línea «Música y pista abierta»; lo que la
     // identifica es la pista que lleva dentro, no cómo se llame la línea.
     const lista = (m.pistas || []).some(x => /CANCIONES DE LAS MESAS/i.test(x.momento))
-      ? mesas.map((t, i) => ({
+      ? mesas.map(t => ({
           cancion: t.cancion,
-          hora: reloj(ARRANQUE_MESAS + i * CADA),
+          hora: m.hora,
           nota: `${t.nombre} · capitán ${t.capitan || '—'} · ${t.personas} personas`,
           fija: true,
         }))
@@ -295,45 +287,31 @@ function construir(mesas) {
 
   // ══ MESAS ══
   const me = wb.addWorksheet('Mesas', { views: [{ state: 'frozen', ySplit: 1 }] })
-  me.addRow(['Mesa', 'Romano', 'Canción que eligieron', 'Capitán', 'Personas',
-    'Hora sugerida', 'Cae dentro de', 'Hora real', '✔ Sonó'])
+  me.addRow(['#', 'Mesa', 'Romano', 'Canción que eligieron', 'Capitán', 'Personas', '✔ Sonó'])
   cabecera(me.getRow(1))
-  anchos(me, [16, 9, 44, 26, 10, 14, 26, 12, 8])
+  anchos(me, [5, 16, 9, 46, 28, 10, 9])
 
-  // En qué momento está el salón a esa hora. No lo decide el reparto: lo decide
-  // el guion, y saberlo es lo que permite correr las que caen mal. Tres caen
-  // hoy dentro de la hora loca y del ramo, y ésas son las que hay que mover.
-  const momentoEn = min => [...ms].reverse().find(m => m.inicio <= min)
-
+  // El número es el orden en que salen de la base, no el orden en que suenan:
+  // suenan en desorden y lo decide el novio esa noche. Sirve para ir marcando.
   mesas.forEach((t, i) => {
-    const min = ARRANQUE_MESAS + i * CADA
     const f = me.rowCount + 1
-    const dentro = momentoEn(min)
-    // La hora loca y el ramo se comen la pista: una canción de mesa ahí no la
-    // oye nadie. El cierre tiene dueño.
-    const estorba = dentro && /papayera|ramo|liga|despedida|cierre/i.test(dentro.momento)
-    me.addRow([t.nombre, t.romano, t.cancion || 'SIN CANCIÓN ANOTADA', t.capitan || '',
-      t.personas, reloj(min), dentro ? dentro.momento : '', '', ''])
+    me.addRow([i + 1, t.nombre, t.romano, t.cancion || 'SIN CANCIÓN ANOTADA',
+      t.capitan || '', t.personas, ''])
     const fila = me.getRow(f)
-    if (!t.cancion) fila.getCell(3).font = { bold: true, color: { argb: ROJO } }
-    if (!t.capitan) fila.getCell(4).font = { color: { argb: ROJO } }
-    if (estorba) {
-      pintar(fila.getCell(6), 'FFFFF1CC')
-      pintar(fila.getCell(7), 'FFFFF1CC')
-      fila.getCell(7).font = { bold: true, color: { argb: 'FF8A6D00' } }
-    }
+    if (!t.cancion) fila.getCell(4).font = { bold: true, color: { argb: ROJO } }
+    if (!t.capitan) fila.getCell(5).font = { color: { argb: ROJO } }
   })
 
   const notas = [
-    'REPARTIDAS, NO SEGUIDAS: una cada quince minutos, entre lo demás. Cuando suena, esa mesa es la que responde y su capitán la levanta.',
-    'LAS AMARILLAS HAY QUE CORRERLAS: caen en un momento en el que la pista no es del DJ —la hora loca, el ramo y la liga—. Ahí una canción de mesa no la oye nadie.',
-    'La hora sugerida es eso, una sugerencia. Un reparto perfecto depende de cómo esté la pista esa noche, y por eso está la columna «Hora real» en blanco.',
+    `TODAS SUENAN EN EL MISMO MOMENTO: ${MOMENTO_MESAS}.`,
+    'UNA DETRÁS DE OTRA Y EN DESORDEN, sin dejar caer la pista. La dinámica la dirige el novio: él marca cuándo se cambia.',
+    'Cuando suena la suya, esa mesa es la que responde y su capitán la levanta con su botella.',
     'Estas once son las únicas canciones que NO se cambian: las eligieron los invitados y su capitán ya lo sabe.',
   ]
   const fNota = me.rowCount + 2
   notas.forEach((t, i) => {
     me.getCell(`A${fNota + i}`).value = t
-    me.mergeCells(`A${fNota + i}:I${fNota + i}`)
+    me.mergeCells(`A${fNota + i}:G${fNota + i}`)
     me.getCell(`A${fNota + i}`).alignment = { wrapText: true, vertical: 'top' }
     me.getCell(`A${fNota + i}`).font = { italic: true, color: { argb: 'FF6B5B4B' } }
     me.getRow(fNota + i).height = 28
@@ -355,7 +333,7 @@ function construir(mesas) {
       'Las que alguien escribió en «Canción definitiva». El resto van con la propuesta.'],
     ['Momentos sin una sola canción', { formula: `COUNTIF(${MM}!$J$2:$J$${ultMm},0)` },
       'Salen en rojo en «Minuto a minuto». Son momentos del cronograma de la wedding sin canción marcada: el brindis, la cena, las fotos en la pista, el snack y las picadas.'],
-    ['Mesas con canción', { formula: `SUMPRODUCT(--(Mesas!$C$2:$C$${mesas.length + 1}<>"SIN CANCIÓN ANOTADA"))` },
+    ['Mesas con canción', { formula: `SUMPRODUCT(--(Mesas!$D$2:$D$${mesas.length + 1}<>"SIN CANCIÓN ANOTADA"))` },
       `De ${mesas.length}. Las eligieron los invitados y no se cambian.`],
     ['Canciones repetidas', { formula: `SUMPRODUCT(--(Playlist!$L$2:$L$${ultPl}<>""))` },
       'Fórmula: compara la columna «LA QUE SUENA» consigo misma. Los avisos de la columna «Enlace o nota» son los de hoy, que además comparan sin tildes ni mayúsculas.'],
@@ -377,7 +355,7 @@ function construir(mesas) {
   const reglas = [
     'CÓMO SE USA — se escribe en la hoja «Playlist», columna «Canción definitiva». Lo que está en «Canción propuesta» no se borra: es el respaldo si al final nadie la cambia.',
     'LA COLUMNA QUE MANDA es «LA QUE SUENA». Es una fórmula: coge la definitiva si la hay y la propuesta si no. Es la que se lleva a la cabina.',
-    'LAS ONCE DE LAS MESAS NO SE TOCAN. Están en la hoja «Mesas» y otra vez dentro de la Playlist, en el momento 16, con su hora repartida. Van sueltas por la noche, no seguidas.',
+    'LAS ONCE DE LAS MESAS NO SE TOCAN, y suenan TODAS SEGUIDAS Y EN DESORDEN en la entrega de botellas a los capitanes, a las 9:10 p. m. Están en la hoja «Mesas» y otra vez dentro de la Playlist, en ese momento.',
     'LAS PROPUESTAS SON UNA PROPUESTA, no el repertorio. El DJ conoce su pista y los novios su gusto. Lo que sí está cerrado es el ORDEN de los momentos y qué viene después de qué.',
     'SI UNA CANCIÓN SALE DOS VECES la columna «Ojo» de la Playlist la marca sola y la nota lo dice. Hoy hay tres cruces: «All of Me» está propuesta en el cóctel y en el primer baile, y dos mesas eligieron la del arranque y la del cierre. Se cambia la del GUION, nunca la de la mesa.',
     'LA COLUMNA «MICRO» de «Minuto a minuto» marca los momentos en los que hace falta un micrófono en la mano. Son los que se olvidan.',
