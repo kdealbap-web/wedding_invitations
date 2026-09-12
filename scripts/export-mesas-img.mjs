@@ -344,31 +344,6 @@ const cm = n => +(n * CM).toFixed(1)
 // La pieza y la hoja donde se imprime. La hoja es más grande a propósito: el
 // margen blanco es de donde se agarra para cortar, y ahí van las marcas —fuera
 // de la pieza, porque si se imprimieran encima se quedarían ahí para siempre.
-const BANDERIN = {
-  w: 9.4, h: 22,          // la pieza
-  doblez: 4.4,            // se dobla aquí y este trozo queda detrás del cuello
-  punta: 4.95,            // desde aquí abajo, el triángulo
-  agujero: 3.5,           // Ø del agujero del cuello de la botella
-}
-
-// Los pliegos donde se imprimen los banderines. El ancho de la pieza (9,4) sale
-// de la cuenta del A4, que es el pliego que se puede imprimir en casa:
-//
-//   A4        2 × 9,4 + 0,8 de calle + 0,7 de margen a cada lado = 21 exactos
-//   Tabloide  4 × 9,4 + 3 calles de 1,26 + 0,9 de margen a cada lado = 43,18
-//
-// Antes cada banderín salía en su propia hoja y, impreso en A4, dejaba 8 cm de
-// blanco a un lado: once capitanes eran once hojas para lo que cabe en seis —o
-// en tres, si el pliego es tabloide.
-//
-// El tabloide va APAISADO: la pieza mide 22 cm de alto y en vertical no entran
-// dos filas (serían 44 contra 43,18), así que en vertical se desperdiciaría lo
-// mismo que en A4 y sólo cabrían tres a lo ancho.
-const PLIEGOS_BAN = {
-  a4:       { archivo: 'a4',       w: 21,    h: 29.7,  margen: 0.7, calle: 0.8,  arriba: 2.2, por: 2 },
-  tabloide: { archivo: 'tabloide', w: 43.18, h: 27.94, margen: 0.9, calle: 1.26, arriba: 2.2, por: 4 },
-}
-
 // Confeti repetible: el mismo nombre de mesa da siempre el mismo reparto, así
 // que regenerar no cambia lo que ya se mandó a imprimir.
 function confeti(semilla, n, W, H) {
@@ -377,12 +352,34 @@ function confeti(semilla, n, W, H) {
   const azar = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296)
   const piezas = []
   for (let i = 0; i < n; i++) {
-    const w = 4 + azar() * 7
+    const w = 3 + azar() * 5
     piezas.push(`<i style="left:${(azar() * W).toFixed(1)}px;top:${(azar() * H).toFixed(1)}px;
       width:${w.toFixed(1)}px;height:${(w * (0.3 + azar() * 0.5)).toFixed(1)}px;
       transform:rotate(${(azar() * 180).toFixed(0)}deg);opacity:${(0.18 + azar() * 0.4).toFixed(2)}"></i>`)
   }
   return piezas.join('')
+}
+
+const BANDERIN = {
+  w: 6, h: 15,            // la pieza, la medida que pidió la wedding
+  doblez: 3,              // se dobla aquí y este trozo queda detrás del cuello
+  punta: 3.2,             // desde aquí abajo, el triángulo
+  agujero: 2.4,           // Ø del agujero del cuello de la botella
+}
+
+// El pliego: TABLOIDE VERTICAL, cuatro columnas por dos filas = ocho banderines.
+//
+//   ancho  4 × 6 + 3 calles de 0,85 + 0,7 de margen a cada lado = 27,94 exactos
+//   alto   2 × 15 + 3,2 arriba para las marcas + 3,5 de calle = 36,7 de 43,18
+//
+// En A4 sólo entrarían tres —dos filas de 15 cm son 30 y el A4 mide 29,7—, así
+// que once capitanes serían cuatro hojas contra dos. Por eso aquí sólo hay un
+// pliego: si algún día hace falta A4, es añadir una entrada a este objeto.
+const PLIEGOS_BAN = {
+  tabloide: {
+    archivo: 'tabloide', w: 27.94, h: 43.18,
+    margen: 0.7, calle: 0.85, arriba: 3.2, calleV: 3.5, cols: 4, filas: 2,
+  },
 }
 
 // ─── El agujero del cuello ───
@@ -392,19 +389,19 @@ function confeti(semilla, n, W, H) {
 // capas. Es como se hace un collarín de botella, y es lo que hace que el doblez
 // sirva para algo.
 //
-// Ø 3,5 cm es para el CUELLO, no para el cuerpo de la botella: la botella mide
+// Ø 2,4 cm es para el CUELLO, no para el cuerpo de la botella: la botella mide
 // 8,5 cm de diámetro, pero el banderín entra por arriba y se apoya en el hombro.
-// Un agujero de 8,5 en una pieza de 9,9 dejaría 7 mm de papel a cada lado y se
-// rompería al colgarlo.
+// En una pieza de 6 cm de ancho, 2,4 deja 1,8 cm de papel a cada lado, que es lo
+// que aguanta el peso sin rasgarse.
 
-/** Una pieza: el banderín más sus marcas, colocado en (x0, y0) de la hoja. */
-function piezaBanderin(mesa, nombreLargo, arte, x0cm, J) {
+/** Una pieza: el banderín más sus marcas, colocado en (x0, y0) del pliego. */
+function piezaBanderin(mesa, nombreLargo, arte, x0cm, y0cm) {
   const B = BANDERIN
   const capitan = nombreCorto(nombreLargo)
   const cancion = (mesa.notas || '').trim()
   const numero = (mesa.nombre || '').replace(/^\s*mesa\s*/i, '').trim()
 
-  const x0 = cm(x0cm), y0 = cm(J.arriba)
+  const x0 = cm(x0cm), y0 = cm(y0cm)
   const pw = cm(B.w), ph = cm(B.h)
   const yDoblez = y0 + cm(B.doblez)
   const yPunta = y0 + cm(B.h - B.punta)
@@ -413,14 +410,13 @@ function piezaBanderin(mesa, nombreLargo, arte, x0cm, J) {
   const contorno = `${x0},${y0} ${x0 + pw},${y0} ${x0 + pw},${yPunta} ${cxPieza},${y0 + ph} ${x0},${yPunta}`
 
   return {
-    // La pieza y su contenido
     html: `<div class="ban" style="left:${x0}px;top:${y0}px;width:${pw}px;height:${ph}px">
-      <div class="conf">${confeti(mesa.nombre + capitan, 48, pw, ph)}</div>
+      <div class="conf">${confeti(mesa.nombre + capitan, 30, pw, ph)}</div>
       <div class="doblez"></div>
       <div class="cuerpo">
         ${arte.logo ? `<img class="crest" src="${arte.logo}" alt="">` : ''}
         <p class="quien"><small>QUERIDO</small>
-          <b style="font-size:${capitan.length > 18 ? 31 : 37}px">${esc(capitan.toUpperCase())}</b></p>
+          <b style="font-size:${capitan.length > 18 ? 17 : 21}px">${esc(capitan.toUpperCase())}</b></p>
         <p class="cargo">ERES EL CAPITÁN DE LA</p>
         <p class="num"><small>MESA</small><span>${esc(numero.toUpperCase())}</span></p>
 
@@ -434,30 +430,30 @@ function piezaBanderin(mesa, nombreLargo, arte, x0cm, J) {
 
         <div class="cancion${cancion ? '' : ' vacia'}">
           <b>LA CANCIÓN DE TU MESA</b>
-          <span style="font-size:${cancion.length > 26 ? 21 : 25}px">${cancion ? esc(cancion.toUpperCase()) : ''}</span>
+          <span style="font-size:${cancion.length > 26 ? 12 : 15}px">${cancion ? esc(cancion.toUpperCase()) : ''}</span>
         </div>
 
-        <div class="firma"><i></i><span>ANGELY &amp; KEVIN · 12 · IX · 2026</span><u></u></div>
+        <div class="firma"><i></i><span>ANGELY &amp; KEVIN · 12 · IX · 2026</span></div>
       </div>
     </div>`,
 
-    // Las marcas, siempre fuera de la pieza
     marcas: `
-      <polygon points="${contorno}" fill="none" stroke="#8A7866" stroke-width="1.2" stroke-dasharray="9 7"/>
+      <polygon points="${contorno}" fill="none" stroke="#8A7866" stroke-width="1" stroke-dasharray="7 6"/>
       <circle cx="${cxPieza}" cy="${yDoblez}" r="${r}" fill="none" stroke="#8A7866"
-              stroke-width="1.2" stroke-dasharray="9 7"/>
+              stroke-width="1" stroke-dasharray="7 6"/>
       <line x1="${x0}" y1="${yDoblez}" x2="${x0 + pw}" y2="${yDoblez}"
             stroke="#C0B3A3" stroke-width="1" stroke-dasharray="3 5"/>
-      <text class="chico" x="${cxPieza}" y="${y0 - 10}" text-anchor="middle">${esc(capitan.toUpperCase())} · ${esc(mesa.nombre.toUpperCase())}</text>
-      <text class="chico" x="${cxPieza}" y="${y0 + ph + 26}" text-anchor="middle">9,4 × 22 cm · DOBLEZ A 4,4 · AGUJERO Ø 3,5</text>`,
+      <text class="chico" x="${cxPieza}" y="${y0 - 9}" text-anchor="middle">${esc(capitan.toUpperCase())} · ${esc(mesa.nombre.toUpperCase())}</text>`,
   }
 }
 
-/** Un pliego con los banderines que quepan: dos en A4, cuatro en tabloide. */
+/** Un pliego tabloide con hasta ocho banderines. */
 function htmlBanderines(lote, arte, J) {
   const B = BANDERIN
-  const piezas = lote.map((t, i) =>
-    piezaBanderin(t.mesa, t.capitan, arte, J.margen + i * (B.w + J.calle), J))
+  const piezas = lote.map((t, i) => piezaBanderin(
+    t.mesa, t.capitan, arte,
+    J.margen + (i % J.cols) * (B.w + J.calle),
+    J.arriba + Math.floor(i / J.cols) * (B.h + J.calleV)))
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
@@ -478,64 +474,71 @@ function htmlBanderines(lote, arte, J) {
 
   .doblez{height:${cm(B.doblez)}px;flex-shrink:0}
   /* El contenido arranca bajo el agujero y TERMINA ANTES DE LA PUNTA: los lados
-     del triángulo se comen el texto que baje de ahí. Entra 1,1 cm, donde todavía
-     mide casi 8 cm de ancho, y ni un milímetro más. */
+     del triángulo se comen el texto que baje de ahí. Entra 0,8 cm, donde todavía
+     mide casi 5 cm de ancho, y ni un milímetro más. */
   .cuerpo{flex:1;display:flex;flex-direction:column;align-items:center;
-    padding:${cm(B.agujero / 2 + 0.38)}px ${cm(0.6)}px ${cm(B.punta - 1.1)}px}
+    padding:${cm(B.agujero / 2 + 0.26)}px ${cm(0.42)}px ${cm(B.punta - 0.8)}px}
   /* El escudo va aquí y no en el doblez: esa franja se dobla hacia atrás y el
      logo quedaría de espaldas. */
-  .crest{height:${cm(1)}px;width:auto;margin-bottom:8px;filter:brightness(1.4) saturate(.55)}
+  .crest{height:${cm(0.62)}px;width:auto;margin-bottom:5px;filter:brightness(1.4) saturate(.55)}
 
-  .quien small{display:block;font-size:17px;font-weight:400;letter-spacing:.3em;color:#F2D79B}
+  .quien small{display:block;font-size:9.5px;font-weight:400;letter-spacing:.28em;color:#F2D79B}
   .quien b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    letter-spacing:.02em;line-height:1.1;margin-top:4px}
+    letter-spacing:.01em;line-height:1.08;margin-top:2px}
 
-  .cargo{font-size:15px;letter-spacing:.26em;color:rgba(255,243,228,.85);margin-top:${cm(0.28)}px}
-  .num{display:flex;align-items:baseline;justify-content:center;gap:10px;margin-top:3px}
-  .num small{font-family:Jost,system-ui,sans-serif;font-size:20px;font-weight:400;
-    letter-spacing:.24em;color:#F2D79B}
+  .cargo{font-size:8.5px;letter-spacing:.22em;color:rgba(255,243,228,.85);margin-top:${cm(0.17)}px}
+  .num{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:2px}
+  .num small{font-family:Jost,system-ui,sans-serif;font-size:11px;font-weight:400;
+    letter-spacing:.22em;color:#F2D79B}
   .num span{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    font-size:${cm(1.1)}px;line-height:.9;color:#FFF3E4}
+    font-size:${cm(0.72)}px;line-height:.9;color:#FFF3E4}
 
-  .por{font-size:16.5px;font-weight:300;line-height:1.38;letter-spacing:.03em;
-    margin-top:${cm(0.3)}px;color:rgba(255,243,228,.94)}
-  .lema{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:30px;
-    letter-spacing:.04em;color:#F2D79B;margin-top:${cm(0.24)}px;line-height:1.1}
+  .por{font-size:9.5px;font-weight:300;line-height:1.36;letter-spacing:.02em;
+    margin-top:${cm(0.18)}px;color:rgba(255,243,228,.94)}
+  .lema{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:17px;
+    letter-spacing:.03em;color:#F2D79B;margin-top:${cm(0.15)}px;line-height:1.08}
 
-  .der{margin-top:${cm(0.3)}px;display:flex;flex-direction:column;gap:${cm(0.18)}px;width:100%}
-  .der p{font-size:16px;font-weight:400;line-height:1.32;letter-spacing:.03em;
-    padding:${cm(0.16)}px ${cm(0.16)}px;border:1px solid rgba(242,215,155,.45);border-radius:6px;
+  .der{margin-top:${cm(0.18)}px;display:flex;flex-direction:column;gap:${cm(0.11)}px;width:100%}
+  .der p{font-size:9px;font-weight:400;line-height:1.3;letter-spacing:.02em;
+    padding:${cm(0.1)}px ${cm(0.1)}px;border:1px solid rgba(242,215,155,.45);border-radius:4px;
     background:rgba(255,243,228,.07)}
-  .der b{display:block;font-size:12.5px;letter-spacing:.22em;color:#F2D79B;margin-bottom:4px}
+  .der b{display:block;font-size:7.5px;letter-spacing:.2em;color:#F2D79B;margin-bottom:2px}
 
-  .cancion{margin-top:${cm(0.28)}px;width:100%}
-  .cancion b{display:block;font-size:12.5px;letter-spacing:.22em;color:#F2D79B;margin-bottom:4px}
+  .cancion{margin-top:${cm(0.17)}px;width:100%}
+  .cancion b{display:block;font-size:7.5px;letter-spacing:.2em;color:#F2D79B;margin-bottom:2px}
   .cancion span{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
-    line-height:1.16;color:#FFF3E4}
-  .cancion.vacia span{border-bottom:1px solid rgba(242,215,155,.5);min-height:26px}
+    line-height:1.14;color:#FFF3E4}
+  .cancion.vacia span{border-bottom:1px solid rgba(242,215,155,.5);min-height:16px}
 
   .firma{margin-top:auto}
-  .firma i{display:block;width:${cm(2.2)}px;height:1px;background:rgba(242,215,155,.5);
-    margin:${cm(0.24)}px auto ${cm(0.18)}px}
-  .firma span{font-size:12.5px;letter-spacing:.22em;color:rgba(255,243,228,.72)}
-  .firma u{display:block;width:11px;height:11px;background:#F2D79B;opacity:.75;
-    transform:rotate(45deg);margin:${cm(0.45)}px auto 0}
+  .firma i{display:block;width:${cm(1.4)}px;height:1px;background:rgba(242,215,155,.5);
+    margin:${cm(0.15)}px auto ${cm(0.11)}px}
+  .firma span{font-size:7.5px;letter-spacing:.18em;color:rgba(255,243,228,.72)}
 
   /* Las marcas van en una capa aparte y SIEMPRE fuera de las piezas: lo que se
      imprima encima se queda ahí para siempre. */
   .marcas{position:absolute;inset:0;pointer-events:none}
   .marcas text{font-family:Jost,system-ui,sans-serif;fill:#8A7866}
   .marcas text.tit{font-size:13px;letter-spacing:.12em}
-  .marcas text.chico{font-size:10.5px;letter-spacing:.1em;fill:#A2917F}
+  .marcas text.chico{font-size:9px;letter-spacing:.08em;fill:#A2917F}
 </style></head><body><div class="hoja">
   ${piezas.map(p => p.html).join('')}
   <svg class="marcas" viewBox="0 0 ${cm(J.w)} ${cm(J.h)}">
-    <text class="tit" x="${cm(J.margen)}" y="${cm(0.95)}">CORTAR POR LA LÍNEA DE PUNTOS</text>
-    <text class="chico" x="${cm(J.w - J.margen)}" y="${cm(0.95)}" text-anchor="end">ANGELY &amp; KEVIN · BANDERINES DE CAPITÁN</text>
-    <text class="chico" x="${cm(J.margen)}" y="${cm(1.45)}">EL AGUJERO VA CENTRADO EN EL DOBLEZ · LA FRANJA DE ARRIBA SE DOBLA HACIA ATRÁS Y EL AGUJERO QUEDA REDONDO</text>
+    <text class="tit" x="${cm(J.margen)}" y="${cm(1.1)}">CORTAR POR LA LÍNEA DE PUNTOS</text>
+    <text class="chico" x="${cm(J.w - J.margen)}" y="${cm(1.1)}" text-anchor="end">ANGELY &amp; KEVIN · BANDERINES DE CAPITÁN · 6 × 15 cm</text>
+    <text class="chico" x="${cm(J.margen)}" y="${cm(1.7)}">EL AGUJERO (Ø 2,4) VA CENTRADO EN EL DOBLEZ · LA FRANJA DE ARRIBA SE DOBLA HACIA ATRÁS Y EL AGUJERO QUEDA REDONDO</text>
     ${piezas.map(p => p.marcas).join('')}
   </svg>
 </div></body></html>`
+}
+
+// «Mesa 7» → «VII». La wedding ubica las tarjetas por el romano: en la mesa se
+// ve de lejos y no se confunde con el número de la tarjeta ni con el del cupo.
+const ROMANOS = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]
+function romano(n) {
+  let r = ''
+  for (const [v, letra] of ROMANOS) while (n >= v) { r += letra; n -= v }
+  return r
 }
 
 // ─── Las tarjetas de agradecimiento ───
@@ -569,6 +572,128 @@ const TEXTO_GRACIAS = {
           'completo. Gracias por el cariño de siempre. Nos lo llevamos para toda la vida.',
   singular: 'Que estés aquí no es un detalle: es la razón por la que este día se siente ' +
             'completo. Gracias por el cariño de siempre. Nos lo llevamos para toda la vida.',
+}
+
+// ─── El guion musical ───
+//
+// Los momentos de la recepción con una propuesta de canción para cada uno. Es
+// UNA PROPUESTA, no el repertorio: el DJ conoce su pista y los novios su gusto.
+// Sale impresa marcada como tal, con renglón en blanco para escribir el cambio.
+//
+// Las horas salen del programa de la boda —ceremonia 6:30, recepción 8:30— y son
+// orientativas: lo que importa es el ORDEN, que es lo que el DJ necesita saber.
+//
+// Está aquí y no en la base porque es criterio, no dato: si mañana la pareja
+// cambia una canción, se cambia esta lista y se vuelve a generar.
+const GUION = [
+  ['8:30', 'Llegada de invitados', 'Cóctel, la gente entra y busca su mesa',
+    ['Perfect · Ed Sheeran (acústico)', 'All of Me · John Legend', 'Vallenato romántico de fondo, volumen bajo']],
+  ['9:10', 'Entrada de los novios', 'El momento de más ruido de la noche',
+    ['Volví a Nacer · Carlos Vives', 'La Tierra del Olvido · Carlos Vives', 'Marry You · Bruno Mars']],
+  ['9:20', 'Primer baile', 'Angely y Kevin solos en la pista',
+    ['Perfect · Ed Sheeran', 'All of Me · John Legend']],
+  ['9:30', 'Baile con los padres', 'Se suman los papás de los dos',
+    ['Mi Primer Amor · Diomedes Díaz', 'Hijo de Tigre · vallenato clásico', 'A mi Manera · Vicente Fernández']],
+  ['9:40', 'Brindis', 'Copas arriba · «¡Vivan Angely y Kevin!»',
+    ['Vivir Mi Vida · Marc Anthony', 'Celebra la Vida · Axel']],
+  ['9:50', 'Cena', 'Fondo, sin competir con las conversaciones',
+    ['Salsa romántica y vallenato suave', 'Nada de pista todavía']],
+  ['10:40', 'Corte de la torta', 'Foto obligada, canción corta y alegre',
+    ['Sugar · Maroon 5', 'La Vida Es Un Carnaval · Celia Cruz']],
+  ['10:55', 'Arranque de fiesta', 'Se abre la pista y no se cierra más',
+    ['La Rebelión · Joe Arroyo', 'El Pegao · champeta', 'La Vaca y el Toro · Diomedes Díaz']],
+  ['11:15', 'Hora loca', 'Con los accesorios y la comparsa',
+    ['Mapalé y champeta', 'Ram Pam Pam · Natti Natasha', 'Mix de merengue']],
+  ['11:45', 'LAS CANCIONES DE LAS MESAS', 'Ver el listado de abajo · REPARTIDAS, no seguidas',
+    ['Una cada 15 o 20 minutos', 'El capitán de esa mesa la está esperando']],
+  ['12:45', 'Ramo y liga', 'Solteras primero, solteros después',
+    ['Single Ladies · Beyoncé', 'Sexy and I Know It · LMFAO']],
+  ['1:30', 'Cierre', 'La última, con todos en la pista',
+    ['L\'Amour Toujours · Gigi D\'Agostino', 'Time of My Life · Bill Medley & Jennifer Warnes']],
+]
+
+function htmlGuion(canciones, arte) {
+  const momentos = GUION.map(([hora, que, nota, temas]) => `
+    <tr>
+      <td class="h">${hora}</td>
+      <td class="q"><b>${esc(que)}</b><span>${esc(nota)}</span></td>
+      <td class="t">${temas.map(x => `<em>${esc(x)}</em>`).join('')}<i class="linea"></i></td>
+    </tr>`).join('')
+
+  const mesas = canciones.map((c, i) => `
+    <li><b>${i + 1}</b><span>${esc(c.numero)}</span>
+      <em class="${c.cancion ? '' : 'sin'}">${esc(c.cancion || 'SIN CANCIÓN ANOTADA')}</em>
+      <u>${esc(c.capitan || '—')} · ${c.gente} pers.</u></li>`).join('')
+
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<link rel="stylesheet" href="${FUENTES}"><style>${ESTILO}
+  .hoja{width:${cm(21)}px;height:${cm(29.7)}px;background:#fff;padding:${cm(1.2)}px ${cm(1.2)}px;
+    display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;gap:14px;border-bottom:2px solid #C8A96E;padding-bottom:11px}
+  .top img{height:${cm(1.25)}px;width:auto}
+  .top h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:29px;
+    line-height:1.05;color:#2A1D14}
+  .top p{font-size:10.5px;letter-spacing:.2em;color:#8A7866;margin-top:2px}
+  .top .der{margin-left:auto;text-align:right;font-size:10.5px;color:#8A7866;line-height:1.65}
+
+  .aviso{font-size:11.5px;line-height:1.5;color:#6B5B4B;margin:10px 0 4px;
+    background:#FBF3E8;border-left:3px solid #C8A96E;padding:7px 10px}
+  .aviso b{color:#2A1D14}
+
+  table{width:100%;border-collapse:collapse}
+  tr{border-bottom:1px solid #EFE7DC}
+  td{padding:7px 5px;vertical-align:top}
+  .h{width:${cm(1.5)}px;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;
+    font-size:17px;color:#9A5B45;white-space:nowrap}
+  .q{width:${cm(5.4)}px}
+  .q b{display:block;font-size:12.5px;font-weight:500;letter-spacing:.04em;color:#2A1D14}
+  .q span{display:block;font-size:10px;color:#A2917F;line-height:1.35;margin-top:1px}
+  .t em{display:block;font-style:normal;font-size:11.5px;line-height:1.45;color:#6B5B4B}
+  .t .linea{display:block;border-bottom:1px dotted #D8C9AE;height:11px;margin-top:2px}
+
+  h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:21px;
+    color:#9A5B45;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #E3D9CB}
+  ol{list-style:none}
+  ol li{display:flex;align-items:baseline;gap:8px;font-size:11.5px;line-height:1.75;
+    border-bottom:1px solid #F6F0E7}
+  ol b{min-width:15px;text-align:right;color:#B08C4F;font-weight:500}
+  ol span{min-width:${cm(1.7)}px;color:#8A7866}
+  ol em{flex:1;font-style:normal;font-weight:500;color:#2A1D14;letter-spacing:.02em}
+  ol em.sin{color:#B00020}
+  ol u{text-decoration:none;font-size:10px;color:#A2917F;white-space:nowrap}
+
+  .nota{margin-top:auto;border-top:1px solid #EFE7DC;padding-top:10px;font-size:11px;
+    line-height:1.55;color:#6B5B4B}
+</style></head><body><div class="hoja">
+  <div class="top">
+    ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
+    <div>
+      <h1>Guion musical</h1>
+      <p>PARA EL DJ · RECEPCIÓN</p>
+    </div>
+    <div class="der">
+      <div>Angely &amp; Kevin</div>
+      <div>Sábado 12 de septiembre de 2026</div>
+      <div>Casona del Prado · Barranquilla</div>
+    </div>
+  </div>
+
+  <p class="aviso"><b>Las canciones de los momentos son una propuesta</b>, no el repertorio:
+  cámbialas por lo que funcione en la pista. Lo que sí está cerrado es el ORDEN de los
+  momentos y las once canciones de las mesas, que las eligieron los invitados.
+  El renglón punteado es para escribir el cambio.</p>
+
+  <table>${momentos}</table>
+
+  <h2>Las canciones de las mesas</h2>
+  <ol>${mesas}</ol>
+
+  <p class="nota">
+    Cada mesa eligió su canción y su capitán la está esperando. <b>Cuando suene, esa mesa
+    es la que responde</b>: van repartidas a lo largo de la noche, una cada quince o veinte
+    minutos, no seguidas. Al lado va cuánta gente hay en esa mesa.
+  </p>
+</div></body></html>`
 }
 
 // ─── La lista del DJ ───
@@ -644,7 +769,7 @@ function htmlCanciones(filas, arte) {
 // un montón de papeles sueltos y hay que ir adivinando.
 //
 // Lleva casilla para ir marcando: se reparte de pie, de mesa en mesa.
-function htmlReparto(gracias, mesasPorId, arte) {
+function htmlReparto(gracias, arte) {
   // Las tarjetas salen numeradas en el mismo orden en que se cortan del pliego
   const porMesa = new Map()
   gracias.forEach((t, i) => {
@@ -655,10 +780,10 @@ function htmlReparto(gracias, mesasPorId, arte) {
 
   const bloques = [...porMesa.entries()].map(([mesa, lista]) => `
     <section class="m">
-      <h2>${esc(mesa)}<span>${lista.length} tarjeta${lista.length === 1 ? '' : 's'}</span></h2>
+      <h2>${esc(mesa)}<span>${esc(lista[0].romano)} · ${lista.length} tarjeta${lista.length === 1 ? '' : 's'}</span></h2>
       <ul>${lista.map(t => `
         <li><i class="box"></i><b>${t.n}</b><span>${esc(t.nombre)}</span>
-        <em>${t.personas} pers.</em></li>`).join('')}</ul>
+        <em>${esc(t.tarjeta)}</em></li>`).join('')}</ul>
     </section>`).join('')
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -696,10 +821,10 @@ function htmlReparto(gracias, mesasPorId, arte) {
     ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
     <div>
       <h1>Dónde va cada tarjeta</h1>
-      <p>TARJETAS DE AGRADECIMIENTO · PARA LA WEDDING</p>
+      <p>TARJETAS DE AGRADECIMIENTO · UNA POR PUESTO · PARA LA WEDDING</p>
     </div>
     <div class="der">
-      <div><b>${gracias.length}</b> tarjetas · ${porMesa.size} mesas</div>
+      <div><b>${gracias.length}</b> tarjetas · ${porMesa.size} mesas · una por puesto</div>
       <div>Angely &amp; Kevin · 12 · IX · 2026</div>
     </div>
   </div>
@@ -709,31 +834,25 @@ function htmlReparto(gracias, mesasPorId, arte) {
   <p class="nota">
     <b>El número es el orden en que salen del pliego</b>, leyendo cada hoja de izquierda a
     derecha y de arriba abajo: si se cortan sin desordenarlas, la pila queda en este
-    mismo orden y se reparte de corrido, mesa por mesa. Una tarjeta por sobre —no por
-    persona—, así que una familia de cinco lleva una sola.
+    mismo orden y se reparte de corrido, mesa por mesa. <b>Una tarjeta por puesto</b>, y
+    cada una lleva impreso el romano de su mesa y el nombre de quien se sienta ahí.
   </p>
 </div></body></html>`
 }
 
 function htmlAgradecimientos(lote, arte, hoja, total, J) {
   const G = GRACIAS
-  const tarjetas = lote.map(t => {
-    // «Familia Gravini Rodriguez Trujillo» y «Jorge Longa» no entran igual
-    const n = t.nombre.length
-    const cuerpo = n > 28 ? 15.5 : n > 22 ? 18 : n > 15 ? 21 : 24
-    return `<div class="t">
+  const tarjetas = lote.map(t => `<div class="t">
       <div class="marco"></div>
       <div class="in">
         ${arte.logo ? `<img src="${arte.logo}" alt="">` : ''}
         <p class="g">GRACIAS</p>
-        <p class="n" style="font-size:${cuerpo}px">${esc(t.nombre)}</p>
         <div class="rule"><i></i><b>&#9670;</b><i></i></div>
-        <p class="msg">${esc(t.personas > 1 ? TEXTO_GRACIAS.plural : TEXTO_GRACIAS.singular)}</p>
+        <p class="msg">${esc(TEXTO_GRACIAS.singular)}</p>
         <p class="ayk">Angely &amp; Kevin</p>
-        <p class="fecha">12 · IX · 2026</p>
+        <p class="ubic"><b>${esc(t.romano)}</b><span>${esc(t.nombre)}</span></p>
       </div>
-    </div>`
-  }).join('')
+    </div>`).join('')
 
   // Los huecos que sobran en la última hoja se dejan vacíos, con su marca de
   // corte: así las seis posiciones caen siempre en el mismo sitio del pliego.
@@ -765,7 +884,13 @@ function htmlAgradecimientos(lote, arte, hoja, total, J) {
   .msg{font-family:'Cormorant Garamond',Georgia,serif;font-size:12.5px;line-height:1.4;
     color:#2A1D14}
   .ayk{font-family:'Great Vibes',cursive;font-size:19px;color:#9A5B45;margin-top:8px;line-height:1.1}
-  .fecha{font-size:8px;letter-spacing:.24em;color:#A2917F;margin-top:3px}
+  /* El pie es lo que usa la wedding para ubicarla: el romano de la mesa manda y
+     el nombre del invitado va pequeño, que es como se busca en el puesto. */
+  .ubic{display:flex;align-items:baseline;justify-content:center;gap:7px;margin-top:9px;
+    padding-top:7px;border-top:1px solid #E0CFAE;width:78%}
+  .ubic b{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:16px;
+    color:#9A5B45;letter-spacing:.04em;line-height:1}
+  .ubic span{font-size:8.5px;letter-spacing:.08em;color:#8A7866;text-align:left;line-height:1.25}
 
   .pie{margin-top:auto;text-align:center;font-size:11px;letter-spacing:.18em;color:#B9AC9C}
 </style></head><body><div class="hoja">
@@ -881,9 +1006,10 @@ async function main() {
       // el que acepte la imprenta. El tabloide gasta la mitad de papel.
       for (const J of Object.values(PLIEGOS_BAN)) {
         await page.setViewport({ width: Math.ceil(cm(J.w)) + 80, height: 1400, deviceScaleFactor: 2 })
-        const hojas = Math.ceil(conQuien.length / J.por)
+        const porHoja = J.cols * J.filas
+        const hojas = Math.ceil(conQuien.length / porHoja)
         for (let h = 0; h < hojas; h++) {
-          const lote = conQuien.slice(h * J.por, (h + 1) * J.por)
+          const lote = conQuien.slice(h * porHoja, (h + 1) * porHoja)
           const nombre = `${J.archivo}-${String(h + 1).padStart(2, '0')}.png`
           await captura(htmlBanderines(lote, arte, J), join(SALIDA, 'capitanes', nombre))
           console.log(`  ✓ capitanes/${nombre}`.padEnd(40),
@@ -925,23 +1051,51 @@ ${canciones.map(c =>
 `, 'utf8')
     console.log('  ✓ dj/canciones-por-mesa.txt')
 
+    await captura(htmlGuion(canciones, arte), join(SALIDA, 'dj', 'guion-musical.png'))
+    console.log('  ✓ dj/guion-musical.png'.padEnd(40), `${GUION.length} momentos`)
+
+    await writeFile(join(SALIDA, 'dj', 'guion-musical.txt'),
+`GUION MUSICAL — Angely & Kevin
+Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
+
+Las canciones de los momentos son una PROPUESTA, no el repertorio. Lo que sí
+está cerrado es el orden de los momentos y las once canciones de las mesas.
+
+${GUION.map(([hora, que, nota, temas]) =>
+  `${hora.padStart(5)}  ${que.toUpperCase()}\n         ${nota}\n` +
+  temas.map(t => `         · ${t}`).join('\n')).join('\n\n')}
+
+
+LAS CANCIONES DE LAS MESAS  —  repartidas, no seguidas
+
+${canciones.map((c, i) =>
+  `${String(i + 1).padStart(3)}.  ${c.numero.padEnd(9)} ${(c.cancion || '— SIN CANCIÓN —').padEnd(38)} ${c.capitan} (${c.gente} pers.)`
+).join('\n')}
+`, 'utf8')
+    console.log('  ✓ dj/guion-musical.txt')
+
     // ─── Agradecimiento: una por SOBRE, no por capitán ───
     // Van ordenadas por mesa y después por nombre, que es como se reparten esa
     // noche: de a mesa. Un sobre repartido entre dos mesas lleva una sola y va
     // con la primera.
-    const ordenMesa = new Map(ms.data.map(m => [m.id, m.orden ?? 0]))
-    const nombreMesa = new Map(ms.data.map(m => [m.id, m.nombre]))
-    const sobres = new Map()
-    for (const a of as.data) {
-      const s = sobres.get(a.guest_id) || { personas: 0, mesa: Infinity, mesaNombre: '' }
-      s.personas++
-      const o = ordenMesa.get(a.mesa_id) ?? 0
-      // Un sobre repartido entre dos mesas lleva UNA tarjeta y va con la primera
-      if (o < s.mesa) { s.mesa = o; s.mesaNombre = nombreMesa.get(a.mesa_id) || '' }
-      sobres.set(a.guest_id, s)
-    }
-    const gracias = [...sobres.entries()]
-      .map(([id, s]) => ({ ...s, nombre: grupoDe.get(id) || '' }))
+    // UNA TARJETA POR CUPO, no por sobre: la wedding las ubica en cada puesto, así
+    // que hacen falta tantas como personas sentadas. Sin la mesa de los novios,
+    // que no se imprime, son 82.
+    const imprimiblesId = new Set(imprimibles.map(m => m.id))
+    const mesaDe = new Map(ms.data.map(m => [m.id, m]))
+    const gracias = as.data
+      .filter(a => imprimiblesId.has(a.mesa_id))
+      .map(a => {
+        const m = mesaDe.get(a.mesa_id)
+        const n = Number((m.nombre || '').replace(/[^0-9]/g, '')) || 0
+        return {
+          nombre: a.member_id ? (nombreDe.get(a.member_id) || '') : (a.etiqueta || ''),
+          tarjeta: grupoDe.get(a.guest_id) || '',
+          mesa: m.orden ?? 0,
+          mesaNombre: m.nombre || '',
+          romano: n ? romano(n) : '·',
+        }
+      })
       .filter(t => t.nombre)
       .sort((a, b) => a.mesa - b.mesa || a.nombre.localeCompare(b.nombre, 'es'))
 
@@ -959,14 +1113,14 @@ ${canciones.map(c =>
     }
     await page.setViewport({ width: 1600, height: 1200, deviceScaleFactor: 2 })
 
-    await captura(htmlReparto(gracias, nombreMesa, arte), join(SALIDA, 'agradecimiento', 'reparto.png'))
+    await captura(htmlReparto(gracias, arte), join(SALIDA, 'agradecimiento', 'reparto.png'))
     console.log('  ✓ agradecimiento/reparto.png'.padEnd(40), 'dónde va cada tarjeta')
 
     await writeFile(join(SALIDA, 'agradecimiento', 'reparto.txt'),
 `DÓNDE VA CADA TARJETA DE AGRADECIMIENTO — Angely & Kevin
 Sábado 12 de septiembre de 2026 · Casona del Prado
 
-${gracias.length} tarjetas · una por SOBRE, no por persona.
+${gracias.length} tarjetas · UNA POR PUESTO. Cada una lleva el romano de su mesa.
 El número es el orden en que salen del pliego, leyendo cada hoja de izquierda a
 derecha y de arriba abajo.
 
@@ -976,7 +1130,7 @@ ${[...new Map(gracias.reduce((acc, t, i) => {
   return acc
 }, new Map()))].map(([mesa, lista]) =>
   `${mesa.toUpperCase()}  (${lista.length})\n` +
-  lista.map(t => `  [ ] ${String(t.n).padStart(2)}  ${t.nombre.padEnd(36)} ${t.personas} pers.`).join('\n')
+  lista.map(t => `  [ ] ${String(t.n).padStart(3)}  ${t.romano.padEnd(5)} ${t.nombre.padEnd(32)} ${t.tarjeta}`).join('\n')
 ).join('\n\n')}
 `, 'utf8')
     console.log('  ✓ agradecimiento/reparto.txt')
@@ -998,6 +1152,10 @@ Generado el ${cuando}
                              abajo termina en punta. Se imprime y se recorta por
                              la figura; lo blanco de alrededor es el descarte.
                              La canción sale de la columna «notas» de la mesa.
+  dj/guion-musical.png       EL GUION DE LA NOCHE: los momentos de la recepción
+  dj/guion-musical.txt       en orden, con una PROPUESTA de canción para cada
+                             uno y renglón para escribir el cambio, y al final
+                             las once canciones de las mesas numeradas.
   dj/canciones-por-mesa.png  LA LISTA DEL DJ: la canción de cada mesa, su
   dj/canciones-por-mesa.txt  capitán y cuánta gente la va a corear. La misma en
                              hoja para imprimir y en texto para mandarla.
@@ -1005,8 +1163,9 @@ Generado el ${cuando}
   agradecimiento/reparto.txt casilla para ir marcando. El número es el orden en
                              que salen del pliego, así que si se cortan sin
                              desordenarlas la pila se reparte de corrido.
-  agradecimiento/a4-NN.png   Una tarjeta de agradecimiento POR SOBRE INVITADO
-  agradecimiento/tabloide-NN.png  —no por capitán—, cuadrada de 6,5 × 6,5 cm.
+  agradecimiento/a4-NN.png   Una tarjeta de agradecimiento POR PUESTO —82 en
+  agradecimiento/tabloide-NN.png  total—, cuadrada de 6,5 × 6,5 cm, con el
+                             romano de su mesa y el nombre de quien se sienta.
                              También en dos pliegos: DOCE por A4 (cinco hojas) o
                              VEINTICUATRO por tabloide (tres hojas). Se cortan por la línea de
                              puntos. Van ordenadas por mesa, que es como se

@@ -685,124 +685,82 @@ reconocen antes de leerlo.
 #### El banderín del capitán
 
 Uno por capitán. **No es una hoja: cuelga del cuello de la botella**, así que la
-pieza es una tira de **9,4 × 22 cm**, y sale en **dos pliegos** (`PLIEGOS_BAN`):
+pieza es una tira de **6 × 15 cm** —la medida que pidió la wedding—, y van **ocho
+por pliego tabloide vertical**:
 
 ```
-  A4         2 × 9,4 + 0,8 de calle + 0,7 de margen a cada lado = 21 exactos
-  Tabloide   4 × 9,4 + 3 calles de 1,26 + 0,9 de margen a cada lado = 43,18
+  ancho  4 × 6 + 3 calles de 0,85 + 0,7 de margen a cada lado = 27,94 exactos
+  alto   2 × 15 + 3,2 arriba para las marcas + 3,5 de calle   = 36,7 de 43,18
+
+  ┌ 3 cm    doblez, va detrás del cuello
+  ├┈┈┈┈┈┈┈  ◯ agujero Ø 2,4 ┈┈┈┈┈┈┈┈  ← el agujero va A CABALLO del doblez
+  │ 8,8     el encargo
+  └ 3,2     la punta
 ```
 
-**El ancho de la pieza sale de la cuenta del A4**, que es el pliego que se puede
-imprimir en casa: con 9,9 cm no quedaba calle por donde meter la tijera. Antes
-cada banderín salía en su propia hoja y, impreso en A4, dejaba 8 cm de blanco a
-un lado — once capitanes eran once hojas para lo que cabe en seis, o en tres si
-el pliego es tabloide.
-
-**El tabloide va apaisado**: la pieza mide 22 cm de alto y en vertical no entran
-dos filas (serían 44 contra 43,18), así que se desperdiciaría lo mismo que en A4
-y sólo cabrían tres a lo ancho. Se imprime **uno de los dos pliegos**, no ambos.
-
-Lo que no se puede aprovechar es la franja de abajo: con piezas de 22 cm no hay
-segunda fila en ningún pliego. Llenarla obligaría a mezclar piezas distintas en
-el mismo papel.
-
-El resto de la anatomía:
-
-```
-  ┌ hoja A4 ── 2,2 cm arriba para las marcas; el resto es donde se corta
-  │ ┌──── pieza 9,4 × 22 ────┐  calle  ┌──── pieza 9,4 × 22 ────┐
-  │ │  4,4 cm  doblez, va detrás │  0,8  │                        │
-  │ ├┈┈┈┈┈  ◯ agujero Ø 3,5 ┈┈┈┈┤       │   ← el agujero va A
-  │ │ 12,65    el encargo        │       │     CABALLO del doblez
-  │ └ 4,95     la punta ────────┘       └────────────────────────┘
-```
+**Sólo hay pliego tabloide.** En A4 entrarían tres —dos filas de 15 cm son 30 y
+el A4 mide 29,7—, así que once capitanes serían cuatro hojas contra dos. Si algún
+día hace falta A4, es añadir una entrada a `PLIEGOS_BAN`.
 
 - **El agujero va centrado en la línea del doblez**, mitad arriba y mitad abajo:
   al doblar, las dos mitades se superponen y queda un agujero redondo que pasa
   por las dos capas. Es como se hace un collarín de botella, y es lo que hace que
   el doblez sirva para algo.
-- **Ø 3,5 cm es para el CUELLO, no para el cuerpo.** La botella mide 8,5 cm de
-  diámetro, pero el banderín entra por arriba y se apoya en el hombro. Un agujero
-  de 8,5 en una pieza de 9,9 dejaría 7 mm de papel a cada lado y se rompería al
-  colgarlo.
+- **Ø 2,4 cm es para el CUELLO, no para el cuerpo.** La botella mide 8,5 cm de
+  diámetro, pero el banderín entra por arriba y se apoya en el hombro. En una
+  pieza de 6 cm, 2,4 deja 1,8 de papel a cada lado: lo que aguanta el peso.
 - El vaciado se hace con una **máscara radial**, no con un círculo pintado de
-  blanco: lo que se ve ahí es papel que se quita, y tiene que verse así en la
-  prueba de impresión.
+  blanco: lo que se ve ahí es papel que se quita.
 - **El escudo va debajo del agujero, no en el doblez.** Esa franja se dobla hacia
-  atrás, así que un logo ahí queda de espaldas y no lo ve nadie.
+  atrás y un logo ahí queda de espaldas.
 - **El contenido termina antes de la punta.** Los lados del triángulo se comen el
   texto que baje de ahí, y la canción —que es lo último— es justo lo que se
-  perdía. Se deja entrar 1,1 cm en la punta, donde todavía mide casi 8 cm de
-  ancho, y ni un milímetro más: por eso `.cuerpo` lleva `padding-bottom` y la
-  firma ya no empuja con `margin-top:auto` contra el borde. Si agregas un bloque,
-  mira el peor caso —el nombre más largo con la canción más larga— antes de dar
-  por bueno.
-- **Las marcas van en una capa SVG aparte y siempre dentro del margen blanco** —
-  corte, doblez, medidas y el nombre del capitán al pie—. Lo que se imprima
-  encima de la pieza se queda ahí para siempre.
-- **Sin flores y sin letra chica.** Esto se lee de lejos, de noche y con la
-  fiesta encima: todo en mayúscula, sobre el terracota de la boda con confeti
-  dorado. Las acuarelas de la participación son para el papel que se mira de
-  cerca; aquí estorbaban.
-- El **confeti es repetible**: sale de una semilla con el nombre de la mesa y el
-  del capitán, así que regenerar no cambia lo que ya se mandó a imprimir.
-- El texto es el que escribieron los novios y va **completo o no va**: quién es,
-  qué mesa comanda, por qué lo eligieron, «HAZ LO TUYO Y COMANDA», sus dos
-  derechos y la canción de su mesa.
-- El nombre **baja de cuerpo si pasa de 18 caracteres**, y la canción si pasa de
-  26: son los dos únicos datos que cambian de largo entre un capitán y otro.
+  perdía. Entra 0,8 cm en la punta y ni un milímetro más.
+- **Las marcas van en una capa SVG aparte y fuera de las piezas.** Lo que se
+  imprima encima se queda ahí para siempre.
+- **Sin flores y sin letra chica**: terracota de la boda con confeti dorado, todo
+  en mayúscula. El confeti sale de una semilla con el nombre de la mesa y el del
+  capitán, así que regenerar no cambia lo que ya se mandó a imprimir.
 
 #### Las tarjetas de agradecimiento
 
-Una **por sobre invitado** —no por capitán—, cuadrada de **6,5 × 6,5 cm**, en los
-mismos dos pliegos que los banderines (`PLIEGOS_GRACIAS`): **doce por A4** (cinco
-hojas) o **veinticuatro por tabloide** (tres). El lado sale de la hoja y no al
-revés: con tres columnas de 6,5 se llenan 19,5 de los 21 cm del A4, y con dos de
-8 quedaban 4,4 cm de blanco a los lados y hacían falta nueve hojas.
+**Una por PUESTO —82 en total—**, no por sobre: la wedding las ubica en cada
+silla, así que hacen falta tantas como personas sentadas. Sin la mesa de los
+novios, que no se imprime, son 82 de las 84 sentadas.
 
-**`agradecimiento/reparto.png` dice dónde va cada una**: el listado por mesa, con
-casilla para ir marcando, y cada tarjeta numerada **en el orden en que sale del
-pliego**. Cortadas sin desordenarlas, la pila se reparte de corrido. Sin esa hoja,
-49 tarjetas cortadas son un montón de papeles sueltos. También en `.txt`. Van **ordenadas por mesa**, que es como se reparten esa noche; un sobre
-repartido entre dos mesas lleva una sola tarjeta y va con la primera.
+Cuadrada de **6,5 × 6,5 cm**, en dos pliegos (`PLIEGOS_GRACIAS`): **doce por A4**
+(siete hojas) o **veinticuatro por tabloide** (cuatro).
 
-- Sobre **marfil y no sobre el terracota del banderín**, por dos razones: el
-  banderín es fiesta y esto es lo otro —se lee despacio, al final de la noche o
-  al día siguiente—, y 49 tarjetas a sangre en terracota son una barbaridad de
-  tinta para algo que se imprime en casa.
-- El texto cambia entre **«estén» y «estés»** según cuánta gente traiga el sobre:
-  a una familia se le habla distinto que a quien viene solo.
-- El nombre tiene cuatro cuerpos según su largo: «Familia Gravini Rodriguez
-  Trujillo» son 34 caracteres y «Jorge Longa» once.
+- Cada tarjeta lleva al pie **el romano de su mesa y el nombre pequeño** de quien
+  se sienta ahí: el romano se ve de lejos al repartirlas y no se confunde con el
+  número de mesa impreso en ningún otro sitio; el nombre es lo que se busca en el
+  puesto. `romano()` convierte «Mesa 7» en «VII».
+- Sobre **marfil y no sobre el terracota del banderín**: el banderín es fiesta y
+  esto se lee despacio, al final de la noche. Y 82 tarjetas a sangre en terracota
+  son una barbaridad de tinta.
+- **`agradecimiento/reparto.png` dice dónde va cada una**: las 82 agrupadas por
+  mesa, con casilla para ir marcando y numeradas **en el orden en que salen del
+  pliego**. Cortadas sin desordenarlas, la pila se reparte de corrido. También en
+  `.txt`.
 
 > El texto de agradecimiento lo escribí yo: es lo único de estas piezas que no
-> salió de los novios. Está en `TEXTO_GRACIAS`, arriba de `htmlAgradecimientos()`.
+> salió de los novios. Está en `TEXTO_GRACIAS`.
 
-#### La lista del DJ
+#### El guion musical del DJ
 
-`dj/canciones-por-mesa.png` — una hoja con la canción de cada mesa, su capitán y
-cuánta gente la va a corear. Se imprime y se le entrega al DJ, así que va sobre
-blanco, en cuerpo grande y sin adornos: se lee en una cabina a oscuras y de
-reojo. Una mesa sin canción sale en rojo.
+`dj/guion-musical.png` — los momentos de la recepción en orden, con hora
+orientativa, qué pasa en cada uno y **una propuesta de canción**, más un renglón
+punteado para escribir el cambio. Al final, las once canciones de las mesas
+numeradas.
 
-`dj/canciones-por-mesa.txt` — lo mismo en texto, que es lo que se manda por
-WhatsApp y lo que el DJ pega en su lista sin volver a teclearlo.
+> **Las canciones de los momentos son una propuesta mía, no el repertorio.** Van
+> impresas marcadas como tal: el DJ conoce su pista y los novios su gusto. Lo que
+> sí está cerrado es el orden de los momentos y las canciones de las mesas, que
+> las eligieron los invitados. Viven en `GUION`, arriba de `htmlGuion()`, porque
+> son criterio y no dato: si cambian una, se cambia esa lista y se regenera.
 
-#### El nombre corto
-
-En las piezas que se **entregan en mano** —banderín y agradecimiento— el nombre
-va como **primer nombre + primer apellido**: «Fredy Alfonso De Alba Castro» es
-como lo escribe la base, no como se le habla. `nombreCorto()` sólo acorta cuando
-hay **cuatro unidades o más** —dos nombres y dos apellidos—; con tres no se puede
-saber si es «nombre + dos apellidos» o «dos nombres + un apellido», y adivinar mal
-es peor que dejarlo largo. Las partículas van pegadas a lo que siguen, o «De Alba»
-se partiría en dos.
-
-> **No se usa en el afiche ni en las hojas de trabajo, y es a propósito.** Ahí el
-> nombre sirve para que alguien se encuentre entre 84: acortado, «Fredy Alfonso
-> De Alba Castro» pasa a «Fredy De Alba», que es **otro invitado**, sentado en la
-> Mesa 6. En un banderín que se entrega en mano no hay ambigüedad posible; en un
-> afiche de entrada, sí.
+`dj/canciones-por-mesa.png` sigue existiendo aparte, para la cabina: sólo las
+once, en cuerpo grande y sin nada más.
 
 #### Las dos piezas van sólo por consola
 
