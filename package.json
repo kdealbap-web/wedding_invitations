@@ -19,7 +19,9 @@
     "usb": "node scripts/armar-usb.mjs",
     "export": "node scripts/export-invitados.mjs",
     "mesas-img": "node scripts/export-mesas-img.mjs",
-    "export-todo": "npm run export && npm run mesas-img"
+    "dj": "node scripts/export-dj.mjs",
+    "ceremonia": "node scripts/export-ceremonia.mjs",
+    "export-todo": "npm run export && npm run mesas-img && npm run dj"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

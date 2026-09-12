@@ -23,12 +23,14 @@ npm run optimize-images -- --desde=src/imagenes_editadas   # ingiere fotos de fu
 npm run favicons         # regenera public/favicon* desde el logo de la boda
 npm run logo             # el logo a 1000/2000/4000 px + un .svg, para impresores
 npm run votos            # los votos en A4 + la tarjeta de las flores, para imprimir
+npm run ceremonia        # el orden de entrada a la iglesia, en A4 y en texto
 
 npm run usb              # arma entrega/USB_BODA_AyK/ para el proveedor de las LED
 npm run export           # invitados + cupos + mesas a Excel con fórmulas vivas
 npm run export -- --demo # el mismo Excel con datos de ejemplo, sin tocar la base
 npm run mesas-img        # plano del salón + una hoja por mesa, en PNG
-npm run export-todo      # el Excel y las imágenes de una vez
+npm run dj               # la playlist del DJ en Excel, con fórmulas vivas
+npm run export-todo      # el Excel, las imágenes y la playlist de una vez
 ```
 
 **No hay tests.** No los inventes ni asumas que existe una suite.
@@ -819,6 +821,86 @@ orientativas: lo que importa es el ORDEN y qué viene después de qué.
 
 `dj/canciones-por-mesa.png` sigue existiendo aparte, para la cabina: sólo las
 once, en cuerpo grande y sin nada más.
+
+#### La playlist del DJ, en Excel
+
+`npm run dj` → `entrega/dj/playlist-DJ.xlsx` — `scripts/export-dj.mjs`. Cuatro
+hojas: **Playlist** (una fila por canción), **Minuto a minuto**, **Mesas** y
+**Resumen**.
+
+Existe porque **un PNG no se puede negociar**. El guion y la lista de mesas ya
+se imprimen y se llevan a la cabina, pero el DJ tiene sus canciones, los novios
+las suyas, y eso se discute hasta el mismo sábado. Este libro es donde se
+discute, y por eso **todo lo que se deduce va en fórmula**, igual que el Excel
+de invitados: se toca una celda y los conteos se rehacen solos.
+
+- **La columna que manda es «LA QUE SUENA»**: `IF(definitiva="", propuesta,
+  definitiva)`. La propuesta se queda escrita —es el respaldo si nadie la
+  cambia— y la definitiva la pisa. **Nadie tiene que borrar nada para cambiar
+  algo**, que es lo que hace que se use en vez de abandonarse.
+- **El momento de las canciones de las mesas se abre en once filas** dentro de
+  la Playlist, con su hora repartida —no la del momento—: van sueltas por la
+  noche y no seguidas. Son las únicas que no se cambian, y van marcadas.
+- **Detecta canciones repetidas de dos maneras.** En JavaScript, comparando sin
+  tildes, sin signos y en minúscula (`claveCancion()`), porque «L'AMOUR
+  TOUJOURS - GIGI D'AGOSTINO» y «L'Amour Toujours · Gigi D'Agostino» son la
+  misma y un `COUNTIF` de Excel no lo ve; el aviso sale escrito en la nota. Y en
+  fórmula, comparando tal cual, para las que cree alguien al editar. **Hoy hay
+  tres cruces**: «All of Me» está propuesta en el cóctel y en el primer baile, y
+  dos mesas eligieron la del arranque de fiesta y la del cierre. **Se cambia
+  siempre la del guion, nunca la de la mesa.**
+- La hoja **Mesas** dice, para cada hora sugerida, **en qué momento está el
+  salón** a esa hora, y pinta en ámbar las que caen dentro de la hora loca o del
+  ramo y la liga: ahí una canción de mesa no la oye nadie y hay que correrla.
+- Al final de cada momento hay **una fila en blanco** con su número y su hora ya
+  puestos: es el sitio obvio para añadir una canción sin insertar filas a mano.
+  Por eso los conteos usan `SUMPRODUCT(...<>"")` y no `COUNTIF`: una fórmula que
+  devuelve `""` no es una celda vacía para `COUNTIF`, y cada momento habría
+  contado una canción de más.
+- La columna **«Micro»** de «Minuto a minuto» sale de buscar `/micr[oó]fono/i`
+  en lo que se le pide al DJ. Es una columna para no leerse veinte frases
+  buscando dónde hace falta un micrófono en la mano, que es lo que se olvida.
+
+> El guion vive en **`scripts/guion-dj.mjs`**, no dentro de un generador: lo usan
+> el Excel y las hojas impresas. `minutosDe()` pone las horas en la misma recta
+> —de 6 a 11 se les suman 12 horas, las 12 son las 24 y de 1 a 5 ya es de
+> madrugada—, porque si no «1:00» vendría antes que «12:45» y todos los bloques
+> saldrían en negativo a partir de la medianoche.
+
+### La entrada a la iglesia
+
+`npm run ceremonia` → `entrega/ceremonia/orden-de-entrada.png` y `.txt` —
+`scripts/export-ceremonia.mjs`. Los datos, en `scripts/ceremonia.mjs`.
+
+**No es una tabla: es el pasillo.** Una tabla de cuatro columnas hay que leerla,
+y esto se mira de reojo diez minutos antes de entrar, con catorce personas
+nerviosas preguntando «¿yo con quién voy?». El papel se parece a lo que va a
+pasar: dos filas de gente a cada lado de un pasillo punteado, el número de orden
+en un medallón en el medio y el altar arriba.
+
+- **El orden del arreglo es el orden de entrada.** No hay campo «posición» a
+  propósito: si cambia quién entra antes, se mueve la línea.
+- `izq` y `der` son los dos lados del pasillo mirando al altar, que es como se
+  ensaya. Una entrada **sin `der` es alguien que entra solo**, y su fila se
+  centra sobre el pasillo: un guion en la casilla vacía parecía un dato que
+  faltaba.
+- El **tipo** sólo se escribe cuando dice algo —quien entra solo, la entrada de
+  la novia—: poner «PAREJA» once veces debajo de once parejas es ruido.
+- **Las dos piezas del violín van marcadas donde empiezan**, en el pasillo y no
+  en una esquina: quien dirige la entrada necesita saber en qué línea entra la
+  música. Viven en `MUSICA_CEREMONIA` y **`guion-dj.mjs` las importa**, para que
+  la playlist del DJ tenga toda la música de la noche aunque esas dos no las
+  ponga él.
+- Va sobre la participación —blanco puro, escudo y esquinas de acuarela— igual
+  que el afiche del salón, pero **las flores van más chicas y al 55 %**: aquí hay
+  veintidós nombres y a tamaño de participación las acuarelas se comían «Estela
+  Marys Rodríguez» y «María Fernanda De Alba». Sobre blanco puro bajar la
+  opacidad las aclara sin ensuciarlas.
+- Los medallones llevan `font-variant-numeric: lining-nums`: Cormorant trae las
+  cifras elzevirianas por defecto y «10» y «11» salían de dos alturas distintas.
+- Sale también en **`.txt`**, que es lo que se manda al grupo de WhatsApp:
+  catorce personas no van a abrir un PNG de cinco megas en el celular para
+  buscar su nombre.
 
 #### Las dos piezas van sólo por consola
 
