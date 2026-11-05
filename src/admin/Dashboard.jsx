@@ -26,20 +26,28 @@ const fmtLimite = (d) => {
 // Mensaje personalizado de invitación (WhatsApp / copiar). Sale de los datos
 // del evento, no de un texto fijo.
 function buildMessage(row, ev) {
-  const quien = ev.config?.anfitrion || ev.titulo
+  // Boda y corporativo invitan en plural; un 15 años o un cumpleaños, en primera persona.
+  const yo = !['boda', 'corporativo'].includes(ev.tipo)
+  const firma = (yo && ev.config?.nombre_corto) || ev.config?.anfitrion || ev.titulo
+  const motivo = yo && ev.config?.titulo ? ev.config.titulo.replace(/^Mis /, 'mis ') : ev.titulo
   const limite = fmtLimite(ev.rsvp_limite)
+  const n = row.total_members || 0
   return (
-`Hola, ${row.group_name}! ✨
+`¡Hola, ${row.group_name}! ✨
 
-Con mucha ilusión te invitamos a ${ev.titulo}. Para nosotros sería muy especial contar contigo.
-
+${yo
+  ? `Con mucha ilusión te invito a celebrar ${motivo}. Para mí sería muy especial contar contigo.`
+  : `Con mucha ilusión te invitamos a ${motivo}. Para nosotros sería muy especial contar contigo.`}
+${n ? `
+Tu invitación es para ${n} ${n === 1 ? 'persona' : 'personas'}.
+` : ''}
 En el siguiente enlace encontrarás todos los detalles y la tarjeta de invitación:
 ${inviteUrl(row, ev)}
 ${limite ? `
-Te agradeceríamos que, si es posible, nos confirmes tu asistencia antes del ${limite} para organizarnos con tiempo. 🗓️
+Te agradecería${yo ? '' : 'mos'} que, si es posible, ${yo ? 'me' : 'nos'} confirmes tu asistencia antes del ${limite} para organizarnos con tiempo. 🗓️
 ` : ''}
 Con cariño,
-${quien}`
+${firma}`
   )
 }
 
