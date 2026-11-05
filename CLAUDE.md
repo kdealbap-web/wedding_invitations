@@ -100,6 +100,15 @@ valida antes de llamar a `createClient`). Las llamadas a Supabase, claro, fallan
 
 ### Eventos y plantillas
 
+**Subdominio por evento** (`config.subdominio`, p. ej. `mauren`): los links del panel
+salen como `https://mauren.invitation.kdealbap.com/i/<token>`. En un subdominio solo
+viven `/i/…` y `/admin` (que lleva directo a ese evento); lo demás redirige a la
+landing (`src/main.jsx`). **El sobre** (`src/invitacion/Sobre.jsx`) es la apertura de la
+invitación; su toque es el primer gesto y arranca la música de YouTube
+(`config.musica.youtube`, `src/components/YoutubeBtn.jsx`). Decimos **«15 años»**, nunca «XV»,
+en todo lo visible.
+
+
 - `events` (migración `008_multi_evento.sql`): `slug`, `tipo`, `titulo`, `fecha` (UTC),
   `estado`, `invitation_types` y `config` (JSON con textos, lugar, vestuario, colores…).
   Lo que en la boda estaba hardcodeado ahora vive en `config`.
@@ -1105,6 +1114,19 @@ arranca idéntico a como se venía viendo; sólo toca las que no tienen sitio, y
 eso se puede correr dos veces. Ver «El plano del salón». Mismo truco que la 006:
 el panel detecta si las columnas existen y cae al plano viejo si no.
 
+Migración `009_cupos_y_numero.sql`: `guests.cupos` y `guests.numero`. Los cupos ya no
+salen solo de contar personas: `total_members = GREATEST(cupos, personas)`, así una
+tarjeta sin nombres (la lista del 15 de Mauren) vale sus cupos sin inventar «Invitado N».
+El panel muestra el número como código (A-07: inicial del tipo + número). El RSVP de una
+tarjeta sin personas pregunta cuántos van y `submit-rsvp` lo acota a los cupos.
+
+Migración `010_permisos_por_evento.sql`: **cada quien ve solo su evento**, en la base.
+`platform_admins` (Kevin y Angely: todo) y `event_admins` (solo su evento: invitados,
+llamadas, mesas; no crean eventos ni cambian estado/config), ambos **por correo** leído
+del JWT. Las vistas pasaron a `security_invoker = on`: sin eso leían como postgres y se
+saltaban todo. **Si creas una vista nueva sobre estas tablas, ponle security_invoker.**
+Para dar acceso a alguien: una fila en `event_admins` + crearle la cuenta.
+
 Migración `008_multi_evento.sql`: tabla `events`, `event_id` en `guests` y `mesas`,
 tipos de invitación por evento, vistas rehechas con `event_id` y nueva `event_summary`.
 Siembra la boda (`archivado`) y el XV de Mauren (`borrador`). Ver «Eventos y plantillas».
@@ -1214,10 +1236,31 @@ La sección correcta del RSVP es `src/sections/S10Rsvp.jsx`, **no**
 
 ## Deploy
 
-Sitio estático desde `dist/`. `public/_redirects` (`/* /index.html 200`) da el
-fallback de SPA que necesita el esquema de rutas Base64 — es formato de Netlify /
-Cloudflare Pages. Las Edge Functions y las migraciones se despliegan aparte, contra
-Supabase.
+**Worker de Cloudflare `weddingskya`** (solo estáticos, `wrangler.jsonc`, SPA por
+`not_found_handling`). Sirve `invitation.kdealbap.com` y los subdominios de evento.
+**No hay despliegue automático**: hacer push a `master` no publica nada (el Worker
+se quedó en un build de junio). Se publica desde la máquina:
+
+```
+scriptsdesplegar.bat            # pide Account ID + API Token, compila y sube dist/
+scriptscloudflare-dominios.bat  # conecta dominios nuevos al Worker (idempotente)
+```
+
+- `desplegar.bat` se niega si hay cambios sin commitear en `src/`: a los invitados
+  solo llega lo commiteado.
+- El build de producción toma `.env` (llaves de Supabase, local) + `.env.production`
+  (`VITE_APP_URL`, público, en el repo).
+- El token es un API Token general (plantilla «Edit Cloudflare Workers» + Zone DNS,
+  Zone Read, SSL). Un token de **R2** no sirve. Los `.bat` lo piden por consola y no
+  lo escriben en disco; los `.log` están gitignoreados.
+- **Evento nuevo con subdominio**: añadir el host a `DOMINIOS` en
+  `scripts/cloudflare-dominios.mjs`, correr el `.bat` y poner `config.subdominio` en
+  el evento. El certificado de segundo nivel (`x.invitation.kdealbap.com`) lo emite
+  Cloudflare solo en unos minutos.
+
+Las Edge Functions y las migraciones se despliegan aparte, contra Supabase
+(`npx supabase functions deploy <nombre> --project-ref sooujrdkxvfnnmjkajkh`;
+`npx supabase db query --linked -f <archivo.sql>` aplica una migración).
 
 ## Datos sensibles
 
