@@ -34,11 +34,15 @@ const api = async (metodo, ruta, cuerpo) => {
 try {
   // Confirmación del token antes de tocar nada: válido, activo y cuándo vence.
   // Se muestran sus 4 últimos caracteres para reconocerlo, nunca el token.
-  const v = await api('GET', '/user/tokens/verify')
+  // Token de usuario → /user/tokens/verify. Token de cuenta (la pantalla nueva de
+  // Cloudflare los crea así) → /accounts/{id}/tokens/verify, con la cuenta de la zona.
+  const zona = await api('GET', `/zones?name=${ZONA}`)
+  const cuentaZona = zona.result?.[0]?.account?.id
+  let v = await api('GET', '/user/tokens/verify')
+  if (!v.ok && cuentaZona) v = await api('GET', `/accounts/${cuentaZona}/tokens/verify`)
   if (!v.ok || v.result?.status !== 'active') throw new Error(`El token no es válido o no está activo (${v.status} ${v.errores})`)
   log(`✓ Token confirmado: activo, termina en …${TOKEN.slice(-4)}${v.result.expires_on ? `, vence ${v.result.expires_on.slice(0, 10)}` : ', sin vencimiento'}`)
 
-  const zona = await api('GET', `/zones?name=${ZONA}`)
   if (!zona.ok || !zona.result?.length) throw new Error(`No veo la zona ${ZONA} (${zona.status} ${zona.errores}). ¿El token tiene Zone:Read sobre ella?`)
   const zoneId = zona.result[0].id
   const cuenta = zona.result[0].account.id
