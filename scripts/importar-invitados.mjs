@@ -198,11 +198,47 @@ async function aplicar(bloques) {
   }
 }
 
+// ─── --sql: lo mismo que --aplicar, como SQL para pegar en el SQL Editor ───
+// Para cuando no hay .env.secrets en la máquina. Mismas guardas que aplicar():
+// el bloque DO aborta entero si el evento no existe, si un tipo no vale o si
+// el evento ya tiene tarjetas. El archivo lleva nombres reales: no va al repo.
+async function escribirSql(bloques, ruta) {
+  const filas = bloques.flatMap((b) => b.filas)
+  if (filas.some((f) => f.cupos == null)) throw new Error('Hay filas con cupos no válidos; corrígelas en el Excel.')
+  const q = (s) => `'${String(s).replace(/'/g, "''")}'`
+  const tipos = [...new Set(bloques.map((b) => b.tipo))]
+  const inserts = filas.map((f) =>
+    `  INSERT INTO guests (event_id, token, name, invitation_type) VALUES (ev, ${q(nanoid(22))}, ${q(f.nombre)}, ${q(f.tipo)}) RETURNING id INTO g;\n` +
+    `  INSERT INTO guest_members (guest_id, name, order_num) SELECT g, 'Invitado ' || i, i FROM generate_series(1, ${f.cupos}) i;`
+  ).join('\n')
+  const sql = `-- Importación de invitados · evento ${EVENTO} · ${filas.length} tarjetas
+DO $$
+DECLARE ev UUID; g UUID;
+BEGIN
+  SELECT id INTO ev FROM events WHERE slug = ${q(EVENTO)};
+  IF ev IS NULL THEN RAISE EXCEPTION 'No existe el evento ${EVENTO}'; END IF;
+  IF EXISTS (SELECT 1 FROM guests WHERE event_id = ev) THEN
+    RAISE EXCEPTION 'El evento ${EVENTO} ya tiene tarjetas; no se importa dos veces';
+  END IF;
+  IF EXISTS (SELECT 1 FROM unnest(ARRAY[${tipos.map(q).join(', ')}]) t
+             WHERE t NOT IN (SELECT x->>'key' FROM events e, jsonb_array_elements(e.invitation_types) x WHERE e.id = ev)) THEN
+    RAISE EXCEPTION 'Algún tipo de invitación no existe en el evento';
+  END IF;
+${inserts}
+END $$;
+`
+  const { writeFile } = await import('node:fs/promises')
+  await writeFile(ruta, sql, 'utf8')
+  console.log(`\n✓ SQL escrito en ${ruta} — pégalo en el SQL Editor de Supabase.`)
+}
+
 // ─── Main ───
 try {
   const bloques = await leer(ARCHIVO)
   resumen(bloques)
-  if (!APLICAR) {
+  if (typeof args.sql === 'string') {
+    await escribirSql(bloques, args.sql)
+  } else if (!APLICAR) {
     console.log('\n(dry-run: no se ha escrito nada. Añade --aplicar para insertar.)')
   } else {
     await aplicar(bloques)
