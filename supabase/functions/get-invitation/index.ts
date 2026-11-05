@@ -23,11 +23,28 @@ serve(async (req) => {
 
     const { data, error } = await supabase
       .from('guests')
-      .select('id, name, invitation_type, guest_members(id, name, order_num), confirmations(attending, dietary_notes, song_request, confirmed_at, confirmation_members(member_id))')
+      .select('id, name, invitation_type, events(slug, tipo, titulo, fecha, estado, rsvp_limite, invitation_types, config), guest_members(id, name, order_num), confirmations(attending, dietary_notes, song_request, confirmed_at, confirmation_members(member_id))')
       .eq('token', token)
       .single()
 
     if (error || !data) return json({ error: 'not_found' }, 404)
+
+    // El evento manda sobre el link. Cerrado o archivado: el link deja de
+    // funcionar y SOLO viaja el título del evento — ni miembros, ni lugar, ni
+    // la confirmación. Así quedaron inactivos los links de la boda.
+    type Ev = { slug: string; tipo: string; titulo: string; fecha: string | null; estado: string;
+                rsvp_limite: string | null; invitation_types: unknown; config: Record<string, unknown> }
+    const evRaw = data.events as Ev | Ev[] | null
+    const ev = Array.isArray(evRaw) ? evRaw[0] : evRaw
+    if (!ev) return json({ error: 'not_found' }, 404)
+    if (ev.estado === 'cerrado' || ev.estado === 'archivado') {
+      return json({ inactive: true, event: { titulo: ev.titulo, estado: ev.estado } })
+    }
+    const event = {
+      slug: ev.slug, tipo: ev.tipo, titulo: ev.titulo, fecha: ev.fecha, estado: ev.estado,
+      rsvp_limite: ev.rsvp_limite, invitation_types: ev.invitation_types, config: ev.config,
+      preview: ev.estado === 'borrador',
+    }
 
     const members = [...(data.guest_members as {id:string;name:string;order_num:number}[])]
       .sort((a, b) => a.order_num - b.order_num)
@@ -54,17 +71,18 @@ serve(async (req) => {
     // Registrar la visita (nunca debe romper la invitación si falla).
     // Se registra también en las invitaciones cerradas: saber que intentaron
     // abrirla es justamente la señal de que quizá cambiaron de planes.
-    try { await supabase.from('invitation_views').insert({ guest_id: data.id }) } catch { /* ignore */ }
+    // En borrador no se cuentan: es el cliente revisando la vista previa.
+    if (!event.preview) try { await supabase.from('invitation_views').insert({ guest_id: data.id }) } catch { /* ignore */ }
 
     // Invitación cerrada: quien avisó que no asiste deja de recibir los datos
     // del evento. No es solo cosa de la interfaz — acá no se devuelven los
     // miembros, ni el tipo, ni la confirmación, así que la información deja de
     // viajar por la red. Se reabre sola si la respuesta vuelve a ser "sí".
     if (confirmation && confirmation.attending === false) {
-      return json({ id: data.id, name: data.name, revoked: true })
+      return json({ id: data.id, name: data.name, revoked: true, event: { titulo: ev.titulo, tipo: ev.tipo, slug: ev.slug } })
     }
 
-    return json({ id: data.id, name: data.name, invitation_type: data.invitation_type, members, confirmation })
+    return json({ id: data.id, name: data.name, invitation_type: data.invitation_type, members, confirmation, event })
   } catch (e) {
     return json({ error: 'internal_error' }, 500)
   }

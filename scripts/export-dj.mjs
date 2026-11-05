@@ -28,13 +28,15 @@
  * cuando alguien la escribe. Nadie tiene que borrar nada para cambiar algo.
  */
 import { createClient } from '@supabase/supabase-js'
+import { miembrosDe, asientosDe } from '../src/admin/evento.js'
+import { elegirEvento } from './evento-cli.mjs'
 import ExcelJS from 'exceljs'
 import { mkdir, readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { momentos } from './guion-dj.mjs'
 
-const SALIDA = resolve('entrega/dj')
+let SALIDA = resolve('entrega/dj')   // main() le añade el slug del evento
 
 const ORO    = 'FFC8A96E'
 const MARFIL = 'FFFBF5EA'
@@ -380,10 +382,12 @@ function construir(mesas) {
 async function main() {
   const { url, key } = await env()
   const sb = createClient(url, key)
+  const evento = await elegirEvento(sb)
+  SALIDA = resolve('entrega/dj', evento.slug)
   const [ms, as, mem] = await Promise.all([
-    sb.from('mesas').select('*').order('orden'),
-    sb.from('asientos').select('mesa_id, member_id'),
-    sb.from('guest_members').select('id, name'),
+    sb.from('mesas').select('*').eq('event_id', evento.id).order('orden'),
+    asientosDe(sb, evento.id, 'mesa_id, member_id'),
+    miembrosDe(sb, evento.id, 'id, name'),
   ])
   for (const r of [ms, as, mem]) if (r.error) throw new Error(r.error.message)
 

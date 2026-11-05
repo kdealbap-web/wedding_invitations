@@ -21,6 +21,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
+    // Solo un evento ACTIVO acepta respuestas. En borrador el link es vista
+    // previa; cerrado o archivado, el evento ya no recibe confirmaciones.
+    const { data: g } = await supabase.from('guests').select('id, events(estado)').eq('id', guest_id).single()
+    const evRaw = g?.events as { estado: string } | { estado: string }[] | null | undefined
+    const estado = Array.isArray(evRaw) ? evRaw[0]?.estado : evRaw?.estado
+    if (!g || !estado) return json({ error: 'not_found' }, 404)
+    if (estado === 'borrador') return json({ error: 'preview' }, 409)
+    if (estado !== 'activo')   return json({ error: 'event_closed' }, 410)
+
     // Upsert confirmation (re-submit is allowed).
     // source y attending_total se mandan explícitos: si la wedding ya había
     // registrado esta tarjeta por teléfono (source='admin', attending_total=N),

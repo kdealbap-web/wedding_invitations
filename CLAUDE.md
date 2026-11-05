@@ -4,8 +4,17 @@ Guía para trabajar en este repositorio. Léela antes de tocar código.
 
 ## Qué es
 
-Invitación digital de boda (Angely & Kevin · 12 de septiembre de 2026) con panel de
-administración de invitados. **Una sola SPA** que sirve dos aplicaciones distintas.
+Plataforma de invitaciones digitales para cualquier evento —**invitation.kdealbap.com**—
+con panel de administración por evento. Nació como la invitación de la boda de Angely &
+Kevin (12·IX·2026), que fue el caso de éxito; desde el 5·XI·2026 es multi-evento. La
+boda sigue en la base como evento **archivado** y su código vive en `src/eventos/boda/`.
+Primer cliente: el XV de Mauren (`xv-mauren`, 28·XII·2026).
+
+**Una sola SPA** que sirve la landing de venta, las invitaciones y el panel.
+
+> Gran parte de este documento describe piezas de la boda (mesas, LED, DJ, votos,
+> banderines…). El panel de mesas y los exports son ya genéricos por evento; las
+> piezas impresas y de video siguen escritas para la boda.
 
 React 19 · Vite 7 · React Router 7 · Supabase (Postgres + Auth + Edge Functions).
 Sin TypeScript en el frontend, sin framework de CSS, sin librería de estado.
@@ -32,7 +41,14 @@ npm run mesas-img        # plano del salón + una hoja por mesa, en PNG
 npm run dj               # la playlist del DJ en Excel, con fórmulas vivas
 npm run minuto           # el minuto a minuto con la música dentro, en PDF
 npm run export-todo      # el Excel, las imágenes y la playlist de una vez
+
+npm run importar -- --evento=xv-mauren --archivo="XV MAUREN/INVITADOS XV.xlsx"   # dry-run; --aplicar inserta
+npm run fotos-evento -- --desde="XV MAUREN" --evento=xv-mauren                  # fotos → src/assets/eventos/<slug>/
 ```
+
+**Todos los exports llevan `--evento=<slug>`** (`export`, `mesas-img`, `dj`, `minuto`,
+`export-todo`). Sin él listan los eventos y salen con error. La carpeta del cliente
+(`XV MAUREN/`) está gitignoreada: tiene nombres reales.
 
 **No hay tests.** No los inventes ni asumas que existe una suite.
 
@@ -73,13 +89,33 @@ valida antes de llamar a `createClient`). Las llamadas a Supabase, claro, fallan
 `src/main.jsx` reparte por ruta:
 
 ```
-/admin/*        →  src/admin/AdminApp.jsx                       panel privado (Supabase Auth)
-/participacion  →  src/participacion/TarjetaParticipacion.jsx   tarjeta imprimible 5 × 7"
-/*              →  src/App.jsx                                  la invitación pública
+/                    →  src/landing/Landing.jsx              landing de venta (sin Supabase)
+/i/:token            →  src/invitacion/InvitacionApp.jsx     la invitación; plantilla según el evento
+/admin               →  src/admin/AdminApp.jsx               panel global: lista de eventos
+/admin/eventos/nuevo · /admin/eventos/:slug/editar           alta y edición de un evento
+/admin/e/:slug       →  Dashboard (invitados)    /admin/e/:slug/mesas → MesasBoard
+/participacion · /pantalla  →  src/eventos/boda/…            archivo de la boda
+/*                   →  «Esta invitación ya no está activa»  (links viejos Base64 de la boda)
 ```
 
-La ruta `/participacion` va **antes** de la catch-all a propósito: cualquier ruta no
-reconocida se interpreta como payload Base64 de invitación.
+### Eventos y plantillas
+
+- `events` (migración `008_multi_evento.sql`): `slug`, `tipo`, `titulo`, `fecha` (UTC),
+  `estado`, `invitation_types` y `config` (JSON con textos, lugar, vestuario, colores…).
+  Lo que en la boda estaba hardcodeado ahora vive en `config`.
+- **El estado manda sobre los links** (lo aplica `get-invitation`):
+  `borrador` → vista previa, RSVP deshabilitado · `activo` → normal ·
+  `cerrado`/`archivado` → el link muestra «evento finalizado» y no viaja ningún dato.
+- La plantilla se elige por `event.config.plantilla` en `src/invitacion/plantillas.js`.
+  **Añadir una plantilla** = carpeta `src/eventos/<nombre>/` con un componente que
+  renderice `<Deck sections …/>` + una línea lazy en `plantillas.js`.
+- Las fotos de un evento van en `src/assets/eventos/<slug>/index.js` (manifiesto
+  `{ fotos, fondos, retrato }`), encontrado por `import.meta.glob`. Otro XV = otra
+  carpeta + su fila en `events`, sin tocar código.
+- Motor compartido en `src/invitacion/`: `Deck.jsx` (slides), `GuestContext.jsx`,
+  `Rsvp.jsx`, `Estado.jsx` (pantallas de carga/inactiva/no encontrada), `fechas.js`.
+- En el panel, **toda consulta filtra por `event_id`** y todo insert lo lleva. Un
+  trigger impide sentar en una mesa a una tarjeta de otro evento.
 
 El panel accede a las tablas **directamente** con el cliente de Supabase, autorizado
 por RLS como rol `authenticated`. El invitado **nunca** toca las tablas: solo llama
@@ -97,7 +133,12 @@ mensaje en vez de una pantalla vacía.
 
 ### El link de invitación
 
-La ruta pública no es un token plano, es un payload JSON codificado en Base64URL:
+**Desde la 008 el link es `/i/<token>`**, con un token opaco `nanoid(22)`: no lleva
+nada legible. El nombre llega con la respuesta de `get-invitation` (hay un loader).
+Lo que sigue describe el esquema **viejo** de la boda, que ya no se genera: esos
+links caen en la página de invitación inactiva.
+
+La ruta pública no era un token plano, era un payload JSON codificado en Base64URL:
 
 ```
 https://dominio/eyJ0IjoiYWJjMTIzIiwibiI6IkZhbWlsaWEiLCJrIjoiY29tcGxldGEifQ
@@ -120,7 +161,10 @@ Si no hay payload válido ni `?t=`, la app **redirige a `/admin/login`**
 
 ### El slide-deck
 
-`src/App.jsx` es el orquestador. No hay scroll de página: son 13 secciones fijas
+El motor es `src/invitacion/Deck.jsx`; cada plantilla le pasa su lista de secciones
+(`src/eventos/boda/Boda.jsx`, `src/eventos/xv/Xv.jsx`). Lo que sigue se escribió
+cuando todo vivía en `src/App.jsx` (ya no existe): `ALL_SECTIONS` y `NAV_ICONS` están
+ahora en `Boda.jsx`. El orquestador era así: No hay scroll de página: son 13 secciones fijas
 superpuestas y solo una lleva la clase `.active`.
 
 - `ALL_SECTIONS` define orden, componente, imagen de fondo y overlay de cada slide.
@@ -310,7 +354,11 @@ SPA; `cine/` y `fiesta.mjs` las encuentran solas, porque barren `src/assets/img`
 
 ### Tipos de invitación
 
-`invitation_type` tiene exactamente dos valores, con un CHECK en la base de datos:
+**Desde la 008 los tipos son por evento** (`events.invitation_types`, validados por
+trigger): la boda tiene `completa`/`recepcion` y el XV `adultos`/`jovenes`. Lo de
+abajo es el caso de la boda.
+
+En la boda `invitation_type` tenía exactamente dos valores:
 
 - `completa` — ceremonia religiosa + recepción. Ve las 13 secciones.
 - `recepcion` — solo la fiesta. `src/App.jsx` **filtra los slides `s4` y `s5`**
@@ -1057,6 +1105,10 @@ arranca idéntico a como se venía viendo; sólo toca las que no tienen sitio, y
 eso se puede correr dos veces. Ver «El plano del salón». Mismo truco que la 006:
 el panel detecta si las columnas existen y cae al plano viejo si no.
 
+Migración `008_multi_evento.sql`: tabla `events`, `event_id` en `guests` y `mesas`,
+tipos de invitación por evento, vistas rehechas con `event_id` y nueva `event_summary`.
+Siembra la boda (`archivado`) y el XV de Mauren (`borrador`). Ver «Eventos y plantillas».
+
 Las migraciones en `supabase/migrations/` están numeradas y llevan un comentario de
 cabecera explicando el porqué. Mantén ese formato al añadir una nueva.
 
@@ -1118,9 +1170,10 @@ sobre fondo oscuro se ven todas. `sinMotas()` las borra por umbral antes y
 después de ampliar —el enfoque vuelve a levantar halo—, conservando el borde de
 verdad (alfa 40–224), que es lo que evita que la curva quede escalonada.
 
-## Datos de la boda
+## Datos de la boda (archivo)
 
-Están hardcodeados en los componentes. Si cambian, hay que buscarlos:
+Para eventos nuevos los datos van en `events.config`, no en el código. Los de la
+boda siguen hardcodeados en `src/eventos/boda/`:
 
 | Dato | Valor |
 |---|---|

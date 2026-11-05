@@ -19,9 +19,9 @@ export default function LoginPage() {
   return (
     <div className="adm-login-wrap">
       <div className="adm-login-card">
-        <p className="adm-login-logo">Angely &amp; Kevin · Wedding</p>
+        <p className="adm-login-logo">Invitation · panel</p>
         <h1>Administración</h1>
-        <p>Panel de invitados · 12 Sep 2026</p>
+        <p>Eventos e invitados</p>
         {error && <p className="adm-err">{error}</p>}
         <form onSubmit={handleLogin}>
           <div className="adm-ff">

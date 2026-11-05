@@ -7,6 +7,8 @@ import { exportarImagenes } from './imagenes'
 import MesaRedonda, { colorDe, arrastraMesa, idDeMesa } from './MesaRedonda'
 import EditarNombre from './EditarNombre'
 import RenumerarMesas from './RenumerarMesas'
+import { useEvent } from './EventContext'
+import { esBoda, linksInactivos, miembrosDe, asientosDe } from './evento'
 
 // ─── Quién se sienta ───
 // Se siembra a la PERSONA, no a la tarjeta: una familia puede repartirse entre
@@ -62,7 +64,8 @@ const COL_MIN = 6    // ancho mínimo de la cuadrícula: el salón se ve entero
 // lo metería en el Excel, en los avisos y en las hojas que se imprimen como una
 // mesa vacía a la que le falta gente. Tampoco es un hueco: ahí no falta nada.
 // Por eso su sitio sí se queda escrito aquí.
-const MUEBLES = [{ rotulo: 'Mesa de Postres', fila: 1, col: 5 }]
+// Es del salón de la boda: en cualquier otro evento no hay muebles.
+const MUEBLES_BODA = [{ rotulo: 'Mesa de Postres', fila: 1, col: 5 }]
 
 // La de los novios responde a los dos nombres: el salón la llama «Mesa de los
 // Novios» y en la base es «Mesa principal» desde que se creó. Aceptando ambos,
@@ -87,15 +90,15 @@ const numeroDe = m => {
 const esNovios = m => NOVIOS.includes((m.nombre || '').trim().toLowerCase())
 
 /** Una celda del salón: o lleva mesa, o lleva un mueble, o está libre. */
-const celdaLibre = (fila, col) => {
-  const mu = MUEBLES.find(x => x.fila === fila && x.col === col)
+const celdaLibre = (fila, col, muebles) => {
+  const mu = muebles.find(x => x.fila === fila && x.col === col)
   return mu ? { fila, col, mueble: mu.rotulo } : { fila, col, mesa: null }
 }
 
 // El plano de verdad: el que sale de `fila`/`col`. Siempre sobra una columna
 // —y una hilera, hasta la tercera— para poder soltar una mesa en sitio nuevo
 // sin tener que hacerle hueco antes.
-function planoGuardado(mesas) {
+function planoGuardado(mesas, muebles) {
   const puestas = [], sueltas = [], repetidas = []
   const ocupada = new Map()
   for (const m of mesas) {
@@ -111,11 +114,11 @@ function planoGuardado(mesas) {
     puestas.push(m)
   }
 
-  const columnas = Math.max(COL_MIN, ...puestas.map(m => m.col), ...MUEBLES.map(x => x.col)) + 1
+  const columnas = Math.max(COL_MIN, ...puestas.map(m => m.col), ...muebles.map(x => x.col)) + 1
   const filas = Math.min(HILERAS, Math.max(1, ...puestas.map(m => m.fila)) + 1)
   const hileras = Array.from({ length: filas }, (_, r) =>
     Array.from({ length: columnas }, (_, c) => {
-      const celda = celdaLibre(r + 1, c + 1)
+      const celda = celdaLibre(r + 1, c + 1, muebles)
       return celda.mueble ? celda : { ...celda, mesa: ocupada.get(`${r + 1}:${c + 1}`) || null }
     }))
 
@@ -124,14 +127,14 @@ function planoGuardado(mesas) {
 
 // El respaldo, mientras la 007 no esté aplicada: la posición se deduce del
 // nombre, como hasta el 10·IX·2026, y no se puede mover nada.
-function planoPorNumero(mesas) {
+function planoPorNumero(mesas, muebles) {
   const porNumero = new Map()
   for (const m of mesas) { const n = numeroDe(m); if (n !== null && !porNumero.has(n)) porNumero.set(n, m) }
   const novios = mesas.find(esNovios)
 
   const colocadas = new Set()
   const hileras = PLANO.map((fila, r) => fila.map((c, i) => {
-    const celda = celdaLibre(r + 1, i + 1)
+    const celda = celdaLibre(r + 1, i + 1, muebles)
     if (celda.mueble || c === null) return celda
     const m = c === 'novios' ? novios : porNumero.get(c)
     if (m) colocadas.add(m.id)
@@ -150,8 +153,12 @@ function planoPorNumero(mesas) {
 // `fila in m` distingue «la columna no existe» —007 sin aplicar, PostgREST ni
 // siquiera devuelve la clave— de «existe y está vacía». Mismo truco que con
 // `capitan_id` y la 006.
-const armarPlano = mesas =>
-  mesas.some(m => 'fila' in m) ? planoGuardado(mesas) : planoPorNumero(mesas)
+// El respaldo por nombre (PLANO) es el salón de la boda: en otro evento no
+// tiene sentido, y sin la 007 sus mesas simplemente caen en «sin sitio».
+const armarPlano = (mesas, boda) => {
+  const muebles = boda ? MUEBLES_BODA : []
+  return mesas.some(m => 'fila' in m) || !boda ? planoGuardado(mesas, muebles) : planoPorNumero(mesas, muebles)
+}
 
 /** El motivo por el que una ficha está marcada, ya sea plaza anónima o nombre flojo. */
 const motivoDe = ficha => ficha.anon ? 'vacio' : nombreIncompleto(ficha.nombre)
@@ -335,6 +342,8 @@ function CancionesMesas({ mesas, onGuardar }) {
 }
 
 export default function MesasBoard() {
+  const { evento } = useEvent()
+  const boda = esBoda(evento)
   const [rows, setRows]         = useState([])
   const [miembros, setMiembros] = useState({})
   const [mesas, setMesas]       = useState([])
@@ -373,10 +382,10 @@ export default function MesasBoard() {
   const cargar = useCallback(async () => {
     setError('')
     const [g, m, ms, as] = await Promise.all([
-      supabase.from('guest_summary').select('*'),
-      supabase.from('guest_members').select('id, guest_id, name, order_num'),
-      supabase.from('mesas').select('*').order('orden').order('nombre'),
-      supabase.from('asientos').select('*'),
+      supabase.from('guest_summary').select('*').eq('event_id', evento.id),
+      miembrosDe(supabase, evento.id),
+      supabase.from('mesas').select('*').eq('event_id', evento.id).order('orden').order('nombre'),
+      asientosDe(supabase, evento.id),
     ])
     const fallo = [g, m, ms, as].find(r => r.error)
     if (fallo) {
@@ -393,11 +402,11 @@ export default function MesasBoard() {
     setMesas(ms.data || [])
     setAsientos(as.data || [])
     setCargando(false)
-  }, [])
+  }, [evento.id])
 
   useEffect(() => { cargar() }, [cargar])
 
-  const plano = useMemo(() => armarPlano(mesas), [mesas])
+  const plano = useMemo(() => armarPlano(mesas, boda), [mesas, boda])
 
   const grupos = useMemo(
     () => armarGrupos(rows, miembros, incluir),
@@ -749,7 +758,7 @@ export default function MesasBoard() {
 
   async function nuevaMesa() {
     const { data, error: e } = await supabase.from('mesas')
-      .insert({ nombre: `Mesa ${siguienteNumero()}`, capacidad: 8, orden: mesas.length + 1 })
+      .insert({ event_id: evento.id, nombre: `Mesa ${siguienteNumero()}`, capacidad: 8, orden: mesas.length + 1 })
       .select('id').single()
     if (e) return flash(e.message)
     await cargar()
@@ -1032,6 +1041,11 @@ export default function MesasBoard() {
 
   return (
     <div className={`adm-main mb-root${elegidas.length ? ' con-destino' : ''}`}>
+      {linksInactivos(evento) && (
+        <div className="adm-alert">
+          <span><b>Evento {evento.estado}</b> · los links están inactivos.</span>
+        </div>
+      )}
       <div className="adm-hdr">
         <h2>Mesas del salón</h2>
         <div className="adm-hdr-r">
@@ -1047,7 +1061,7 @@ export default function MesasBoard() {
             title="Descarga el .xlsx con las mesas y los cupos, con fórmulas vivas"
             onClick={async () => {
               try {
-                const r = await exportarExcel(setExportando)
+                const r = await exportarExcel(evento, setExportando)
                 flash(`Excel listo · ${r.tarjetas} tarjetas · ${r.mesas} mesas`)
               } catch (e) { flash(`No se pudo exportar: ${e.message}`) }
               finally { setExportando('') }
@@ -1058,7 +1072,7 @@ export default function MesasBoard() {
             title="Descarga un ZIP con el plano del salón y una hoja por mesa, listas para imprimir"
             onClick={async () => {
               try {
-                const r = await exportarImagenes(setImagenes)
+                const r = await exportarImagenes(evento, setImagenes)
                 flash(r.faltan
                   ? `Imágenes listas · ${r.mesas} mesas · ojo: ${r.faltan} nombres por completar`
                   : `Imágenes listas · ${r.mesas} mesas`)

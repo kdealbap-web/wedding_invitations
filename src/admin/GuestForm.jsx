@@ -2,10 +2,16 @@ import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
 import { supabase } from '../lib/supabase'
 
-const EMPTY = { name: '', invitation_type: 'completa', whatsapp: '', notes: '', token: '', members: [''] }
+const EMPTY = { name: '', whatsapp: '', notes: '', token: '', members: [''] }
 
-export default function GuestForm({ guest, onClose, onSaved }) {
+export default function GuestForm({ evento, guest, onClose, onSaved }) {
   const isEdit = Boolean(guest)
+  // Los tipos salen de la lista del evento; el primero es el de defecto. Si la
+  // tarjeta trae uno que ya no está en la lista, se conserva como opción.
+  const tipos = evento.invitation_types || []
+  const opciones = guest && !tipos.some(t => t.key === guest.invitation_type)
+    ? [...tipos, { key: guest.invitation_type, label: `${guest.invitation_type} (ya no existe)` }]
+    : tipos
   const [form, setForm]     = useState(isEdit ? {
     name:            guest.name,
     invitation_type: guest.invitation_type,
@@ -13,7 +19,7 @@ export default function GuestForm({ guest, onClose, onSaved }) {
     notes:           guest.notes || '',
     token:           guest.token,
     members:         guest.memberNames?.length ? guest.memberNames : [''],
-  } : { ...EMPTY, token: nanoid(32) })
+  } : { ...EMPTY, invitation_type: tipos[0]?.key || '', token: nanoid(22) })
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
 
@@ -38,6 +44,7 @@ export default function GuestForm({ guest, onClose, onSaved }) {
           .from('guests')
           .update({ name: form.name.trim(), invitation_type: form.invitation_type, whatsapp: form.whatsapp.trim() || null, notes: form.notes.trim() || null })
           .eq('id', guest.id)
+          .eq('event_id', evento.id)
         if (gErr) throw gErr
 
         // Replace members
@@ -52,7 +59,7 @@ export default function GuestForm({ guest, onClose, onSaved }) {
         // Insert guest
         const { data, error: gErr } = await supabase
           .from('guests')
-          .insert({ name: form.name.trim(), invitation_type: form.invitation_type, token: form.token, whatsapp: form.whatsapp.trim() || null, notes: form.notes.trim() || null })
+          .insert({ event_id: evento.id, name: form.name.trim(), invitation_type: form.invitation_type, token: form.token, whatsapp: form.whatsapp.trim() || null, notes: form.notes.trim() || null })
           .select('id')
           .single()
         if (gErr) throw gErr
@@ -102,7 +109,7 @@ export default function GuestForm({ guest, onClose, onSaved }) {
           <div className="adm-ff">
             <label>Tipo de invitación</label>
             <div className="adm-toggle">
-              {[{ val: 'completa', lbl: 'Ceremonia + Recepción' }, { val: 'recepcion', lbl: 'Solo Recepción' }].map(o => (
+              {opciones.map(t => ({ val: t.key, lbl: t.label })).map(o => (
                 <label key={o.val} className={form.invitation_type === o.val ? 'on' : ''}>
                   <input type="radio" name="inv_type" checked={form.invitation_type === o.val} onChange={() => set('invitation_type', o.val)} />
                   {o.lbl}
@@ -142,7 +149,7 @@ export default function GuestForm({ guest, onClose, onSaved }) {
             <div className="adm-token-row">
               <input value={form.token} readOnly />
               {!isEdit && (
-                <button type="button" className="adm-ico" title="Regenerar" onClick={() => set('token', nanoid(32))}>
+                <button type="button" className="adm-ico" title="Regenerar" onClick={() => set('token', nanoid(22))}>
                   <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                 </button>
               )}

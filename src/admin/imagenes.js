@@ -10,6 +10,7 @@
 import { supabase } from '../lib/supabase'
 import { logoWedding, florSupIzq, florSupDer, florInfDer, florInfIzq } from '../assets/images'
 import { nombreIncompleto } from './nombres'
+import { miembrosDe, asientosDe } from './evento'
 
 const TINTA  = '#2A1D14'
 const SUAVE  = '#8A7866'
@@ -159,7 +160,7 @@ async function hojaMesa(mesa, gente, cuando) {
   x.fillStyle = '#A2917F'
   x.font = fb(11)
   x.textAlign = 'left'
-  x.fillText('Casona del Prado · Barranquilla', M, yp + 22)
+  x.fillText(EV.lugar, M, yp + 22)
   x.textAlign = 'right'
   x.fillText(cuando, CARTA.w - M, yp + 22)
 
@@ -285,11 +286,35 @@ async function aficheBienvenida(mesas, porMesa, arte) {
   x.strokeStyle = FILETE
   x.beginPath(); x.moveTo(cx - 280, yp); x.lineTo(cx + 280, yp); x.stroke()
   x.fillStyle = ACC_P; x.font = fs(58)
-  x.fillText('Angely & Kevin', cx, yp + 82)
+  x.fillText(EV.titulo, cx, yp + 82)
   x.fillStyle = SUAVE; x.font = fb(16)
-  x.fillText('1 2   D E   S E P T I E M B R E   D E   2 0 2 6   ·   C A S O N A   D E L   P R A D O', cx, yp + 126)
+  x.fillText(EV.espaciada, cx, yp + 126)
 
   return png(c)
+}
+
+// Los datos del evento que van impresos. Los fija exportarImagenes() antes de
+// dibujar; los valores de arranque son los de la boda para que nada cambie si
+// alguien dibuja sin pasar por ahí.
+let EV = { lugar: 'Casona del Prado · Barranquilla', titulo: 'Angely & Kevin', cuando: '12 de septiembre de 2026 · Casona del Prado', pie: 'Angely & Kevin · #AyKBoda', espaciada: '1 2   D E   S E P T I E M B R E   D E   2 0 2 6   ·   C A S O N A   D E L   P R A D O' }
+
+const espaciar = s => s.toUpperCase().split(' ').map(w => w.split('').join(' ')).join('   ')
+
+function datosImpresos(ev) {
+  const cfg = ev.config || {}
+  const fecha = ev.fecha
+    ? new Date(ev.fecha).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Bogota' })
+    : ''
+  const lugar = cfg.lugar?.nombre || ''
+  const cuando = [fecha, lugar].filter(Boolean).join(' · ')
+  const hashtag = cfg.hashtag ? ` · ${cfg.hashtag}` : ''
+  return {
+    titulo: ev.titulo,
+    lugar: [cfg.lugar?.nombre, cfg.lugar?.ciudad].filter(Boolean).join(' · '),
+    cuando,
+    pie: `${ev.titulo}${hashtag}`,
+    espaciada: espaciar(cuando),
+  }
 }
 
 // ─── Plano general ───
@@ -307,13 +332,13 @@ async function plano(mesas, porMesa, cuando) {
   x.fillStyle = SUAVE; x.font = fb(13)
   x.fillText('R E P A R T O   D E   M E S A S', M, 62)
   x.fillStyle = TINTA; x.font = fd(44)
-  x.fillText('Angely & Kevin', M, 112)
+  x.fillText(EV.titulo, M, 112)
 
   const sentados = [...porMesa.values()].reduce((s, g) => s + g.length, 0)
   const faltan = [...porMesa.values()].flat().filter(p => p.falta).length
   x.textAlign = 'right'; x.fillStyle = SUAVE; x.font = fb(13)
   x.fillText(`${mesas.length} mesas · ${sentados} personas sentadas`, 1600 - M, 62)
-  x.fillText('12 de septiembre de 2026 · Casona del Prado', 1600 - M, 84)
+  x.fillText(EV.cuando, 1600 - M, 84)
   x.fillText(`Generado el ${cuando}`, 1600 - M, 106)
 
   x.strokeStyle = ORO; x.lineWidth = 2
@@ -358,7 +383,7 @@ async function plano(mesas, porMesa, cuando) {
   x.fillStyle = faltan ? ROJO : SUAVE
   x.fillText(faltan ? `● ${faltan} nombre(s) por completar` : 'Todos los nombres completos', M, yp + 24)
   x.textAlign = 'right'; x.fillStyle = SUAVE
-  x.fillText('Angely & Kevin · #AyKBoda', 1600 - M, yp + 24)
+  x.fillText(EV.pie, 1600 - M, yp + 24)
 
   return png(c)
 }
@@ -368,13 +393,14 @@ const slug = s => (s || '').toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 /** Genera el ZIP con el afiche, el plano y una hoja por mesa, y lo descarga. */
-export async function exportarImagenes(avisar = () => {}) {
+export async function exportarImagenes(evento, avisar = () => {}) {
+  EV = datosImpresos(evento)
   avisar('Consultando…')
   const [ms, as, mem, gs] = await Promise.all([
-    supabase.from('mesas').select('*').order('orden'),
-    supabase.from('asientos').select('*'),
-    supabase.from('guest_members').select('id, name'),
-    supabase.from('guest_summary').select('id, group_name'),
+    supabase.from('mesas').select('*').eq('event_id', evento.id).order('orden'),
+    asientosDe(supabase, evento.id),
+    miembrosDe(supabase, evento.id, 'id, name'),
+    supabase.from('guest_summary').select('id, group_name').eq('event_id', evento.id),
   ])
   for (const r of [ms, as, mem, gs]) if (r.error) throw new Error(r.error.message)
   if (!ms.data.length) throw new Error('No hay mesas creadas todavía')
@@ -411,8 +437,8 @@ export async function exportarImagenes(avisar = () => {}) {
 
   const faltan = [...porMesa.values()].flat().filter(p => p.falta).length
   zip.file('LEEME.txt',
-`REPARTO DE MESAS — Angely & Kevin
-Sábado 12 de septiembre de 2026 · Casona del Prado, Barranquilla
+`REPARTO DE MESAS — ${EV.titulo}
+${EV.cuando}
 Generado el ${cuando}
 
   bienvenida.png             EL AFICHE DE LA ENTRADA: todas las mesas con sus
@@ -441,7 +467,7 @@ y Enter guarda y pasa al siguiente.
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `mesas_${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.zip`
+  a.download = `${evento.slug}_mesas_${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.zip`
   document.body.appendChild(a); a.click(); a.remove()
   setTimeout(() => URL.revokeObjectURL(url), 4000)
 

@@ -1,7 +1,7 @@
 /**
  * Export de invitados, cupos y mesas a Excel — desde la línea de comandos.
  *
- *   npm run export                 # lee de Supabase (necesita .env)
+ *   npm run export -- --evento=<slug>                 # lee de Supabase (necesita .env)
  *   npm run export -- --demo       # datos de ejemplo, para ver el formato sin base
  *
  * El libro lo arma `src/admin/excel.js`, EL MISMO que usa el botón «Exportar
@@ -18,6 +18,8 @@ import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { construirLibro } from '../src/admin/excel.js'
 import { ESTADOS, estadoOf } from '../src/admin/cupos.js'
+import { miembrosDe, asientosDe, sufijoArchivo } from '../src/admin/evento.js'
+import { elegirEvento } from './evento-cli.mjs'
 
 const DEMO = process.argv.includes('--demo')
 const SALIDA = resolve('entrega/invitados')
@@ -39,11 +41,14 @@ async function env() {
 async function traerDeSupabase() {
   const { url, key } = await env()
   const sb = createClient(url, key)
+  const evento = await elegirEvento(sb)
+  console.log(`  Evento: ${evento.titulo} (${evento.slug})
+`)
   const [g, m, ms, as] = await Promise.all([
-    sb.from('guest_summary').select('*'),
-    sb.from('guest_members').select('id, guest_id, name, order_num'),
-    sb.from('mesas').select('*').order('orden'),
-    sb.from('asientos').select('*'),
+    sb.from('guest_summary').select('*').eq('event_id', evento.id),
+    miembrosDe(sb, evento.id),
+    sb.from('mesas').select('*').eq('event_id', evento.id).order('orden'),
+    asientosDe(sb, evento.id),
   ])
   if (g.error) throw new Error(`guest_summary: ${g.error.message}`)
   if (m.error) throw new Error(`guest_members: ${m.error.message}`)
@@ -54,6 +59,8 @@ async function traerDeSupabase() {
     miembros: m.data || [],
     mesas: conMesas ? (ms.data || []) : [],
     asientos: conMesas ? (as.data || []) : [],
+    evento,
+    tipos: evento.invitation_types || [],
   }
 }
 
@@ -103,18 +110,19 @@ async function main() {
   await mkdir(SALIDA, { recursive: true })
   const { wb, filasPersona } = construirLibro(datos, ExcelJS)
 
-  const xlsx = join(SALIDA, DEMO ? 'invitados-DEMO.xlsx' : 'invitados-y-mesas.xlsx')
+  const pre = DEMO ? '' : `${sufijoArchivo(datos.evento)}_`
+  const xlsx = join(SALIDA, DEMO ? 'invitados-DEMO.xlsx' : `${pre}invitados-y-mesas.xlsx`)
   await wb.xlsx.writeFile(xlsx)
 
-  await writeFile(join(SALIDA, 'tarjetas.csv'), csv([
+  await writeFile(join(SALIDA, `${pre}tarjetas.csv`), csv([
     ['Tarjeta', 'Tipo', 'Estado', 'Cupos', 'Confirmados', 'WhatsApp'],
     ...datos.rows.map(r => [r.group_name, r.invitation_type, LBL[estadoOf(r)], r.total_members || 0, r.attending_count || 0, r.whatsapp || '']),
   ]), 'utf8')
-  await writeFile(join(SALIDA, 'personas.csv'),
+  await writeFile(join(SALIDA, `${pre}personas.csv`),
     csv([['Persona', 'Tarjeta', 'Estado tarjeta', 'Mesa'], ...filasPersona]), 'utf8')
 
   console.log(`  ✓ ${xlsx}`)
-  console.log('  ✓ tarjetas.csv · personas.csv')
+  console.log(`  ✓ ${pre}tarjetas.csv · ${pre}personas.csv`)
   console.log(`\n  ${datos.rows.length} tarjetas · ${filasPersona.length} personas · ${datos.mesas.length} mesas\n`)
 }
 

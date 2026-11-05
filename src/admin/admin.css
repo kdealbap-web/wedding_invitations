@@ -863,3 +863,6 @@ body.admin-body {
 .mb-sin-mesas h3 { font-size: 1rem; color: #e2e8f0; font-weight: 600 }
 .mb-sin-mesas p  { font-size: .84rem; color: #64748b; line-height: 1.75; max-width: 34rem }
 .mb-sin-mesas .adm-btn { margin-top: .5rem }
+
+/* Enlaces con aspecto de botón (lista de eventos, formulario) */
+a.adm-btn { text-decoration: none }

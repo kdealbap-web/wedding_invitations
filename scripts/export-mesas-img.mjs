@@ -1,9 +1,9 @@
 /**
  * Exporta el reparto de mesas como imágenes.
  *
- *   npm run mesas-img
+ *   npm run mesas-img -- --evento=<slug>
  *
- * Genera, en entrega/mesas/:
+ * Genera, en entrega/mesas/<slug>/:
  *   bienvenida.png             el afiche de la entrada: todas las mesas con sus
  *                              invitados, sobre la plantilla de la participación
  *   bienvenida-pendon-75x175.png   el mismo, en pendón de 75 × 175 cm
@@ -26,10 +26,12 @@ import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { nombreIncompleto } from '../src/admin/nombres.js'
+import { miembrosDe, asientosDe } from '../src/admin/evento.js'
+import { elegirEvento } from './evento-cli.mjs'
 import { VOTOS, FLORES, estiloFlores, cuerpoFlores, bloqueVoto } from './votos-texto.mjs'
 import { GUION, POR_HOJA_GUION } from './guion-dj.mjs'
 
-const SALIDA = resolve('entrega/mesas')
+let SALIDA = resolve('entrega/mesas')   // main() le añade el slug del evento
 // El escudo y las cuatro esquinas de acuarela, recortadas de la participación.
 // Ver «El afiche de bienvenida» en CLAUDE.md.
 const ARTE = [
@@ -1039,11 +1041,14 @@ async function main() {
 
   const { url, key } = await env()
   const sb = createClient(url, key)
+  const evento = await elegirEvento(sb)
+  SALIDA = resolve('entrega/mesas', evento.slug)
+  console.log(`  Evento: ${evento.titulo} (${evento.slug})`)
   const [ms, as, mem, gs] = await Promise.all([
-    sb.from('mesas').select('*').order('orden'),
-    sb.from('asientos').select('*'),
-    sb.from('guest_members').select('id, name'),
-    sb.from('guest_summary').select('id, group_name'),
+    sb.from('mesas').select('*').eq('event_id', evento.id).order('orden'),
+    asientosDe(sb, evento.id),
+    miembrosDe(sb, evento.id, 'id, name'),
+    sb.from('guest_summary').select('id, group_name').eq('event_id', evento.id),
   ])
   for (const r of [ms, as, mem, gs]) if (r.error) throw new Error(r.error.message)
   if (!ms.data.length) throw new Error('No hay mesas creadas todavía')

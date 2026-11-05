@@ -2,15 +2,20 @@ import { StrictMode, Component, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
-import App from './App.jsx'
+import { NoActiva } from './invitacion/Estado.jsx'
 
 // Carga diferida a propósito: el panel es lo único que construye el cliente de
 // Supabase al importarse, y si faltan las variables de entorno eso tumbaba la
 // aplicación entera —incluida la tarjeta, que no usa Supabase—. Separándolos,
 // un fallo de configuración solo afecta a /admin. De paso divide el bundle.
 const AdminApp             = lazy(() => import('./admin/AdminApp.jsx'))
-const TarjetaParticipacion = lazy(() => import('./participacion/TarjetaParticipacion.jsx'))
-const PantallaLed          = lazy(() => import('./pantalla/PantallaLed.jsx'))
+const Landing              = lazy(() => import('./landing/Landing.jsx'))
+const InvitacionApp        = lazy(() => import('./invitacion/InvitacionApp.jsx'))
+const TarjetaParticipacion = lazy(() => import('./eventos/boda/participacion/TarjetaParticipacion.jsx'))
+const PantallaLed          = lazy(() => import('./eventos/boda/pantalla/PantallaLed.jsx'))
+
+// Los links viejos de la boda con ?t=TOKEN apuntaban a la raíz: ya no son válidos.
+const Inicio = () => (new URLSearchParams(window.location.search).has('t') ? <NoActiva /> : <Landing />)
 
 const centrado = {
   display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -53,7 +58,10 @@ createRoot(document.getElementById('root')).render(
             <Route path="/admin/*"       element={<AdminApp />} />
             <Route path="/participacion" element={<TarjetaParticipacion />} />
             <Route path="/pantalla"      element={<PantallaLed />} />
-            <Route path="/*"             element={<App />} />
+            <Route path="/"              element={<Inicio />} />
+            <Route path="/i/:token"      element={<InvitacionApp />} />
+            {/* Links viejos de la boda (/eyJ… y ?t=) y cualquier otra ruta */}
+            <Route path="*"              element={<NoActiva />} />
           </Routes>
         </Suspense>
       </ErrorBoundary>

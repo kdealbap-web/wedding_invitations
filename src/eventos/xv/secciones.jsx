@@ -1,0 +1,258 @@
+import { useState, useEffect } from 'react'
+import { useGuest } from '../../invitacion/GuestContext'
+import Rsvp from '../../invitacion/Rsvp'
+import { fechaLarga, fechaCorta, googleCalUrl, descargarIcs } from '../../invitacion/fechas'
+import { useFoto } from './fotos'
+
+// ─── Secciones de la plantilla XV ───
+// Todo el contenido sale de event.config (ver 008_multi_evento.sql): nada de
+// esto lleva texto de un evento concreto, así que otro XV solo cambia su config.
+
+const useConfig = () => {
+  const { event } = useGuest()
+  return { event, cfg: event?.config || {} }
+}
+
+const Orn = () => (
+  <div className="div-orn"><div className="div-line" /><div className="div-dot" /><div className="div-line" /></div>
+)
+
+// ─── Hero ───
+const partes = (ms) => {
+  const s = Math.max(0, Math.floor(ms / 1000))
+  return { d: Math.floor(s / 86400), h: Math.floor(s / 3600) % 24, m: Math.floor(s / 60) % 60, s: s % 60 }
+}
+
+function useCuentaRegresiva(iso) {
+  const meta = iso ? new Date(iso).getTime() : null
+  const [ahora, setAhora] = useState(() => Date.now())
+  useEffect(() => {
+    if (!meta) return
+    const id = setInterval(() => setAhora(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [meta])
+  return meta ? partes(meta - ahora) : null
+}
+
+export function XHero() {
+  const { event, cfg } = useConfig()
+  const cd = useCuentaRegresiva(event?.fecha)
+  const nombre = cfg.nombre_corto || cfg.anfitrion
+  return (
+    <>
+      <p className="xv-eyebrow">Te invito a celebrar</p>
+      <h1 className="xv-titulo">{cfg.titulo || event?.titulo}</h1>
+      <p className="xv-nombre">{nombre}</p>
+      {cfg.anfitrion && cfg.anfitrion !== nombre && <p className="xv-apellido">{cfg.anfitrion}</p>}
+      <Orn />
+      {event?.fecha && (
+        <p className="xv-fecha">{fechaLarga(event.fecha)}{cfg.hora_texto ? ` · ${cfg.hora_texto}` : ''}</p>
+      )}
+      {cd && (
+        <div className="xv-cd" aria-label="Cuenta regresiva">
+          {[['d', 'días'], ['h', 'horas'], ['m', 'min'], ['s', 'seg']].map(([k, l]) => (
+            <div key={k} className="xv-cd-i">
+              <b>{String(cd[k]).padStart(2, '0')}</b>
+              <span>{l}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
+
+// ─── Mensaje ───
+export function XMensaje() {
+  const { cfg } = useConfig()
+  return (
+    <>
+      <p className="xv-eyebrow">Un mensaje para ti</p>
+      <Orn />
+      <blockquote className="xv-cita">{cfg.mensaje}</blockquote>
+      <p className="xv-firma">{cfg.nombre_corto || cfg.anfitrion}</p>
+    </>
+  )
+}
+
+// ─── Invitación exclusiva ───
+export function XExclusiva() {
+  const { nombre, members } = useGuest()
+  const n = members.length
+  return (
+    <>
+      <p className="xv-eyebrow">Invitación exclusiva</p>
+      <h2 className="sec-title" style={{ textAlign: 'center' }}>Reservado <em>para</em></h2>
+      <p className="xv-invitado">{nombre}</p>
+      {n > 0 && (
+        <div className="xv-cupos">
+          <b>{n}</b>
+          <span>Cupos asignados: {n} {n === 1 ? 'persona' : 'personas'}</span>
+        </div>
+      )}
+      {n > 0 && (
+        <ul className="xv-miembros">
+          {members.map(m => <li key={m.id}>{m.name}</li>)}
+        </ul>
+      )}
+    </>
+  )
+}
+
+// ─── Detalles ───
+export function XDetalles({ onToast }) {
+  const { event, cfg } = useConfig()
+  const l = cfg.lugar || {}
+  const dir = [l.nombre, l.salon, l.direccion].filter(Boolean).join(', ')
+  const cal = {
+    titulo: event?.titulo || '', iso: event?.fecha, horas: 4, lugar: dir,
+    detalle: [cfg.hora_texto && `Hora: ${cfg.hora_texto}`, l.salon && `${l.nombre} · ${l.salon}`].filter(Boolean).join('\n'),
+  }
+  return (
+    <>
+      <p className="xv-eyebrow">Los detalles</p>
+      <h2 className="sec-title" style={{ textAlign: 'center' }}>Cuándo <em>y dónde</em></h2>
+      <Orn />
+      <div className="xv-detalles">
+        <div className="xv-det">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <p className="xv-det-t">{fechaLarga(event?.fecha)}</p>
+          {cfg.hora_texto && <p className="xv-det-s">{cfg.hora_texto}</p>}
+        </div>
+        <div className="xv-det">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <p className="xv-det-t">{l.nombre}</p>
+          {l.salon && <p className="xv-det-s">{l.salon}</p>}
+          {l.direccion && <p className="xv-det-d">{l.direccion}</p>}
+        </div>
+      </div>
+      <div className="xv-botones">
+        {l.maps && (
+          <a className="btn btn-acc" href={l.maps} target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>
+            Cómo llegar
+          </a>
+        )}
+        {event?.fecha && (
+          <>
+            <a className="btn btn-ghost" href={googleCalUrl(cal)} target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M12 14v4M10 16h4"/></svg>
+              Google Calendar
+            </a>
+            <button type="button" className="btn btn-ghost" onClick={() => { descargarIcs({ ...cal, archivo: `${event.slug}.ics` }); onToast?.('Evento descargado') }}>
+              <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+              Añadir al calendario
+            </button>
+          </>
+        )}
+      </div>
+      {event?.fecha && <p className="xv-nota">{fechaCorta(event.fecha)} · añádelo para no olvidarlo</p>}
+    </>
+  )
+}
+
+// ─── Código de vestuario ───
+export function XVestuario() {
+  const { cfg } = useConfig()
+  const v = cfg.vestuario || {}
+  return (
+    <>
+      <p className="xv-eyebrow">Código de vestuario</p>
+      <h2 className="sec-title" style={{ textAlign: 'center' }}>{v.etiqueta}</h2>
+      <Orn />
+      <div className="xv-detalles">
+        {v.caballeros && (
+          <div className="xv-det">
+            <svg viewBox="0 0 24 24"><path d="M12 2L8 6l4 2 4-2-4-4z"/><path d="M8 6l-4 1v14h16V7l-4-1"/><line x1="12" y1="8" x2="12" y2="20"/></svg>
+            <p className="xv-det-s">Caballeros</p>
+            <p className="xv-det-t">{v.caballeros}</p>
+          </div>
+        )}
+        {v.damas && (
+          <div className="xv-det">
+            <svg viewBox="0 0 24 24"><path d="M12 2c-2 0-4 1-4 4v1l-3 14h14l-3-14V6c0-3-2-4-4-4z"/></svg>
+            <p className="xv-det-s">Damas</p>
+            <p className="xv-det-t">{v.damas}</p>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+// ─── Tonos reservados ───
+export function XTonos() {
+  const { cfg } = useConfig()
+  const t = cfg.tonos_reservados || {}
+  return (
+    <>
+      <p className="xv-eyebrow">Tonos reservados</p>
+      <h2 className="sec-title" style={{ textAlign: 'center' }}>Estos colores son <em>de la quinceañera</em></h2>
+      <Orn />
+      <div className="xv-tonos">
+        {(t.colores || []).map(c => (
+          <div key={c.hex} className="xv-tono">
+            <span className="xv-tono-c" style={{ background: c.hex }} />
+            <span className="xv-tono-n">{c.nombre}</span>
+            <span className="xv-tono-h">{c.hex}</span>
+          </div>
+        ))}
+      </div>
+      {t.nota && <p className="xv-texto">{t.nota}</p>}
+    </>
+  )
+}
+
+// ─── Solo jóvenes y adultos ───
+export function XRestriccion() {
+  const { cfg } = useConfig()
+  const r = cfg.restriccion || {}
+  return (
+    <>
+      <p className="xv-eyebrow">Un detalle importante</p>
+      <h2 className="sec-title" style={{ textAlign: 'center' }}>{r.titulo}</h2>
+      <Orn />
+      <div className="xv-tarjeta">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="7" r="3"/><path d="M3 20c0-3.3 2.2-6 5-6"/><circle cx="16" cy="7" r="3"/><path d="M21 20c0-3.3-2.2-6-5-6"/></svg>
+        <p>{r.texto}</p>
+      </div>
+    </>
+  )
+}
+
+// ─── Lluvia de sobres ───
+export function XRegalos() {
+  const { cfg } = useConfig()
+  const r = cfg.regalos || {}
+  return (
+    <>
+      <p className="xv-eyebrow">Un detalle</p>
+      <h2 className="sec-title" style={{ textAlign: 'center' }}>{r.titulo}</h2>
+      <Orn />
+      <div className="xv-tarjeta">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        <p>{r.texto}</p>
+      </div>
+    </>
+  )
+}
+
+// ─── RSVP ───
+export function XRsvp({ onToast }) {
+  const foto = useFoto('retrato')
+  return <Rsvp onToast={onToast} foto={foto} />
+}
+
+// ─── Cierre ───
+export function XCierre() {
+  const { event, cfg } = useConfig()
+  return (
+    <>
+      <p className="xv-eyebrow">Gracias</p>
+      <p className="xv-cierre">{cfg.cierre}</p>
+      <Orn />
+      <p className="xv-nombre xv-nombre-s">{cfg.nombre_corto || cfg.anfitrion}</p>
+      <p className="xv-apellido">{event?.fecha ? fechaLarga(event.fecha) : ''}</p>
+    </>
+  )
+}

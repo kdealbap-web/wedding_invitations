@@ -433,3 +433,11 @@ button,input,select,textarea{font-family:inherit}
 .cerrada-btn:hover{background:var(--acc-dk);transform:translateY(-2px)}
 .cerrada-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .cerrada-hash{font-family:var(--fs);font-size:1.5rem;color:var(--gold);opacity:.55;margin-top:2rem}
+
+/* ─── Invitación genérica: loader y banner de vista previa ─── */
+.inv-loader{display:flex;gap:.55rem;justify-content:center}
+.inv-loader span{width:9px;height:9px;border-radius:50%;background:var(--gold);opacity:.25;animation:inv-pulso 1.2s ease-in-out infinite}
+.inv-loader span:nth-child(2){animation-delay:.18s}
+.inv-loader span:nth-child(3){animation-delay:.36s}
+@keyframes inv-pulso{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:.95;transform:scale(1.15)}}
+.preview-banner{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:700;padding:.28rem 1rem;border-radius:0 0 12px 12px;background:rgba(20,12,6,.82);border:1px solid rgba(255,255,255,.16);border-top:none;backdrop-filter:blur(8px);font-family:var(--fb);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.78);white-space:nowrap;pointer-events:none}

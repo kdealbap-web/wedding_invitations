@@ -1,11 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 
-const PLAYLIST = [
-  '/audio/perfect.mp3',
-  '/audio/all_of_me.mp3',
-]
-
-export default function AudioBtn() {
+// Las pistas llegan por prop (cada evento trae las suyas). Sin pistas no hay
+// botón: no se monta nada.
+export default function AudioBtn({ tracks: PLAYLIST = [] }) {
   // `on` = el usuario quiere sonido (arranca en true → intenta autoplay)
   // `started` = el audio realmente está sonando
   const [on, setOn] = useState(true)
@@ -15,7 +12,7 @@ export default function AudioBtn() {
 
   const play = () => {
     const a = audioRef.current
-    if (!a) return Promise.reject()
+    if (!a || !PLAYLIST.length) return Promise.reject()
     if (!a.src) a.src = PLAYLIST[trackIdx.current]
     return a.play().then(() => setStarted(true))
   }

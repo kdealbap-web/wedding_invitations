@@ -5,44 +5,43 @@ import { exportarExcel } from './descargar'
 import GuestForm from './GuestForm'
 import CallModal from './CallModal'
 
+import { useEvent } from './EventContext'
+import { linksInactivos, tipoLabel, diasPara } from './evento'
+
 const APP_URL = import.meta.env.VITE_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
-const WEDDING = new Date('2026-09-12T00:00:00-05:00')
 
-// UTF-8 safe Base64URL encode of JSON payload { t, n, k }
-function encodeInvite(token, name, type) {
-  const json  = JSON.stringify({ t: token, n: name, k: type })
-  const bytes = new TextEncoder().encode(json)
-  const bin   = String.fromCharCode(...bytes)
-  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-}
-
+// El token es opaco (nanoid 22): el nombre ya no viaja en el link.
 function inviteUrl(row) {
-  return `${APP_URL}/${encodeInvite(row.token, row.group_name, row.invitation_type)}`
+  return `${APP_URL}/i/${row.token}`
 }
 
-// Mensaje personalizado de invitación (WhatsApp / copiar)
-function buildMessage(row) {
-  return (
-`Hola, ${row.group_name}! ✨🧡
+const fmtLimite = (d) => {
+  if (!d) return ''
+  try { return new Date(`${d}T12:00:00`).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' }) } catch { return '' }
+}
 
-Con mucha ilusión te invitamos a celebrar nuestra boda. 💍 Para nosotros sería muy especial contar contigo en este día tan importante.
+// Mensaje personalizado de invitación (WhatsApp / copiar). Sale de los datos
+// del evento, no de un texto fijo.
+function buildMessage(row, ev) {
+  const quien = ev.config?.anfitrion || ev.titulo
+  const limite = fmtLimite(ev.rsvp_limite)
+  return (
+`Hola, ${row.group_name}! ✨
+
+Con mucha ilusión te invitamos a ${ev.titulo}. Para nosotros sería muy especial contar contigo.
 
 En el siguiente enlace encontrarás todos los detalles y la tarjeta de invitación:
 ${inviteUrl(row)}
-
-Te agradeceríamos que, si es posible, nos confirmes tu asistencia antes del 12 de agosto para organizarnos con tiempo. 🗓️
-
-Tenemos muchas ganas de que nos acompañes a celebrar este día tan especial y mágico.
-
+${limite ? `
+Te agradeceríamos que, si es posible, nos confirmes tu asistencia antes del ${limite} para organizarnos con tiempo. 🗓️
+` : ''}
 Con cariño,
-Angely y Kevin
-#AyKBoda
-Comienza la cuenta regresiva...`
+${quien}`
   )
 }
 
-function waUrl(row) {
-  return `https://wa.me/${(row.whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent(buildMessage(row))}`
+function waUrl(row, ev) {
+  return `https://wa.me/${(row.whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent(buildMessage(row, ev))}`
 }
 
 function StatusBadge({ row }) {
@@ -52,10 +51,11 @@ function StatusBadge({ row }) {
   return <span className={`badge ${e.cls}`} title={e.desc + quien}>{e.lbl}{intentos}</span>
 }
 
-function TypeBadge({ type }) {
-  return type === 'completa'
-    ? <span className="badge badge-gold">Completa</span>
-    : <span className="badge badge-blue">Recepción</span>
+const TIPO_CLS = ['badge-gold', 'badge-blue', 'badge-green', 'badge-gray']
+
+function TypeBadge({ type, evento }) {
+  const i = Math.max(0, (evento.invitation_types || []).findIndex(t => t.key === type))
+  return <span className={`badge ${TIPO_CLS[i % TIPO_CLS.length]}`}>{tipoLabel(evento, type)}</span>
 }
 
 function fmtDate(s) {
@@ -91,6 +91,9 @@ const WORK_RANK = {
 const workRank = (r) => WORK_RANK[estadoOf(r)]
 
 export default function Dashboard() {
+  const { evento } = useEvent()
+  const tipos = evento.invitation_types || []
+  const inactivo = linksInactivos(evento)
   const [rows, setRows]         = useState([])
   const [details, setDetails]   = useState([])
   const [loading, setLoading]   = useState(true)
@@ -114,11 +117,11 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async () => {
     const [{ data: gs }, { data: confs }] = await Promise.all([
-      supabase.from('guest_summary').select('*').order('group_name'),
-      supabase.from('confirmations').select('guest_id, attending, dietary_notes, song_request'),
+      supabase.from('guest_summary').select('*').eq('event_id', evento.id).order('group_name'),
+      supabase.from('confirmations').select('guest_id, attending, dietary_notes, song_request, guests!inner(event_id)').eq('guests.event_id', evento.id),
     ])
     return { rows: gs || [], details: confs || [] }
-  }, [])
+  }, [evento.id])
 
   // Carga completa (con spinner; reinicia la selección)
   const load = useCallback(async () => {
@@ -138,13 +141,13 @@ export default function Dashboard() {
   }, [fetchData])
 
   const loadWithMembers = useCallback(async (guestId) => {
-    const { data: guest } = await supabase.from('guests').select('*, guest_members(id, name, order_num)').eq('id', guestId).single()
+    const { data: guest } = await supabase.from('guests').select('*, guest_members(id, name, order_num)').eq('id', guestId).eq('event_id', evento.id).single()
     if (!guest) return null
     return {
       ...guest,
       memberNames: (guest.guest_members || []).sort((a, b) => a.order_num - b.order_num).map(m => m.name)
     }
-  }, [])
+  }, [evento.id])
 
   useEffect(() => { load() }, [load])
 
@@ -193,13 +196,12 @@ export default function Dashboard() {
     prePeople:   gente.preconfirmado,
     // Cupos que siguen en el aire (sin respuesta + no contesta).
     openCupos:   gente.sin_respuesta + gente.no_contesta,
-    completa:    rows.filter(r => r.invitation_type === 'completa').length,
-    recepcion:   rows.filter(r => r.invitation_type === 'recepcion').length,
+    porTipo:     tipos.map(t => ({ ...t, n: rows.filter(r => r.invitation_type === t.key).length })),
     unopened:    rows.filter(r => !r.view_count).length,
     por,
   }
   const counts = { all: stats.invitations, ...por }
-  const daysLeft = Math.max(0, Math.ceil((WEDDING.getTime() - Date.now()) / 86400000))
+  const daysLeft = diasPara(evento.fecha)
 
   // ── Detalles del RSVP (alimentación / canciones) ──
   const nameOf = (gid) => rows.find(r => r.id === gid)?.group_name || 'Invitado'
@@ -222,21 +224,21 @@ export default function Dashboard() {
   // ── Acciones masivas ──
   const bulkType = async (type) => {
     const ids = [...selected]
-    const { error } = await supabase.from('guests').update({ invitation_type: type }).in('id', ids)
+    const { error } = await supabase.from('guests').update({ invitation_type: type }).eq('event_id', evento.id).in('id', ids)
     if (error) return flash('Error al actualizar')
-    flash(`${ids.length} cambiada(s) a ${type === 'completa' ? 'Completa' : 'Solo Recepción'}`)
+    flash(`${ids.length} cambiada(s) a ${tipoLabel(evento, type)}`)
     load()
   }
   const bulkDelete = async () => {
     if (!confirm(`¿Eliminar ${selected.size} invitación(es)? Esta acción no se puede deshacer.`)) return
-    const { error } = await supabase.from('guests').delete().in('id', [...selected])
+    const { error } = await supabase.from('guests').delete().eq('event_id', evento.id).in('id', [...selected])
     if (error) return flash('Error al eliminar')
     flash(`${selected.size} eliminada(s)`)
     load()
   }
   const bulkCopyMessages = () => {
     const msgs = rows.filter(r => selected.has(r.id))
-      .map(r => buildMessage(r))
+      .map(r => buildMessage(r, evento))
       .join('\n\n━━━━━━━━━━━━━━━\n\n')
     navigator.clipboard.writeText(msgs).then(() => flash(`${selected.size} mensaje(s) copiado(s)`))
   }
@@ -248,20 +250,26 @@ export default function Dashboard() {
   }
   const handleDelete = async (row) => {
     if (!confirm(`¿Eliminar la invitación de "${row.group_name}"?`)) return
-    await supabase.from('guests').delete().eq('id', row.id)
+    await supabase.from('guests').delete().eq('id', row.id).eq('event_id', evento.id)
     flash('Invitación eliminada')
     load()
   }
   const copyUrl = (row) => navigator.clipboard.writeText(inviteUrl(row)).then(() => flash('URL copiada'))
-  const copyMessage = (row) => navigator.clipboard.writeText(buildMessage(row)).then(() => flash('Mensaje copiado'))
+  const copyMessage = (row) => navigator.clipboard.writeText(buildMessage(row, evento)).then(() => flash('Mensaje copiado'))
 
   return (
     <div className="adm-main" style={{ padding: '2rem' }}>
+      {inactivo && (
+        <div className="adm-alert">
+          <span><b>Evento {evento.estado}</b> · los links están inactivos. Puedes mirar y exportar, pero los invitados ya no pueden abrir ni confirmar.</span>
+        </div>
+      )}
+
       {/* Header con cuenta regresiva */}
       <div className="adm-page-head">
         <div>
           <h1 className="adm-page-title">Panel de invitados</h1>
-          <p className="adm-page-sub">Angely &amp; Kevin · 12 de septiembre de 2026</p>
+          <p className="adm-page-sub">{evento.titulo}{evento.fecha ? ` · ${new Date(evento.fecha).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Bogota' })}` : ''}</p>
         </div>
         <div className="adm-head-right">
           <button
@@ -275,7 +283,7 @@ export default function Dashboard() {
           <button className="adm-ico" title="Actualizar ahora" onClick={() => { refresh(); flash('Actualizado') }}>
             <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           </button>
-          <div className="adm-days"><b>{daysLeft}</b> días para la boda</div>
+          {daysLeft !== null && <div className="adm-days"><b>{daysLeft}</b> días para el evento</div>}
         </div>
       </div>
 
@@ -305,8 +313,9 @@ export default function Dashboard() {
         <div className="adm-stat">
           <div className="adm-stat-l2">Tipo de invitación</div>
           <div className="adm-stat-types">
-            <span className="badge badge-gold">Completa · {stats.completa}</span>
-            <span className="badge badge-blue">Recepción · {stats.recepcion}</span>
+            {stats.porTipo.map((t, i) => (
+              <span key={t.key} className={`badge ${TIPO_CLS[i % TIPO_CLS.length]}`}>{t.label} · {t.n}</span>
+            ))}
           </div>
         </div>
       </div>
@@ -356,7 +365,7 @@ export default function Dashboard() {
             disabled={!!exportando}
             onClick={async () => {
               try {
-                const r = await exportarExcel(setExportando)
+                const r = await exportarExcel(evento, setExportando)
                 flash(r.conMesas
                   ? `Excel listo · ${r.tarjetas} tarjetas · ${r.mesas} mesas`
                   : `Excel listo · ${r.tarjetas} tarjetas (sin mesas: falta aplicar 005_mesas.sql)`)
@@ -387,8 +396,9 @@ export default function Dashboard() {
           <span>{selected.size} seleccionada(s)</span>
           <div className="adm-bulk-actions">
             <span className="adm-bulk-lbl">Tipo:</span>
-            <button className="adm-btn adm-btn-ghost" onClick={() => bulkType('completa')}>→ Completa</button>
-            <button className="adm-btn adm-btn-ghost" onClick={() => bulkType('recepcion')}>→ Solo Recepción</button>
+            {tipos.map(t => (
+              <button key={t.key} className="adm-btn adm-btn-ghost" onClick={() => bulkType(t.key)}>→ {t.label}</button>
+            ))}
             <button className="adm-btn adm-btn-ghost" onClick={bulkCopyMessages}>Copiar mensajes</button>
             <button className="adm-btn adm-btn-red" onClick={bulkDelete}>Eliminar</button>
             <button className="adm-btn adm-btn-ghost" onClick={() => setSelected(new Set())}>Cancelar</button>
@@ -428,7 +438,7 @@ export default function Dashboard() {
                       <div style={{ fontSize: '.75rem', color: '#64748b', marginTop: '.15rem' }}>{row.whatsapp}</div>
                     )}
                   </td>
-                  <td><TypeBadge type={row.invitation_type} /></td>
+                  <td><TypeBadge type={row.invitation_type} evento={evento} /></td>
                   <td>
                     {row.total_members
                       ? <span style={{ color: '#94a3b8' }}>{row.total_members}</span>
@@ -460,7 +470,7 @@ export default function Dashboard() {
                         <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                       </button>
                       {row.whatsapp && (
-                        <a className="adm-ico green" title="Enviar por WhatsApp" href={waUrl(row)} target="_blank" rel="noopener">
+                        <a className="adm-ico green" title="Enviar por WhatsApp" href={waUrl(row, evento)} target="_blank" rel="noopener">
                           <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                         </a>
                       )}
@@ -521,6 +531,7 @@ export default function Dashboard() {
 
       {showForm && (
         <GuestForm
+          evento={evento}
           guest={editing}
           onClose={() => { setShowForm(false); setEditing(null) }}
           onSaved={() => { setShowForm(false); setEditing(null); flash('Guardado'); load() }}

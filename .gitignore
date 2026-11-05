@@ -45,3 +45,7 @@ entrega/
 # Al repo entran las copias a 2200 px de src/assets/img, ingeridas con
 #   npm run optimize-images -- --desde=src/imagenes_editadas
 src/imagenes_editadas/
+
+# Material de clientes: nombres reales de invitados y fotos originales
+XV MAUREN/
+*.zip

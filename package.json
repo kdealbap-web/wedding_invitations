@@ -22,7 +22,9 @@
     "dj": "node scripts/export-dj.mjs",
     "ceremonia": "node scripts/export-ceremonia.mjs",
     "minuto": "node scripts/export-minuto.mjs",
-    "export-todo": "npm run export && npm run mesas-img && npm run dj"
+    "importar": "node scripts/importar-invitados.mjs",
+    "fotos-evento": "node scripts/importar-fotos-evento.mjs",
+    "export-todo": "node scripts/export-todo.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

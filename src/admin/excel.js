@@ -24,12 +24,13 @@ const anchos = (hoja, ws) => ws.forEach((w, i) => { hoja.getColumn(i + 1).width 
 
 /**
  * Arma el libro completo.
- * @param datos    { rows, miembros, mesas, asientos } tal como salen de Supabase
+ * @param datos    { rows, miembros, mesas, asientos } tal como salen de Supabase,
+ *                 más `evento` y `tipos` (su lista de invitation_types) si los hay
  * @param ExcelJS  el módulo, inyectado por quien llama
  */
-export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, ExcelJS) {
+export function construirLibro({ rows, miembros, mesas = [], asientos = [], evento = null, tipos = [] }, ExcelJS) {
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'Boda Angely & Kevin'
+  wb.creator = evento?.titulo || 'Invitation'
   wb.created = new Date()
   // ExcelJS escribe las fórmulas sin valor cacheado. Sin esto, algunos visores
   // muestran las celdas vacías hasta que alguien las toca.
@@ -40,6 +41,10 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
   const mesaDeMiembro = new Map(asientos.filter(a => a.member_id).map(a => [a.member_id, mesaDe.get(a.mesa_id) || '']))
   const nombreDeMiembro = new Map(miembros.map(m => [m.id, m.name]))
   const grupoDeTarjeta = new Map(rows.map(r => [r.id, r.group_name]))
+
+  // Sin lista de tipos (el demo), se conserva el criterio de siempre.
+  const etiquetaTipo = k => tipos.find(x => x.key === k)?.label
+    || (k === 'completa' ? 'Completa' : k === 'recepcion' ? 'Recepción' : k)
 
   // ══ TARJETAS ══
   const t = wb.addWorksheet('Tarjetas', { views: [{ state: 'frozen', ySplit: 1 }] })
@@ -52,7 +57,7 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
     const suyas = [...new Set(asientos.filter(a => a.guest_id === r.id).map(a => mesaDe.get(a.mesa_id)).filter(Boolean))]
     t.addRow([
       r.group_name,
-      r.invitation_type === 'completa' ? 'Completa' : 'Recepción',
+      etiquetaTipo(r.invitation_type),
       LBL[estadoOf(r)],
       r.total_members || 0,
       r.attending_count || 0,
@@ -246,8 +251,8 @@ export function construirLibro({ rows, miembros, mesas = [], asientos = [] }, Ex
 }
 
 /** Nombre de archivo con la fecha, para no pisar exports anteriores. */
-export function nombreArchivo() {
+export function nombreArchivo(slug = 'evento') {
   const d = new Date()
   const p = n => String(n).padStart(2, '0')
-  return `invitados-y-mesas_${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.xlsx`
+  return `${slug}_invitados-y-mesas_${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.xlsx`
 }

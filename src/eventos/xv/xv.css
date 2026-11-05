@@ -1,0 +1,99 @@
+/* ─── Plantilla XV ───
+   Los tonos reservados del evento (rosa, oro rosa, dorado, beis, marrón) son
+   los colores de la quinceañera: aquí se vuelven los tokens de la plantilla.
+   Todo va bajo .tpl-xv para no pisar a index.css ni a la plantilla de la boda.
+   Van en hex porque son los mismos valores que trae event.config. */
+
+.tpl-xv{
+  --rosa:#E8A7B8;
+  --acc:#B76E79;--acc-dk:#8F4F5A;      /* oro rosa */
+  --gold:#C9A24A;                       /* dorado */
+  --olsft:#D9C3A5;                      /* beis */
+  --olive:#6B4A35;                      /* marrón */
+  background:#1a0f0c;
+}
+
+/* Contenido: centrado y con scroll propio cuando no cabe (móvil) */
+.tpl-xv .sec-c{text-align:center;display:flex;flex-direction:column;align-items:center;overflow-y:auto;scrollbar-width:none;padding-bottom:calc(5rem + env(safe-area-inset-bottom))}
+.tpl-xv .sec-c::-webkit-scrollbar{display:none}
+.tpl-xv .sec-title{font-weight:400;text-shadow:0 2px 18px rgba(0,0,0,.45)}
+.tpl-xv .sec-title em{color:var(--rosa)}
+.tpl-xv .eyebrow::before,.tpl-xv .eyebrow::after{background:rgba(232,167,184,.3)}
+.tpl-xv .div-line{background:rgba(201,162,74,.4)}
+.tpl-xv .div-dot{background:var(--gold)}
+.tpl-xv .div-orn{width:min(260px,70%)}
+.tpl-xv .btn-acc{background:linear-gradient(135deg,var(--acc),var(--acc-dk))}
+.tpl-xv .btn-ghost{border-color:rgba(201,162,74,.45)}
+.tpl-xv .nd.active .nd-ico{box-shadow:0 0 12px rgba(183,110,121,.45)}
+.tpl-xv .nd-ico svg{stroke:var(--rosa)}
+.tpl-xv .sec-bg{filter:saturate(.95)}
+
+/* Entradas de cada slide (el equivalente a #sN de la boda) */
+.tpl-xv #x2:not(.active):not(.exiting){transform:scale(.9)}
+.tpl-xv #x3:not(.active):not(.exiting){transform:translateY(42px)}
+.tpl-xv #x4:not(.active):not(.exiting){transform:translateX(38px)}
+.tpl-xv #x5:not(.active):not(.exiting){transform:translateX(-38px) scale(.98)}
+.tpl-xv #x6:not(.active):not(.exiting){transform:scale(.88)}
+.tpl-xv #x7:not(.active):not(.exiting){transform:translateY(40px)}
+.tpl-xv #x8:not(.active):not(.exiting){transform:scale(.86)}
+.tpl-xv #x9:not(.active):not(.exiting){transform:translateX(-38px)}
+.tpl-xv #x10:not(.active):not(.exiting){transform:scale(.9)}
+
+/* Tipografía */
+.xv-eyebrow{font-family:var(--fb);font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--olsft);margin-bottom:.8rem}
+.xv-titulo{font-family:var(--fd);font-weight:300;font-style:italic;font-size:clamp(2.4rem,7vw,4.4rem);line-height:1;color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.5)}
+.xv-nombre{font-family:var(--fs);font-size:clamp(3.6rem,13vw,7.2rem);line-height:1.05;color:var(--rosa);text-shadow:0 0 28px rgba(232,167,184,.35),0 2px 18px rgba(0,0,0,.5);margin:.1em 0 0}
+.xv-nombre-s{font-size:clamp(2.8rem,9vw,4.6rem)}
+.xv-apellido{font-family:var(--fb);font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:.2rem}
+.xv-fecha{font-family:var(--fd);font-size:clamp(1.05rem,2.6vw,1.4rem);color:var(--olsft);letter-spacing:.04em}
+.xv-fecha::first-letter,.xv-det-t::first-letter{text-transform:uppercase}
+
+/* Cuenta regresiva */
+.xv-cd{display:flex;gap:clamp(.6rem,2.5vw,1.2rem);margin-top:1.3rem}
+.xv-cd-i{display:flex;flex-direction:column;align-items:center;min-width:3.6rem;padding:.55rem .5rem;border-radius:14px;background:rgba(26,15,12,.55);border:1px solid rgba(201,162,74,.35);backdrop-filter:blur(8px)}
+.xv-cd-i b{font-family:var(--fd);font-weight:500;font-size:clamp(1.5rem,4.5vw,2.1rem);line-height:1;color:var(--gold);font-variant-numeric:tabular-nums lining-nums}
+.xv-cd-i span{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-top:.25rem}
+
+/* Mensaje y cierre */
+.xv-cita{font-family:var(--fd);font-style:italic;font-weight:400;font-size:clamp(1.2rem,3.2vw,1.9rem);line-height:1.65;color:rgba(255,255,255,.92);max-width:36rem;text-shadow:0 2px 16px rgba(0,0,0,.5)}
+.xv-firma{font-family:var(--fs);font-size:clamp(2rem,6vw,3rem);color:var(--rosa);margin-top:1rem}
+.xv-cierre{font-family:var(--fd);font-style:italic;font-size:clamp(1.3rem,3.6vw,2.1rem);line-height:1.55;color:#fff;max-width:34rem;text-shadow:0 2px 18px rgba(0,0,0,.55)}
+
+/* Invitación exclusiva */
+.xv-invitado{font-family:var(--fs);font-size:clamp(2.4rem,8vw,4.4rem);line-height:1.15;color:var(--rosa);margin:.5rem 0 1rem;text-shadow:0 0 24px rgba(232,167,184,.3)}
+.xv-cupos{display:inline-flex;align-items:center;gap:.8rem;padding:.5rem 1.2rem .5rem .6rem;border-radius:999px;background:rgba(26,15,12,.6);border:1px solid rgba(201,162,74,.45)}
+.xv-cupos b{display:flex;align-items:center;justify-content:center;width:2.4rem;height:2.4rem;border-radius:50%;background:var(--gold);color:#1a0f0c;font-family:var(--fd);font-weight:600;font-size:1.4rem;line-height:1}
+.xv-cupos span{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.85)}
+.xv-miembros{list-style:none;margin-top:1.1rem;display:flex;flex-direction:column;gap:.3rem}
+.xv-miembros li{font-family:var(--fd);font-size:clamp(1.05rem,2.4vw,1.3rem);color:rgba(255,255,255,.88)}
+.xv-miembros li::before{content:'◆';color:var(--gold);font-size:.55em;margin-right:.7rem;vertical-align:middle}
+
+/* Detalles y vestuario */
+.xv-detalles{display:grid;grid-template-columns:1fr 1fr;gap:1rem;width:100%;max-width:640px}
+@media(max-width:600px){.xv-detalles{grid-template-columns:1fr}}
+.xv-det{padding:1.2rem 1rem;border-radius:18px;background:rgba(26,15,12,.58);border:1px solid rgba(201,162,74,.3);backdrop-filter:blur(10px)}
+.xv-det svg{width:26px;height:26px;stroke:var(--gold);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.55rem}
+.xv-det-t{font-family:var(--fd);font-size:clamp(1.15rem,2.6vw,1.4rem);color:#fff;line-height:1.3}
+.xv-det-s{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--olsft);margin-top:.2rem}
+.xv-det-d{font-size:.78rem;line-height:1.6;color:rgba(255,255,255,.65);margin-top:.5rem}
+.xv-botones{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.3rem}
+.xv-nota{font-family:var(--fd);font-style:italic;font-size:.9rem;color:rgba(255,255,255,.55);margin-top:.9rem}
+
+/* Tonos reservados */
+.xv-tonos{display:flex;flex-wrap:wrap;gap:clamp(.8rem,3vw,1.6rem);justify-content:center;max-width:36rem}
+.xv-tono{display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.xv-tono-c{width:clamp(54px,13vw,76px);height:clamp(54px,13vw,76px);border-radius:50%;border:2px solid rgba(255,255,255,.35);box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.xv-tono-n{font-family:var(--fd);font-size:1.05rem;color:#fff}
+.xv-tono-h{font-size:.58rem;letter-spacing:.14em;color:rgba(255,255,255,.5)}
+.xv-texto{font-family:var(--fd);font-style:italic;font-size:clamp(1rem,2.2vw,1.2rem);line-height:1.7;color:rgba(255,255,255,.8);max-width:30rem;margin-top:1.4rem}
+
+/* Tarjeta de aviso (restricción y regalos) */
+.xv-tarjeta{max-width:32rem;padding:1.6rem 1.5rem;border-radius:22px;background:rgba(26,15,12,.62);border:1px solid rgba(201,162,74,.35);backdrop-filter:blur(12px)}
+.xv-tarjeta svg{width:34px;height:34px;stroke:var(--gold);fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.8rem}
+.xv-tarjeta p{font-family:var(--fd);font-style:italic;font-size:clamp(1.05rem,2.3vw,1.3rem);line-height:1.7;color:rgba(255,255,255,.9)}
+
+/* RSVP: mismo formulario compartido, con el layout de este deck */
+.tpl-xv #x9 .sec-c{text-align:left;align-items:stretch;padding:1.5rem clamp(1rem,4vw,3rem) calc(5rem + env(safe-area-inset-bottom))}
+.tpl-xv .rsvp-who{border-color:rgba(201,162,74,.35)}
+.tpl-xv .ff input:focus{border-color:var(--rosa)}
+.tpl-xv .choice-lbl.selected{background:var(--acc);border-color:var(--acc-dk)}

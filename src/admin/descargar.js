@@ -5,19 +5,21 @@
 // carga hasta que se usa.
 import { supabase } from '../lib/supabase'
 import { construirLibro, nombreArchivo } from './excel'
+import { miembrosDe, asientosDe } from './evento'
 
 /**
  * Trae los datos, arma el libro y lo descarga.
+ * @param evento  la fila de `events`: todo se filtra por ella
  * @param avisar  callback para ir contando qué hace (el botón lo muestra)
  */
-export async function exportarExcel(avisar = () => {}) {
+export async function exportarExcel(evento, avisar = () => {}) {
   avisar('Consultando…')
 
   const [g, m, ms, as] = await Promise.all([
-    supabase.from('guest_summary').select('*'),
-    supabase.from('guest_members').select('id, guest_id, name, order_num'),
-    supabase.from('mesas').select('*').order('orden'),
-    supabase.from('asientos').select('*'),
+    supabase.from('guest_summary').select('*').eq('event_id', evento.id),
+    miembrosDe(supabase, evento.id),
+    supabase.from('mesas').select('*').eq('event_id', evento.id).order('orden'),
+    asientosDe(supabase, evento.id),
   ])
 
   if (g.error) throw new Error(g.error.message)
@@ -30,6 +32,8 @@ export async function exportarExcel(avisar = () => {}) {
     miembros: m.data || [],
     mesas: conMesas ? (ms.data || []) : [],
     asientos: conMesas ? (as.data || []) : [],
+    evento,
+    tipos: evento.invitation_types || [],
   }
 
   avisar('Armando el libro…')
@@ -42,7 +46,7 @@ export async function exportarExcel(avisar = () => {}) {
   }))
   const a = document.createElement('a')
   a.href = url
-  a.download = nombreArchivo()
+  a.download = nombreArchivo(evento.slug)
   document.body.appendChild(a)
   a.click()
   a.remove()
