@@ -37,7 +37,8 @@
 //  mla3567  H 3:2    el espejo: ella reflejada, pelo en primer plano   '10% 40%'
 //  mla3641  H 3:2    balcón al atardecer, ella al centro, farol a la der. '49% 33%'
 //
-// Sin usar hoy (alternativas): mil1166, mil1320, mil2149, mla2500, mla2600, mla3567.
+// Sin usar hoy (alternativas): mil1166, mil2149, mla2500, mla2600, mla3567.
+// mil1320 (el cartel «Reserva la fecha») va sola en el último slide, x11.
 import mil1166 from './mil1166.jpg'
 import mil1250 from './mil1250.jpg'
 import mil1320 from './mil1320.jpg'
@@ -74,6 +75,7 @@ export default {
     x8:  { src: mla2397, pos: '39% 27%' },   // lluvia de sobres
     x9:  { src: mla2457, pos: '33% 53%' },   // RSVP (de fondo; la lateral es «retrato»): globos oro rosa
     x10: { src: mla3641, pos: '49% 33%' },   // cierre: el balcón al atardecer
+    x11: { src: mil1320, pos: '50% 50%' },   // «Guarda la fecha»: SOLA, al final y entera (sin recorte, sin tarjeta)
   },
   // Para el panel lateral del hero y del RSVP
   retrato: mil1445,

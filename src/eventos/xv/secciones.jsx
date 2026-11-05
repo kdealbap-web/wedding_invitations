@@ -287,6 +287,12 @@ export function XRsvp({ onToast }) {
   return <Rsvp onToast={onToast} foto={foto} />
 }
 
+// ─── Guarda la fecha: solo la foto, entera ───
+// El texto va en la imagen misma; aquí solo un pie discreto.
+export function XGuarda() {
+  return <p className="xv-guarda">Guarda la fecha</p>
+}
+
 // ─── Cierre ───
 export function XCierre() {
   const { event, cfg } = useConfig()

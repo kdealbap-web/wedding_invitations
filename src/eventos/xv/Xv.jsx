@@ -6,7 +6,7 @@ import { fechaCorta } from '../../invitacion/fechas'
 import { manifiestoDe } from './fotos'
 import {
   XHero, XMensaje, XExclusiva, XDetalles, XVestuario, XTonos,
-  XRestriccion, XRegalos, XRsvp, XCierre, XDecoracion,
+  XRestriccion, XRegalos, XRsvp, XCierre, XGuarda, XDecoracion,
 } from './secciones'
 import './xv.css'
 
@@ -20,6 +20,7 @@ import './xv.css'
 // al texto no es el velo sino la tarjeta de marfil de .sec-c (ver xv.css).
 const OV_CLARO  = 'linear-gradient(170deg,rgba(255,248,242,.28),rgba(250,228,228,.34))'
 const OV_HERO   = 'linear-gradient(to bottom,rgba(255,248,242,.06) 0%,rgba(255,240,235,.14) 55%,rgba(247,222,224,.4) 100%)'
+const OV_SOLA   = 'linear-gradient(170deg,rgba(255,248,242,.15),rgba(247,226,226,.25))'
 const OV_FORM   = 'linear-gradient(170deg,rgba(255,248,242,.55),rgba(247,226,226,.6))'
 
 // Interior del <svg> de cada punto lateral (trazo, viewBox 24)
@@ -34,14 +35,15 @@ const ICONOS = {
   x8:  '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8"/><path d="M12 8C10 4 6 4 7 6.5 7.7 8 10.5 8 12 8zM12 8c2-4 6-4 5-1.5-.7 1.5-3.5 1.5-5 1.5z"/>', // regalo
   x9:  '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',                                                  // confirmar
   x10: '<path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>',                            // estrella
+  x11: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/>', // calendario
 }
 
 // Colores del sobre de apertura (variables de invitacion/sobre.css)
 const TEMA_SOBRE = {
-  '--sb-fondo-1': '#fffaf5', '--sb-fondo-2': '#f9e7e0', '--sb-fondo-3': '#efc7cc',
-  '--sb-papel': '#fbefe7', '--sb-papel-2': '#f1d9cf',
-  '--sb-forro': '#eebbc4', '--sb-forro-2': '#f7d3d8',
-  '--sb-borde': '#d4968a', '--sb-tinta': '#4a2433', '--sb-tinta-2': '#7a4656',
+  '--sb-v1': '#6a3150', '--sb-v2': '#3b1731', '--sb-v3': '#1a0916',     // terciopelo ciruela
+  '--sb-papel': '#fbefe7', '--sb-papel-2': '#efd5ca',
+  '--sb-forro': '#eeb4be', '--sb-forro-2': '#f6cdd3',                    // forro palo rosa
+  '--sb-borde': '#d09184', '--sb-tinta': '#4a2433', '--sb-tinta-2': '#7a4656',
   '--sb-script': "'Parisienne',cursive", '--sb-disp': "'Playfair Display',Georgia,serif",
 }
 
@@ -57,11 +59,16 @@ const SECCIONES = [
   { id: 'x8',  Component: XRegalos,     label: 'Lluvia de sobres', si: c => c.regalos },
   { id: 'x9',  Component: XRsvp,        label: 'Confirma tu asistencia' },
   { id: 'x10', Component: XCierre,      label: 'Cierre' },
+  { id: 'x11', Component: XGuarda,      label: 'Guarda la fecha' },   // siempre la última, con la foto sola
 ]
 
 export default function Xv() {
   const { event, nombre } = useGuest()
   const [abierto, setAbierto] = useState(false)
+  const { numero, tipo } = useGuest()
+  // Serie de la invitación (Adultos → A-01), igual que en el slide «Tu invitación»
+  const etiqueta = event?.invitation_types?.find(t => t.key === tipo)?.label?.trim()
+  const nro = numero != null ? `${etiqueta ? etiqueta[0].toUpperCase() + '-' : ''}${String(numero).padStart(2, '0')}` : null
   const cfg = event?.config || {}
   const man = manifiestoDe(event?.slug)
 
@@ -74,17 +81,17 @@ export default function Xv() {
         bg: f?.src || fotos[i % Math.max(fotos.length, 1)] || '',
         pos: f?.pos,
         panel: s.id !== 'x9',   // el RSVP ya trae su propia foto lateral
-        ov: s.id === 'x1' ? OV_HERO : s.id === 'x9' ? OV_FORM : OV_CLARO,
+        ov: s.id === 'x1' ? OV_HERO : s.id === 'x9' ? OV_FORM : s.id === 'x11' ? OV_SOLA : OV_CLARO,
       }
     })
   }, [cfg, man])
 
   return (
     <>
-      <Deck sections={sections} musica={cfg.musica} className="tpl-xv"><XDecoracion /></Deck>
+      <Deck sections={sections} musica={cfg.musica} className="tpl-xv" bloqueado={!abierto}><XDecoracion /></Deck>
       {!abierto && (
         <Sobre
-          listo para={nombre} monograma="15" tema={TEMA_SOBRE}
+          listo para={nombre} numero={nro} monograma="15" tema={TEMA_SOBRE}
           linea="Te invito a celebrar" titulo={cfg.titulo || event?.titulo}
           nombre={cfg.nombre_corto || cfg.anfitrion}
           fecha={event?.fecha ? `${fechaCorta(event.fecha)} · ${new Date(event.fecha).getFullYear()}` : ''}

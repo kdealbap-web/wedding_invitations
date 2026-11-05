@@ -12,12 +12,14 @@ import AutoPlayBtn from '../components/AutoPlayBtn'
 // Recibe `sections` [{ id, Component, label, bg, pos, ov, icon, panel }] y se ocupa de la
 // navegación: no hay scroll de página, son secciones fijas superpuestas y solo
 // una lleva `.active`. `icon` es el interior del <svg> del punto lateral.
+//   bloqueado → no navega (teclado, deslizar, autoplay): p. ej. mientras el sobre
+//               de apertura está abierto encima
 //   panel     → pinta además la foto entera en un <img.sec-foto>; la plantilla
 //               decide en su CSS cuándo se ve (p. ej. en escritorio)
 //   musica    → lista de pistas (opcional; sin ellas no hay botón de audio)
 //   className → clase de la plantilla en #app, para sus tokens de color
 //   children  → decoración extra (pétalos, destellos…)
-export default function Deck({ sections, musica, className = '', children }) {
+export default function Deck({ sections, musica, className = '', bloqueado = false, children }) {
   const { tipo } = useGuest()
   const [cur, setCur]   = useState(0)
   const [exitIdx, setExitIdx] = useState(null)
@@ -27,7 +29,7 @@ export default function Deck({ sections, musica, className = '', children }) {
   const touchStart      = useRef({ x: 0, y: 0 })
 
   const goTo = useCallback((idx) => {
-    if (transitioning.current || idx < 0 || idx >= sections.length) return
+    if (bloqueado || transitioning.current || idx < 0 || idx >= sections.length) return
     setCur(prev => {
       if (idx === prev) return prev
       transitioning.current = true
@@ -38,7 +40,7 @@ export default function Deck({ sections, musica, className = '', children }) {
       }, 950)
       return idx
     })
-  }, [sections.length])
+  }, [sections.length, bloqueado])
 
   const goToId = useCallback((id) => {
     const idx = sections.findIndex(s => s.id === id)
