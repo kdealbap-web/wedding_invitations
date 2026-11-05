@@ -9,8 +9,11 @@ import { fechaLarga, diaCorto, plazoVencido } from './fechas'
 // los tokens (--acc, --gold) de la plantilla que lo envuelva.
 //   foto → imagen de la columna lateral (opcional)
 export default function Rsvp({ onToast, foto }) {
-  const { guestId, nombre, members, loading, confirmation, event, preview } = useGuest()
-  const cupos = members.length
+  const { guestId, nombre, members, cupos: cuposTarjeta, loading, confirmation, event, preview } = useGuest()
+  const cupos = members.length || cuposTarjeta
+  // Sin personas cargadas solo hay un número de cupos: se pregunta cuántos vienen
+  const porNumero = members.length === 0 && cuposTarjeta > 0
+  const [cuantos, setCuantos] = useState(() => Math.min(Math.max(confirmation?.attending_total || cuposTarjeta, 1), cuposTarjeta || 1))
   const [attending, setAttending]     = useState(true)
   const [checked, setChecked]         = useState({})
   const [dietary, setDietary]         = useState('')
@@ -41,6 +44,7 @@ export default function Rsvp({ onToast, foto }) {
   const confirmed = justSent || (confirmation && {
     attending: confirmation.attending,
     memberIds: confirmation.attending_member_ids || [],
+    total:     confirmation.attending_total || null,
     dietary:   confirmation.dietary_notes || '',
     song:      confirmation.song_request || '',
   })
@@ -49,6 +53,22 @@ export default function Rsvp({ onToast, foto }) {
     e.preventDefault()
     if (bloqueo) { onToast(bloqueo); return }
     if (!guestId) { onToast('Invitación no encontrada. Pide tu link personalizado.'); return }
+
+    if (porNumero) {
+      setSubmitting(true)
+      try {
+        await submitRsvp({ guest_id: guestId, attending, attending_total: attending ? cuantos : null, dietary_notes: dietary, song_request: song })
+        setJustSent({ attending, memberIds: [], total: attending ? cuantos : null, dietary, song })
+        onToast(attending ? '¡Confirmación recibida! Gracias por acompañarnos.' : 'Gracias por avisarnos, te llevamos en el corazón.')
+      } catch (err) {
+        onToast(err.message === 'preview' ? 'Vista previa: el evento aún no está publicado.'
+          : err.message === 'event_closed' ? 'Este evento ya no recibe respuestas.'
+          : 'Error al confirmar. Intenta de nuevo.')
+      } finally {
+        setSubmitting(false)
+      }
+      return
+    }
 
     const memberIds = attending ? members.filter(m => checked[m.id]).map(m => m.id) : []
 
@@ -108,6 +128,12 @@ export default function Rsvp({ onToast, foto }) {
                   Ya recibimos tu confirmación. <strong>Contamos con tu presencia</strong>{fecha && <> el {fecha}</>}.
                 </p>
                 <div className="rsvp-confirmed-list">
+                  {attendingNames.length === 0 && confirmed.total > 0 && (
+                    <div className="rcr">
+                      <span className="rcr-label">Asistentes</span>
+                      <span className="rcr-value">{confirmed.total} {confirmed.total === 1 ? 'persona' : 'personas'}</span>
+                    </div>
+                  )}
                   {attendingNames.length > 0 && (
                     <div className="rcr">
                       <span className="rcr-label">Asistentes · {attendingNames.length}</span>
@@ -198,6 +224,17 @@ export default function Rsvp({ onToast, foto }) {
                         {m.name}
                       </label>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {attending && porNumero && (
+                <div className="ff" style={{ marginBottom: '1rem' }}>
+                  <label id="rsvp-cuantos-l">¿Cuántos asistirán?</label>
+                  <div className="rsvp-contador" role="group" aria-labelledby="rsvp-cuantos-l">
+                    <button type="button" aria-label="Una persona menos" disabled={cuantos <= 1} onClick={() => setCuantos(n => Math.max(1, n - 1))}>−</button>
+                    <output aria-live="polite"><b>{cuantos}</b><span>de {cuposTarjeta} {cuposTarjeta === 1 ? 'cupo' : 'cupos'}</span></output>
+                    <button type="button" aria-label="Una persona más" disabled={cuantos >= cuposTarjeta} onClick={() => setCuantos(n => Math.min(cuposTarjeta, n + 1))}>+</button>
                   </div>
                 </div>
               )}

@@ -1,32 +1,42 @@
 /* ─── Plantilla XV ───
-   Los tonos reservados del evento (rosa, oro rosa, dorado, beis, marrón) son
-   los colores de la quinceañera: aquí se vuelven los tokens de la plantilla.
-   Todo va bajo .tpl-xv para no pisar a index.css ni a la plantilla de la boda.
-   Van en hex porque son los mismos valores que trae event.config. */
+   Palo rosa y oro rosa sobre vino: el fondo profundo es lo que hace brillar
+   los dos. El oro rosa nunca va plano: es un degradado metálico (--metal) en
+   títulos, divisores y bordes. Todo bajo .tpl-xv para no pisar a index.css. */
 
 .tpl-xv{
-  --rosa:#E8A7B8;
-  --acc:#B76E79;--acc-dk:#8F4F5A;      /* oro rosa */
-  --gold:#C9A24A;                       /* dorado */
-  --olsft:#D9C3A5;                      /* beis */
-  --olive:#6B4A35;                      /* marrón */
-  background:#1a0f0c;
+  --vino-0:#1a0710;                     /* fondo más hondo */
+  --vino:#2c0e1d;                       /* vino / ciruela oscuro */
+  --ciruela:#4b1a33;
+  --rosa:#EBB9C2;                       /* palo rosa */
+  --acc:#C98B83;--acc-dk:#8C4852;       /* oro rosa */
+  --gold:#EDC2AE;                       /* oro rosa claro (texto) */
+  --olsft:#E6CDC2;                      /* texto secundario */
+  --olive:#6B4A35;
+  --marfil:#FBF0E8;
+  --metal:linear-gradient(100deg,#a8665f 0%,#f0c4b1 28%,#fde6d8 50%,#d49a8d 72%,#a8665f 100%);
+  --linea:rgba(237,194,174,.38);
+  background:var(--vino-0);
 }
 
 /* Contenido: centrado y con scroll propio cuando no cabe (móvil) */
 .tpl-xv .sec-c{text-align:center;display:flex;flex-direction:column;align-items:center;overflow-y:auto;scrollbar-width:none;padding-bottom:calc(5rem + env(safe-area-inset-bottom))}
 .tpl-xv .sec-c::-webkit-scrollbar{display:none}
-.tpl-xv .sec-title{font-weight:400;text-shadow:0 2px 18px rgba(0,0,0,.45)}
+.tpl-xv .sec-title{font-weight:400;color:var(--marfil);text-shadow:0 2px 18px rgba(26,7,16,.6)}
 .tpl-xv .sec-title em{color:var(--rosa)}
-.tpl-xv .eyebrow::before,.tpl-xv .eyebrow::after{background:rgba(232,167,184,.3)}
-.tpl-xv .div-line{background:rgba(201,162,74,.4)}
-.tpl-xv .div-dot{background:var(--gold)}
+.tpl-xv .eyebrow::before,.tpl-xv .eyebrow::after{background:var(--linea)}
 .tpl-xv .div-orn{width:min(260px,70%)}
-.tpl-xv .btn-acc{background:linear-gradient(135deg,var(--acc),var(--acc-dk))}
-.tpl-xv .btn-ghost{border-color:rgba(201,162,74,.45)}
-.tpl-xv .nd.active .nd-ico{box-shadow:0 0 12px rgba(183,110,121,.45)}
+.tpl-xv .div-line{background:linear-gradient(90deg,transparent,#e3ad9c 60%,#f6d3c3)}
+.tpl-xv .div-line:last-child{background:linear-gradient(270deg,transparent,#e3ad9c 60%,#f6d3c3)}
+.tpl-xv .div-dot{width:7px;height:7px;background:var(--metal);box-shadow:0 0 8px rgba(240,196,177,.5)}
+.tpl-xv .btn-acc{background:var(--metal);color:var(--vino-0);font-weight:600;box-shadow:0 4px 18px rgba(201,139,131,.28)}
+.tpl-xv .btn-acc:hover{background:linear-gradient(100deg,#c9877d,#fde6d8 50%,#c9877d)}
+.tpl-xv .btn-ghost{background:rgba(44,14,29,.55);border-color:var(--linea);color:var(--marfil)}
+.tpl-xv .btn-ghost:hover{background:rgba(75,26,51,.7)}
+.tpl-xv .btn svg{stroke:currentColor}
+.tpl-xv .nd.active .nd-ico{box-shadow:0 0 12px rgba(237,194,174,.5)}
 .tpl-xv .nd-ico svg{stroke:var(--rosa)}
-.tpl-xv .sec-bg{filter:saturate(.95)}
+.tpl-xv .sec-bg{filter:saturate(.92) sepia(.12)}
+.tpl-xv #audio-btn.playing{color:var(--gold);border-color:var(--linea)}
 
 /* Entradas de cada slide (el equivalente a #sN de la boda) */
 .tpl-xv #x2:not(.active):not(.exiting){transform:scale(.9)}
@@ -39,61 +49,91 @@
 .tpl-xv #x9:not(.active):not(.exiting){transform:translateX(-38px)}
 .tpl-xv #x10:not(.active):not(.exiting){transform:scale(.9)}
 
+/* Decoración fija: marco, filigrana en las esquinas, destellos */
+.xv-deco{position:fixed;inset:0;z-index:3;pointer-events:none}
+.xv-marco{position:absolute;inset:10px;border:1px solid transparent;border-image:linear-gradient(160deg,rgba(240,196,177,.55),rgba(240,196,177,.1) 40%,rgba(240,196,177,.1) 60%,rgba(240,196,177,.55)) 1}
+.xv-esq{position:absolute;width:46px;height:46px;fill:none;stroke:url(#xv-metal);stroke-width:1.1;stroke-linecap:round;opacity:.9}
+.xv-esq0{top:6px;left:6px}
+.xv-esq1{top:6px;right:6px;transform:scaleX(-1)}
+.xv-esq2{bottom:6px;left:6px;transform:scaleY(-1)}
+.xv-esq3{bottom:6px;right:6px;transform:scale(-1)}
+.xv-chispa{position:absolute;background:linear-gradient(135deg,#fde6d8,#e3ad9c);clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;animation:xv-brillo 4s ease-in-out infinite}
+@keyframes xv-brillo{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:.85;transform:scale(1) rotate(45deg)}}
+
 /* Tipografía */
+.xv-corona{width:54px;height:34px;fill:none;stroke:url(#xv-metal);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;margin-bottom:.7rem;filter:drop-shadow(0 0 8px rgba(240,196,177,.4))}
+.xv-corona circle{fill:#f6d3c3;stroke:none}
 .xv-eyebrow{font-family:var(--fb);font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--olsft);margin-bottom:.8rem}
-.xv-titulo{font-family:var(--fd);font-weight:300;font-style:italic;font-size:clamp(2.4rem,7vw,4.4rem);line-height:1;color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.5)}
-.xv-nombre{font-family:var(--fs);font-size:clamp(3.6rem,13vw,7.2rem);line-height:1.05;color:var(--rosa);text-shadow:0 0 28px rgba(232,167,184,.35),0 2px 18px rgba(0,0,0,.5);margin:.1em 0 0}
+.xv-titulo{font-family:var(--fd);font-weight:300;font-style:italic;font-size:clamp(2.4rem,7vw,4.4rem);line-height:1;color:var(--marfil);text-shadow:0 2px 24px rgba(26,7,16,.7)}
+.xv-nombre,.xv-invitado,.xv-firma{background:var(--metal);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 14px rgba(26,7,16,.6))}
+.xv-nombre{font-family:var(--fs);font-size:clamp(3.6rem,13vw,7.2rem);line-height:1.15;padding:0 .12em;margin:.05em 0 0}
 .xv-nombre-s{font-size:clamp(2.8rem,9vw,4.6rem)}
-.xv-apellido{font-family:var(--fb);font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:.2rem}
-.xv-fecha{font-family:var(--fd);font-size:clamp(1.05rem,2.6vw,1.4rem);color:var(--olsft);letter-spacing:.04em}
+.xv-apellido{font-family:var(--fb);font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;color:var(--olsft);margin-top:.2rem}
+.xv-fecha{font-family:var(--fd);font-size:clamp(1.05rem,2.6vw,1.4rem);color:var(--gold);letter-spacing:.04em}
 .xv-fecha::first-letter,.xv-det-t::first-letter{text-transform:uppercase}
 
 /* Cuenta regresiva */
 .xv-cd{display:flex;gap:clamp(.6rem,2.5vw,1.2rem);margin-top:1.3rem}
-.xv-cd-i{display:flex;flex-direction:column;align-items:center;min-width:3.6rem;padding:.55rem .5rem;border-radius:14px;background:rgba(26,15,12,.55);border:1px solid rgba(201,162,74,.35);backdrop-filter:blur(8px)}
+.xv-cd-i{display:flex;flex-direction:column;align-items:center;min-width:3.6rem;padding:.55rem .5rem;border-radius:14px;background:rgba(36,9,24,.62);border:1px solid var(--linea);backdrop-filter:blur(8px)}
 .xv-cd-i b{font-family:var(--fd);font-weight:500;font-size:clamp(1.5rem,4.5vw,2.1rem);line-height:1;color:var(--gold);font-variant-numeric:tabular-nums lining-nums}
-.xv-cd-i span{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-top:.25rem}
+.xv-cd-i span{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:var(--olsft);margin-top:.25rem}
 
 /* Mensaje y cierre */
-.xv-cita{font-family:var(--fd);font-style:italic;font-weight:400;font-size:clamp(1.2rem,3.2vw,1.9rem);line-height:1.65;color:rgba(255,255,255,.92);max-width:36rem;text-shadow:0 2px 16px rgba(0,0,0,.5)}
-.xv-firma{font-family:var(--fs);font-size:clamp(2rem,6vw,3rem);color:var(--rosa);margin-top:1rem}
-.xv-cierre{font-family:var(--fd);font-style:italic;font-size:clamp(1.3rem,3.6vw,2.1rem);line-height:1.55;color:#fff;max-width:34rem;text-shadow:0 2px 18px rgba(0,0,0,.55)}
+.xv-cita{font-family:var(--fd);font-style:italic;font-weight:400;font-size:clamp(1.2rem,3.2vw,1.9rem);line-height:1.65;color:var(--marfil);max-width:36rem;text-shadow:0 2px 16px rgba(26,7,16,.7)}
+.xv-firma{font-family:var(--fs);font-size:clamp(2rem,6vw,3rem);margin-top:1rem;padding:0 .1em}
+.xv-cierre{font-family:var(--fd);font-style:italic;font-size:clamp(1.3rem,3.6vw,2.1rem);line-height:1.55;color:var(--marfil);max-width:34rem;text-shadow:0 2px 18px rgba(26,7,16,.7)}
+.xv-mono{display:flex;align-items:center;justify-content:center;width:3.4rem;height:3.4rem;margin:.3rem 0 .2rem;border-radius:50%;border:1.5px solid transparent;background:linear-gradient(var(--vino),var(--vino)) padding-box,var(--metal) border-box;box-shadow:0 0 18px rgba(240,196,177,.25)}
+.xv-mono span{font-family:var(--fs);font-size:2rem;line-height:1;padding-top:.15rem;background:var(--metal);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* Invitación exclusiva */
-.xv-invitado{font-family:var(--fs);font-size:clamp(2.4rem,8vw,4.4rem);line-height:1.15;color:var(--rosa);margin:.5rem 0 1rem;text-shadow:0 0 24px rgba(232,167,184,.3)}
-.xv-cupos{display:inline-flex;align-items:center;gap:.8rem;padding:.5rem 1.2rem .5rem .6rem;border-radius:999px;background:rgba(26,15,12,.6);border:1px solid rgba(201,162,74,.45)}
-.xv-cupos b{display:flex;align-items:center;justify-content:center;width:2.4rem;height:2.4rem;border-radius:50%;background:var(--gold);color:#1a0f0c;font-family:var(--fd);font-weight:600;font-size:1.4rem;line-height:1}
-.xv-cupos span{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.85)}
+.xv-invitado{font-family:var(--fs);font-size:clamp(2.4rem,8vw,4.4rem);line-height:1.2;margin:.5rem 0 .6rem;padding:0 .1em}
+.xv-nro{font-family:var(--fb);font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;color:var(--olsft);margin-bottom:1rem}
+.xv-nro b{font-family:var(--fd);font-weight:600;font-size:1.25rem;letter-spacing:.08em;color:var(--gold);margin-left:.35rem;vertical-align:-.1em;font-variant-numeric:lining-nums}
+.xv-cupos{display:inline-flex;align-items:center;gap:.8rem;padding:.5rem 1.2rem .5rem .6rem;border-radius:999px;background:rgba(36,9,24,.68);border:1px solid var(--linea)}
+.xv-cupos b{display:flex;align-items:center;justify-content:center;width:2.4rem;height:2.4rem;border-radius:50%;background:var(--metal);color:var(--vino-0);font-family:var(--fd);font-weight:600;font-size:1.4rem;line-height:1}
+.xv-cupos span{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--marfil)}
 .xv-miembros{list-style:none;margin-top:1.1rem;display:flex;flex-direction:column;gap:.3rem}
-.xv-miembros li{font-family:var(--fd);font-size:clamp(1.05rem,2.4vw,1.3rem);color:rgba(255,255,255,.88)}
+.xv-miembros li{font-family:var(--fd);font-size:clamp(1.05rem,2.4vw,1.3rem);color:var(--marfil)}
 .xv-miembros li::before{content:'◆';color:var(--gold);font-size:.55em;margin-right:.7rem;vertical-align:middle}
 
 /* Detalles y vestuario */
 .xv-detalles{display:grid;grid-template-columns:1fr 1fr;gap:1rem;width:100%;max-width:640px}
 @media(max-width:600px){.xv-detalles{grid-template-columns:1fr}}
-.xv-det{padding:1.2rem 1rem;border-radius:18px;background:rgba(26,15,12,.58);border:1px solid rgba(201,162,74,.3);backdrop-filter:blur(10px)}
+.xv-det{padding:1.2rem 1rem;border-radius:18px;background:rgba(36,9,24,.7);border:1px solid var(--linea);backdrop-filter:blur(10px)}
 .xv-det svg{width:26px;height:26px;stroke:var(--gold);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.55rem}
-.xv-det-t{font-family:var(--fd);font-size:clamp(1.15rem,2.6vw,1.4rem);color:#fff;line-height:1.3}
+.xv-det-t{font-family:var(--fd);font-size:clamp(1.15rem,2.6vw,1.4rem);color:var(--marfil);line-height:1.3}
 .xv-det-s{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--olsft);margin-top:.2rem}
-.xv-det-d{font-size:.78rem;line-height:1.6;color:rgba(255,255,255,.65);margin-top:.5rem}
+.xv-det-d{font-size:.78rem;line-height:1.6;color:rgba(251,240,232,.78);margin-top:.5rem}
 .xv-botones{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.3rem}
-.xv-nota{font-family:var(--fd);font-style:italic;font-size:.9rem;color:rgba(255,255,255,.55);margin-top:.9rem}
+.xv-nota{font-family:var(--fd);font-style:italic;font-size:.9rem;color:var(--olsft);margin-top:.9rem}
 
 /* Tonos reservados */
 .xv-tonos{display:flex;flex-wrap:wrap;gap:clamp(.8rem,3vw,1.6rem);justify-content:center;max-width:36rem}
 .xv-tono{display:flex;flex-direction:column;align-items:center;gap:.3rem}
-.xv-tono-c{width:clamp(54px,13vw,76px);height:clamp(54px,13vw,76px);border-radius:50%;border:2px solid rgba(255,255,255,.35);box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.xv-tono-n{font-family:var(--fd);font-size:1.05rem;color:#fff}
-.xv-tono-h{font-size:.58rem;letter-spacing:.14em;color:rgba(255,255,255,.5)}
-.xv-texto{font-family:var(--fd);font-style:italic;font-size:clamp(1rem,2.2vw,1.2rem);line-height:1.7;color:rgba(255,255,255,.8);max-width:30rem;margin-top:1.4rem}
+.xv-tono-c{width:clamp(54px,13vw,76px);height:clamp(54px,13vw,76px);border-radius:50%;border:2px solid rgba(251,240,232,.4);box-shadow:0 6px 18px rgba(26,7,16,.5)}
+.xv-tono-n{font-family:var(--fd);font-size:1.05rem;color:var(--marfil)}
+.xv-tono-h{font-size:.58rem;letter-spacing:.14em;color:var(--olsft)}
+.xv-texto{font-family:var(--fd);font-style:italic;font-size:clamp(1rem,2.2vw,1.2rem);line-height:1.7;color:var(--marfil);max-width:30rem;margin-top:1.4rem}
 
 /* Tarjeta de aviso (restricción y regalos) */
-.xv-tarjeta{max-width:32rem;padding:1.6rem 1.5rem;border-radius:22px;background:rgba(26,15,12,.62);border:1px solid rgba(201,162,74,.35);backdrop-filter:blur(12px)}
+.xv-tarjeta{max-width:32rem;padding:1.6rem 1.5rem;border-radius:22px;background:rgba(36,9,24,.72);border:1px solid var(--linea);backdrop-filter:blur(12px)}
 .xv-tarjeta svg{width:34px;height:34px;stroke:var(--gold);fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.8rem}
-.xv-tarjeta p{font-family:var(--fd);font-style:italic;font-size:clamp(1.05rem,2.3vw,1.3rem);line-height:1.7;color:rgba(255,255,255,.9)}
+.xv-tarjeta p{font-family:var(--fd);font-style:italic;font-size:clamp(1.05rem,2.3vw,1.3rem);line-height:1.7;color:var(--marfil)}
 
 /* RSVP: mismo formulario compartido, con el layout de este deck */
 .tpl-xv #x9 .sec-c{text-align:left;align-items:stretch;padding:1.5rem clamp(1rem,4vw,3rem) calc(5rem + env(safe-area-inset-bottom))}
-.tpl-xv .rsvp-who{border-color:rgba(201,162,74,.35)}
+.tpl-xv .rsvp-who{border-color:var(--linea);background:rgba(36,9,24,.6)}
+.tpl-xv .rsvp-who-name{color:var(--gold)}
+.tpl-xv .rsvp-who-cupos{background:rgba(237,194,174,.14);border-color:var(--linea);box-shadow:none}
+.tpl-xv .rsvp-who-cupos b{color:var(--gold);text-shadow:none}
+.tpl-xv .rsvp-who-cupos span{color:var(--marfil)}
+.tpl-xv .ff label,.tpl-xv .rsvp-note{color:var(--olsft)}
+.tpl-xv .ff input{background:rgba(36,9,24,.55);border-color:var(--linea)}
 .tpl-xv .ff input:focus{border-color:var(--rosa)}
-.tpl-xv .choice-lbl.selected{background:var(--acc);border-color:var(--acc-dk)}
+.tpl-xv .choice-lbl.selected{background:var(--metal);border-color:transparent;color:var(--vino-0);font-weight:500}
+.tpl-xv .choice-lbl.selected .choice-radio{border-color:var(--vino-0)}
+.tpl-xv .rsvp-contador button{background:rgba(36,9,24,.6);border-color:var(--linea)}
+
+@media(prefers-reduced-motion:reduce){
+  .xv-chispa{animation:none;opacity:.5}
+}

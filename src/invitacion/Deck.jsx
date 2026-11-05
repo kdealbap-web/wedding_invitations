@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useGuest } from './GuestContext'
 import ProgBar     from '../components/ProgBar'
 import AudioBtn    from '../components/AudioBtn'
+import YoutubeBtn  from '../components/YoutubeBtn'
 import NavDots     from '../components/NavDots'
 import NavArrows   from '../components/NavArrows'
 import Toast       from '../components/Toast'
@@ -106,7 +107,9 @@ export default function Deck({ sections, musica, className = '', children }) {
   return (
     <div id="app" className={className}>
       <ProgBar pct={pct} />
-      {musica?.length > 0 && <AudioBtn tracks={musica} />}
+      {musica?.youtube
+        ? <YoutubeBtn videoId={musica.youtube} />
+        : musica?.length > 0 && <AudioBtn tracks={musica} />}
       {children}
       <NavDots sections={sections} cur={cur} onGo={goTo} icons={icons} />
       <NavArrows cur={cur} total={sections.length} onPrev={prev} onNext={next} />

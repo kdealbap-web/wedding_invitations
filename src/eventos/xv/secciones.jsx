@@ -17,6 +17,45 @@ const Orn = () => (
   <div className="div-orn"><div className="div-line" /><div className="div-dot" /><div className="div-line" /></div>
 )
 
+// Corona en trazo de oro rosa; el degradado #xv-metal se define en XDecoracion
+const Corona = () => (
+  <svg className="xv-corona" viewBox="0 0 64 40" aria-hidden="true">
+    <path d="M6 32 4 12l14 10L32 6l14 16 14-10-2 20z" />
+    <path d="M6 37h52" />
+    <circle cx="4" cy="9" r="2" /><circle cx="32" cy="3.5" r="2" /><circle cx="60" cy="9" r="2" />
+  </svg>
+)
+
+// ─── Decoración fija: marco, filigrana en las esquinas y destellos ───
+const ESQUINA = 'M3 44V9q0-6 6-6h35M11 38V15q0-4 4-4h23M20 20q7 0 7 7 0 6-6 6-5 0-5-5 0-4 4-4'
+const CHISPAS = Array.from({ length: 16 }, (_, i) => ({
+  x: (i * 37 + 11) % 97, y: (i * 53 + 7) % 93,
+  s: 5 + (i * 7) % 8, d: 3.2 + (i * 13) % 40 / 10, t: ((i * 29) % 50) / 10,
+}))
+
+export function XDecoracion() {
+  return (
+    <div className="xv-deco" aria-hidden="true">
+      <svg width="0" height="0" style={{ position: 'absolute' }}>
+        <defs>
+          <linearGradient id="xv-metal" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#a8665f" /><stop offset=".35" stopColor="#f0c4b1" />
+            <stop offset=".55" stopColor="#fde6d8" /><stop offset=".8" stopColor="#c9877d" />
+            <stop offset="1" stopColor="#a8665f" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="xv-marco" />
+      {[0, 1, 2, 3].map(i => (
+        <svg key={i} className={`xv-esq xv-esq${i}`} viewBox="0 0 48 48"><path d={ESQUINA} /></svg>
+      ))}
+      {CHISPAS.map((c, i) => (
+        <span key={i} className="xv-chispa" style={{ left: c.x + '%', top: c.y + '%', width: c.s, height: c.s, animationDuration: c.d + 's', animationDelay: c.t + 's' }} />
+      ))}
+    </div>
+  )
+}
+
 // ─── Hero ───
 const partes = (ms) => {
   const s = Math.max(0, Math.floor(ms / 1000))
@@ -40,6 +79,7 @@ export function XHero() {
   const nombre = cfg.nombre_corto || cfg.anfitrion
   return (
     <>
+      <Corona />
       <p className="xv-eyebrow">Te invito a celebrar</p>
       <h1 className="xv-titulo">{cfg.titulo || event?.titulo}</h1>
       <p className="xv-nombre">{nombre}</p>
@@ -77,20 +117,24 @@ export function XMensaje() {
 
 // ─── Invitación exclusiva ───
 export function XExclusiva() {
-  const { nombre, members } = useGuest()
-  const n = members.length
+  const { nombre, members, numero, cupos, tipo, event } = useGuest()
+  // Serie de la invitación: inicial de la etiqueta del tipo (Adultos → A)
+  const etiqueta = event?.invitation_types?.find(t => t.key === tipo)?.label?.trim()
+  const nro = numero != null ? `${etiqueta ? etiqueta[0].toUpperCase() + '-' : ''}${String(numero).padStart(2, '0')}` : null
+  const n = cupos || members.length
   return (
     <>
       <p className="xv-eyebrow">Invitación exclusiva</p>
       <h2 className="sec-title" style={{ textAlign: 'center' }}>Reservado <em>para</em></h2>
       <p className="xv-invitado">{nombre}</p>
+      {nro && <p className="xv-nro">Invitación N.º <b>{nro}</b></p>}
       {n > 0 && (
         <div className="xv-cupos">
           <b>{n}</b>
           <span>Cupos asignados: {n} {n === 1 ? 'persona' : 'personas'}</span>
         </div>
       )}
-      {n > 0 && (
+      {members.length > 0 && (
         <ul className="xv-miembros">
           {members.map(m => <li key={m.id}>{m.name}</li>)}
         </ul>
@@ -251,6 +295,7 @@ export function XCierre() {
       <p className="xv-eyebrow">Gracias</p>
       <p className="xv-cierre">{cfg.cierre}</p>
       <Orn />
+      <div className="xv-mono"><span>{(cfg.nombre_corto || cfg.anfitrion || '').trim()[0]}</span></div>
       <p className="xv-nombre xv-nombre-s">{cfg.nombre_corto || cfg.anfitrion}</p>
       <p className="xv-apellido">{event?.fecha ? fechaLarga(event.fecha) : ''}</p>
     </>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { nanoid } from 'nanoid'
 import { supabase } from '../lib/supabase'
 
-const EMPTY = { name: '', whatsapp: '', notes: '', token: '', members: [''] }
+const EMPTY = { name: '', whatsapp: '', notes: '', token: '', cupos: '', members: [''] }
 
 export default function GuestForm({ evento, guest, onClose, onSaved }) {
   const isEdit = Boolean(guest)
@@ -18,6 +18,7 @@ export default function GuestForm({ evento, guest, onClose, onSaved }) {
     whatsapp:        guest.whatsapp || '',
     notes:           guest.notes || '',
     token:           guest.token,
+    cupos:           guest.cupos ?? '',
     members:         guest.memberNames?.length ? guest.memberNames : [''],
   } : { ...EMPTY, invitation_type: tipos[0]?.key || '', token: nanoid(22) })
   const [saving, setSaving] = useState(false)
@@ -37,12 +38,14 @@ export default function GuestForm({ evento, guest, onClose, onSaved }) {
     setSaving(true)
     try {
       const members = form.members.map(m => m.trim()).filter(Boolean)
+      // Vacío → null: cuentan las personas cargadas (migración 009)
+      const cupos = form.cupos === '' ? null : Number(form.cupos)
 
       if (isEdit) {
         // Update guest
         const { error: gErr } = await supabase
           .from('guests')
-          .update({ name: form.name.trim(), invitation_type: form.invitation_type, whatsapp: form.whatsapp.trim() || null, notes: form.notes.trim() || null })
+          .update({ name: form.name.trim(), invitation_type: form.invitation_type, whatsapp: form.whatsapp.trim() || null, notes: form.notes.trim() || null, cupos })
           .eq('id', guest.id)
           .eq('event_id', evento.id)
         if (gErr) throw gErr
@@ -59,7 +62,7 @@ export default function GuestForm({ evento, guest, onClose, onSaved }) {
         // Insert guest
         const { data, error: gErr } = await supabase
           .from('guests')
-          .insert({ event_id: evento.id, name: form.name.trim(), invitation_type: form.invitation_type, token: form.token, whatsapp: form.whatsapp.trim() || null, notes: form.notes.trim() || null })
+          .insert({ event_id: evento.id, name: form.name.trim(), invitation_type: form.invitation_type, token: form.token, whatsapp: form.whatsapp.trim() || null, notes: form.notes.trim() || null, cupos })
           .select('id')
           .single()
         if (gErr) throw gErr
@@ -119,7 +122,17 @@ export default function GuestForm({ evento, guest, onClose, onSaved }) {
           </div>
 
           <div className="adm-ff">
-            <label>Miembros de la invitación</label>
+            <label>Cupos de la tarjeta</label>
+            <input
+              type="number" min="1" max="50"
+              value={form.cupos}
+              onChange={e => set('cupos', e.target.value)}
+              placeholder="Vacío = tantos como miembros con nombre"
+            />
+          </div>
+
+          <div className="adm-ff">
+            <label>Miembros de la invitación (opcional)</label>
             <div className="adm-members">
               {form.members.map((m, i) => (
                 <div key={i} className="adm-member-row">

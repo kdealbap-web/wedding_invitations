@@ -441,3 +441,13 @@ button,input,select,textarea{font-family:inherit}
 .inv-loader span:nth-child(3){animation-delay:.36s}
 @keyframes inv-pulso{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:.95;transform:scale(1.15)}}
 .preview-banner{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:700;padding:.28rem 1rem;border-radius:0 0 12px 12px;background:rgba(20,12,6,.82);border:1px solid rgba(255,255,255,.16);border-top:none;backdrop-filter:blur(8px);font-family:var(--fb);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.78);white-space:nowrap;pointer-events:none}
+
+/* Contador de asistentes (tarjetas sin personas cargadas) */
+.rsvp-contador{display:flex;align-items:center;gap:.8rem}
+.rsvp-contador button{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font-size:1.4rem;line-height:1;cursor:pointer;transition:background .2s,border-color .2s}
+.rsvp-contador button:hover:not(:disabled){background:rgba(255,255,255,.18);border-color:var(--gold)}
+.rsvp-contador button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.rsvp-contador button:disabled{opacity:.35;cursor:default}
+.rsvp-contador output{display:flex;flex-direction:column;align-items:center;min-width:5.5rem}
+.rsvp-contador output b{font-family:var(--fd);font-weight:500;font-size:2rem;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums lining-nums}
+.rsvp-contador output span{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:.15rem}

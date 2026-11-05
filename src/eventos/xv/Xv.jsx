@@ -4,7 +4,7 @@ import Deck from '../../invitacion/Deck'
 import { manifiestoDe } from './fotos'
 import {
   XHero, XMensaje, XExclusiva, XDetalles, XVestuario, XTonos,
-  XRestriccion, XRegalos, XRsvp, XCierre,
+  XRestriccion, XRegalos, XRsvp, XCierre, XDecoracion,
 } from './secciones'
 import './xv.css'
 
@@ -14,9 +14,13 @@ import './xv.css'
 // opcionales (vestuario, tonos, restricción, regalos) solo aparecen si el
 // evento trae esa clave en su config.
 
-const OV_OSCURO = 'linear-gradient(160deg,rgba(24,12,10,.72),rgba(18,9,8,.82))'
+const OV_OSCURO = 'linear-gradient(160deg,rgba(48,14,32,.82),rgba(26,7,16,.9))'
+// El formulario va sobre un velo más cerrado: la foto de fondo trae letras
+// El cierre pone texto sobre el vestido claro y la balaustrada: más velo al centro
+const OV_CIERRE = 'linear-gradient(to bottom,rgba(36,9,24,.55) 0%,rgba(36,9,24,.72) 50%,rgba(26,7,16,.92) 100%)'
+const OV_FORM = 'linear-gradient(160deg,rgba(48,14,32,.93),rgba(26,7,16,.96))'
 // Hero y cierre dejan ver más la foto; el texto va centrado y con sombra
-const OV_FOTO = 'linear-gradient(to bottom,rgba(20,10,8,.45) 0%,rgba(20,10,8,.35) 45%,rgba(20,10,8,.8) 100%)'
+const OV_FOTO = 'linear-gradient(to bottom,rgba(36,9,24,.5) 0%,rgba(40,10,26,.5) 45%,rgba(26,7,16,.9) 100%)'
 
 const ICONOS = {
   x1:  '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',
@@ -58,10 +62,10 @@ export default function Xv() {
         id: s.id, Component: s.Component, label: s.label, icon: ICONOS[s.id],
         bg: f?.src || fotos[i % Math.max(fotos.length, 1)] || '',
         pos: f?.pos,
-        ov: s.id === 'x1' || s.id === 'x10' ? OV_FOTO : OV_OSCURO,
+        ov: s.id === 'x1' ? OV_FOTO : s.id === 'x10' ? OV_CIERRE : s.id === 'x9' ? OV_FORM : OV_OSCURO,
       }
     })
   }, [cfg, man])
 
-  return <Deck sections={sections} musica={cfg.musica} className="tpl-xv" />
+  return <Deck sections={sections} musica={cfg.musica} className="tpl-xv"><XDecoracion /></Deck>
 }

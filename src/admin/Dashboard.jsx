@@ -90,6 +90,12 @@ const WORK_RANK = {
 }
 const workRank = (r) => WORK_RANK[estadoOf(r)]
 
+// A-07: inicial de la etiqueta del tipo + número de la tarjeta (migración 009)
+const codigoTarjeta = (row, evento) => {
+  const label = (evento.invitation_types || []).find(t => t.key === row.invitation_type)?.label || row.invitation_type
+  return `${label[0].toUpperCase()}-${String(row.numero).padStart(2, '0')}`
+}
+
 export default function Dashboard() {
   const { evento } = useEvent()
   const tipos = evento.invitation_types || []
@@ -117,7 +123,7 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async () => {
     const [{ data: gs }, { data: confs }] = await Promise.all([
-      supabase.from('guest_summary').select('*').eq('event_id', evento.id).order('group_name'),
+      supabase.from('guest_summary').select('*').eq('event_id', evento.id).order('invitation_type').order('numero', { nullsFirst: false }).order('group_name'),
       supabase.from('confirmations').select('guest_id, attending, dietary_notes, song_request, guests!inner(event_id)').eq('guests.event_id', evento.id),
     ])
     return { rows: gs || [], details: confs || [] }
@@ -433,7 +439,10 @@ export default function Dashboard() {
                     <input type="checkbox" className="adm-check" checked={selected.has(row.id)} onChange={() => toggleSel(row.id)} aria-label={`Seleccionar ${row.group_name}`} />
                   </td>
                   <td>
-                    <div style={{ fontWeight: 500, color: '#e2e8f0' }}>{row.group_name}</div>
+                    <div style={{ fontWeight: 500, color: '#e2e8f0' }}>
+                      {row.numero && <span style={{ color: '#64748b', fontVariantNumeric: 'tabular-nums', marginRight: '.45rem' }}>{codigoTarjeta(row, evento)}</span>}
+                      {row.group_name}
+                    </div>
                     {row.whatsapp && (
                       <div style={{ fontSize: '.75rem', color: '#64748b', marginTop: '.15rem' }}>{row.whatsapp}</div>
                     )}
