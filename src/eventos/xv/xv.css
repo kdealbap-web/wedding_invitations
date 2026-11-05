@@ -256,6 +256,12 @@
 .tpl-xv #x11 .sec-c{position:absolute;left:0;right:54px;bottom:calc(5.3rem + env(safe-area-inset-bottom));width:auto;max-width:none;max-height:none;padding:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;overflow:visible;pointer-events:none}
 .tpl-xv #x11 .xv-guarda{font-family:var(--fd);font-style:italic;font-weight:500;font-size:.95rem;letter-spacing:.08em;color:var(--tinta);text-shadow:0 1px 8px rgba(255,248,242,.9)}
 .tpl-xv #x11:not(.active):not(.exiting){transform:scale(.94)}
+/* Móvil: la foto sola, a pantalla completa (pedido de Kevin). Centrada en el cartel y la cara. */
+@media(max-width:1023px){
+  .tpl-xv #x11{padding:0}
+  .tpl-xv #x11 .sec-foto{inset:0;top:0;left:0;width:100%;height:100%;max-width:none;max-height:none;transform:none;object-fit:cover;object-position:50% 38%;border-radius:0;box-shadow:none}
+  .tpl-xv #x11 .sec-c{display:none}
+}
 @media(min-width:1024px){
   .tpl-xv #x11{padding:0 clamp(4rem,7vw,7rem)}
   .tpl-xv #x11 .sec-foto{top:calc(50% - 2.4rem);left:50%;max-width:min(60vw,900px);max-height:calc(100dvh - 12rem)}
