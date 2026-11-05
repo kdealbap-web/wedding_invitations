@@ -11,8 +11,11 @@ import { linksInactivos, tipoLabel, diasPara } from './evento'
 const APP_URL = import.meta.env.VITE_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
 
 // El token es opaco (nanoid 22): el nombre ya no viaja en el link.
-function inviteUrl(row) {
-  return `${APP_URL}/i/${row.token}`
+// Un evento con subdominio propio (config.subdominio) manda sus links por él:
+// mauren → https://mauren.invitation.kdealbap.com/i/<token>
+function inviteUrl(row, ev) {
+  const sub = ev?.config?.subdominio
+  return `${sub ? `https://${sub}.invitation.kdealbap.com` : APP_URL}/i/${row.token}`
 }
 
 const fmtLimite = (d) => {
@@ -31,7 +34,7 @@ function buildMessage(row, ev) {
 Con mucha ilusión te invitamos a ${ev.titulo}. Para nosotros sería muy especial contar contigo.
 
 En el siguiente enlace encontrarás todos los detalles y la tarjeta de invitación:
-${inviteUrl(row)}
+${inviteUrl(row, ev)}
 ${limite ? `
 Te agradeceríamos que, si es posible, nos confirmes tu asistencia antes del ${limite} para organizarnos con tiempo. 🗓️
 ` : ''}
@@ -260,7 +263,7 @@ export default function Dashboard() {
     flash('Invitación eliminada')
     load()
   }
-  const copyUrl = (row) => navigator.clipboard.writeText(inviteUrl(row)).then(() => flash('URL copiada'))
+  const copyUrl = (row) => navigator.clipboard.writeText(inviteUrl(row, evento)).then(() => flash('URL copiada'))
   const copyMessage = (row) => navigator.clipboard.writeText(buildMessage(row, evento)).then(() => flash('Mensaje copiado'))
 
   return (

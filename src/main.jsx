@@ -49,6 +49,14 @@ class ErrorBoundary extends Component {
   }
 }
 
+// ─── Subdominio de un evento (mauren.invitation.kdealbap.com) ───
+// Solo sirve sus invitaciones (/i/…) y el panel (/admin). Todo lo demás —la raíz,
+// rutas sueltas— va a la landing de la plataforma, en el dominio principal.
+const enSubdominio = /^[a-z0-9-]+\.invitation\.kdealbap\.com$/.test(window.location.hostname)
+if (enSubdominio && !/^\/(i\/|admin)/.test(window.location.pathname)) {
+  window.location.replace('https://invitation.kdealbap.com/')
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>

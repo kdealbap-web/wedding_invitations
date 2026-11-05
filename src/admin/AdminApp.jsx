@@ -74,6 +74,38 @@ function Shell({ onSignOut, children }) {
   )
 }
 
+// ─── Inicio del panel ───
+// Por un subdominio de evento (mauren.invitation…) se entra directo a ese evento.
+// Quien solo administra un evento va a él; la lista completa es de la plataforma.
+// La base (010) ya filtra lo que cada quien ve: esto solo decide a dónde llevarlo.
+const SUB = window.location.hostname.match(/^([a-z0-9-]+).invitation.kdealbap.com$/)?.[1] || null
+
+function Inicio() {
+  const [destino, setDestino] = useState(undefined)
+  useEffect(() => {
+    (async () => {
+      if (SUB) {
+        const { data } = await supabase.from('events').select('slug').eq('config->>subdominio', SUB).maybeSingle()
+        return setDestino(data ? `/admin/e/${data.slug}` : 'sin-acceso')
+      }
+      // Sin la 010 la función no existe: se comporta como antes (todo visible).
+      const { data: plataforma, error } = await supabase.rpc('es_admin_plataforma')
+      if (error || plataforma) return setDestino({ plataforma: true })
+      const { data: evs } = await supabase.from('events').select('slug')
+      setDestino(evs?.length === 1 ? `/admin/e/${evs[0].slug}` : evs?.length ? { plataforma: false } : 'sin-acceso')
+    })()
+  }, [])
+  if (destino === undefined) return <div className="adm-spin">Cargando…</div>
+  if (destino === 'sin-acceso') return (
+    <div className="adm-main" style={{ padding: '2rem' }}>
+      <h1 className="adm-page-title">Sin acceso</h1>
+      <p className="adm-page-sub">Tu cuenta no tiene eventos asignados aquí. Escríbele a quien te dio el acceso.</p>
+    </div>
+  )
+  if (typeof destino === 'string') return <Navigate to={destino} replace />
+  return <EventosList plataforma={destino.plataforma} />
+}
+
 function ProtectedLayout({ session }) {
   const navigate = useNavigate()
   if (!session) return <Navigate to="/admin/login" replace />
@@ -85,7 +117,7 @@ function ProtectedLayout({ session }) {
 
   return (
     <Routes>
-      <Route index element={<Shell onSignOut={signOut}><EventosList /></Shell>} />
+      <Route index element={<Shell onSignOut={signOut}><Inicio /></Shell>} />
       <Route path="eventos/nuevo" element={<Shell onSignOut={signOut}><EventForm /></Shell>} />
       <Route path="eventos/:slug/editar" element={
         <EventLayout><Shell onSignOut={signOut}><EventForm /></Shell></EventLayout>

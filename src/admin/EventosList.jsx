@@ -71,7 +71,7 @@ function Tabla({ lista, onEstado }) {
   )
 }
 
-export default function EventosList() {
+export default function EventosList({ plataforma = true }) {
   const [eventos, setEventos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -108,10 +108,10 @@ export default function EventosList() {
           <p className="adm-page-sub">{eventos.length} evento(s) · {archivados.length} archivado(s)</p>
         </div>
         <div className="adm-head-right">
-          <Link className="adm-btn adm-btn-gold" to="/admin/eventos/nuevo">
+          {plataforma && <Link className="adm-btn adm-btn-gold" to="/admin/eventos/nuevo">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Nuevo evento
-          </Link>
+          </Link>}
         </div>
       </div>
 
