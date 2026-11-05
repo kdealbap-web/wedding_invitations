@@ -93,7 +93,8 @@ async function leer(archivo) {
       const cupos = cuposDe(ws.getCell(`${b.cupos}${r}`).value)
       const id = textoDe(ws.getCell(`${b.id}${r}`).value).trim()
       if (cupos == null) invalidas.push({ fila: r, valor: textoDe(ws.getCell(`${b.cupos}${r}`).value) })
-      filas.push({ fila: r, id, nombre, cupos, tipo: b.tipo })
+      // numero = orden dentro del bloque (A-01, J-01…), no el ID del Excel, que puede venir sucio
+      filas.push({ fila: r, id, numero: filas.length + 1, nombre, cupos, tipo: b.tipo })
     }
     bloques.push({ ...b, filas, invalidas })
   }
@@ -173,18 +174,12 @@ async function aplicar(bloques) {
 
     let cupos = 0
     for (const f of filas) {
-      const { rows: [g] } = await client.query(
-        'INSERT INTO guests (event_id, token, name, invitation_type, notes) VALUES ($1, $2, $3, $4, NULL) RETURNING id',
-        [eventId, nanoid(22), f.nombre, f.tipo]
+      // Sin personas inventadas: los cupos van en la tarjeta (migración 009) y
+      // el panel los muestra como plazas sin nombre hasta que alguien las nombre.
+      await client.query(
+        'INSERT INTO guests (event_id, token, numero, name, invitation_type, cupos) VALUES ($1, $2, $3, $4, $5, $6)',
+        [eventId, nanoid(22), f.numero, f.nombre, f.tipo, f.cupos]
       )
-      // El Excel no trae nombres de las personas: cada cupo queda como «Invitado N»,
-      // que nombres.js marca como genérico para completar a mano.
-      for (let i = 1; i <= f.cupos; i++) {
-        await client.query(
-          'INSERT INTO guest_members (guest_id, name, order_num) VALUES ($1, $2, $3)',
-          [g.id, `Invitado ${i}`, i]
-        )
-      }
       cupos += f.cupos
     }
 
@@ -208,12 +203,11 @@ async function escribirSql(bloques, ruta) {
   const q = (s) => `'${String(s).replace(/'/g, "''")}'`
   const tipos = [...new Set(bloques.map((b) => b.tipo))]
   const inserts = filas.map((f) =>
-    `  INSERT INTO guests (event_id, token, name, invitation_type) VALUES (ev, ${q(nanoid(22))}, ${q(f.nombre)}, ${q(f.tipo)}) RETURNING id INTO g;\n` +
-    `  INSERT INTO guest_members (guest_id, name, order_num) SELECT g, 'Invitado ' || i, i FROM generate_series(1, ${f.cupos}) i;`
+    `  INSERT INTO guests (event_id, token, numero, name, invitation_type, cupos) VALUES (ev, ${q(nanoid(22))}, ${f.numero}, ${q(f.nombre)}, ${q(f.tipo)}, ${f.cupos});`
   ).join('\n')
   const sql = `-- Importación de invitados · evento ${EVENTO} · ${filas.length} tarjetas
 DO $$
-DECLARE ev UUID; g UUID;
+DECLARE ev UUID;
 BEGIN
   SELECT id INTO ev FROM events WHERE slug = ${q(EVENTO)};
   IF ev IS NULL THEN RAISE EXCEPTION 'No existe el evento ${EVENTO}'; END IF;

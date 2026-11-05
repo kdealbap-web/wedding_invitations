@@ -23,7 +23,7 @@ serve(async (req) => {
 
     const { data, error } = await supabase
       .from('guests')
-      .select('id, name, invitation_type, events(slug, tipo, titulo, fecha, estado, rsvp_limite, invitation_types, config), guest_members(id, name, order_num), confirmations(attending, dietary_notes, song_request, confirmed_at, confirmation_members(member_id))')
+      .select('id, name, invitation_type, numero, cupos, events(slug, tipo, titulo, fecha, estado, rsvp_limite, invitation_types, config), guest_members(id, name, order_num), confirmations(attending, attending_total, dietary_notes, song_request, confirmed_at, confirmation_members(member_id))')
       .eq('token', token)
       .single()
 
@@ -54,7 +54,7 @@ serve(async (req) => {
     // guest_id, PostgREST devuelve `confirmations` como OBJETO (relación 1-a-1);
     // en otros casos podría venir como arreglo. Normalizamos ambos.
     type ConfRow = {
-      attending: boolean; dietary_notes: string | null; song_request: string | null;
+      attending: boolean; attending_total: number | null; dietary_notes: string | null; song_request: string | null;
       confirmed_at: string; confirmation_members: { member_id: string }[] | null
     }
     const confRaw = data.confirmations as ConfRow | ConfRow[] | null
@@ -65,6 +65,7 @@ serve(async (req) => {
       dietary_notes:        confRow.dietary_notes,
       song_request:         confRow.song_request,
       confirmed_at:         confRow.confirmed_at,
+      attending_total:      confRow.attending_total,
       attending_member_ids: (confRow.confirmation_members ?? []).map((cm) => cm.member_id),
     } : null
 
@@ -82,7 +83,9 @@ serve(async (req) => {
       return json({ id: data.id, name: data.name, revoked: true, event: { titulo: ev.titulo, tipo: ev.tipo, slug: ev.slug } })
     }
 
-    return json({ id: data.id, name: data.name, invitation_type: data.invitation_type, members, confirmation, event })
+    // cupos: los de la tarjeta (009) o, si hay más personas cargadas, las personas.
+    const cupos = Math.max((data.cupos as number | null) ?? 0, members.length)
+    return json({ id: data.id, name: data.name, numero: data.numero, cupos, invitation_type: data.invitation_type, members, confirmation, event })
   } catch (e) {
     return json({ error: 'internal_error' }, 500)
   }
