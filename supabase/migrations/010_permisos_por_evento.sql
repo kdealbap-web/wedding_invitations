@@ -119,15 +119,14 @@ ALTER VIEW guest_summary SET (security_invoker = on);
 ALTER VIEW mesa_summary  SET (security_invoker = on);
 ALTER VIEW event_summary SET (security_invoker = on);
 
--- ─── Quién es quién (5·XI·2026) ───
-INSERT INTO platform_admins (email) VALUES ('kdealbap@gmail.com') ON CONFLICT DO NOTHING;
+-- ─── Quién es quién (5·XI·2026): Kevin y Angely, la plataforma ───
+INSERT INTO platform_admins (email) VALUES ('kdealbap@gmail.com'), ('angelyacosta1011@gmail.com') ON CONFLICT DO NOTHING;
 
 INSERT INTO event_admins (event_id, email)
 SELECT e.id, x.email
 FROM events e
 JOIN (VALUES
-  ('boda-angely-kevin', 'angelyacosta1011@gmail.com'),
   ('boda-angely-kevin', 'yulitzaorozcowedding@gmail.com'),
-  ('xv-mauren',         'maye.obandom02@gmail.com')
+  ('xv-mauren',         'maye.obandom02@gmail.com')        -- Mayerlis, hermana mayor de Mauren
 ) AS x(slug, email) ON x.slug = e.slug
 ON CONFLICT DO NOTHING;
