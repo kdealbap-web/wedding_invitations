@@ -3,6 +3,13 @@ import { GuestProvider, useGuest } from './GuestContext'
 import { PLANTILLAS } from './plantillas'
 import { Cargador, NoEncontrada, NoActiva, EventoFinalizado } from './Estado'
 import InvitacionCerrada from '../components/InvitacionCerrada'
+import Sobre from './Sobre'
+
+// Mientras responde la red se ve el sobre cerrado, sin poder tocarlo todavía. Se
+// recuerda la última plantilla para no enseñárselo a quien viene de la boda.
+const CLAVE_PLANTILLA = 'inv-plantilla'
+const ultimaPlantilla = () => { try { return localStorage.getItem(CLAVE_PLANTILLA) } catch { return null } }
+const Espera = () => ultimaPlantilla() === 'boda' ? <Cargador /> : <Sobre listo={false} />
 
 // ─── La invitación: /i/:token ───
 // Decide qué se ve según lo que responda get-invitation: cargando, link que no
@@ -12,9 +19,11 @@ function Inner() {
 
   useEffect(() => {
     if (event?.titulo && !revoked) document.title = event.titulo
+    const pl = event?.config?.plantilla
+    if (pl) try { localStorage.setItem(CLAVE_PLANTILLA, pl) } catch { /* nada */ }
   }, [event, revoked])
 
-  if (loading)  return <Cargador />
+  if (loading)  return <Espera />
   if (error)    return <NoEncontrada />
   if (inactive) return <EventoFinalizado titulo={event?.titulo} />
 
@@ -27,7 +36,7 @@ function Inner() {
   return (
     <>
       {preview && <div className="preview-banner">Vista previa · el evento aún no está publicado</div>}
-      <Suspense fallback={<Cargador />}>
+      <Suspense fallback={<Espera />}>
         <Plantilla />
       </Suspense>
     </>

@@ -1,42 +1,95 @@
-/* ─── Plantilla XV ───
-   Palo rosa y oro rosa sobre vino: el fondo profundo es lo que hace brillar
-   los dos. El oro rosa nunca va plano: es un degradado metálico (--metal) en
-   títulos, divisores y bordes. Todo bajo .tpl-xv para no pisar a index.css. */
+/* Las dos tipografías propias de esta plantilla viven aquí (y no en index.html)
+   para que no pesen en la boda ni en el panel. Parisienne: caligrafía de trazo
+   firme, se lee bien a 390 px. Playfair Display: serif de contraste alto con
+   peso, para títulos y cifras. */
+@import url('https://fonts.googleapis.com/css2?family=Parisienne&family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500;1,700&display=swap');
+
+/* ─── Plantilla de quinceañera ───
+   Luminosa: marfil, champán y rubor, con palo rosa y oro rosa de protagonistas.
+   El contenido va en una tarjeta de marfil esmerilado sobre la foto (esa tarjeta
+   es lo que da el contraste, no un velo oscuro) y el texto en ciruela profundo.
+   El oro rosa nunca va plano: es un degradado metálico (--metal) en títulos,
+   marcos y botones. Todo bajo .tpl-xv para no pisar a index.css. */
 
 .tpl-xv{
-  --vino-0:#1a0710;                     /* fondo más hondo */
-  --vino:#2c0e1d;                       /* vino / ciruela oscuro */
-  --ciruela:#4b1a33;
-  --rosa:#EBB9C2;                       /* palo rosa */
-  --acc:#C98B83;--acc-dk:#8C4852;       /* oro rosa */
-  --gold:#EDC2AE;                       /* oro rosa claro (texto) */
-  --olsft:#E6CDC2;                      /* texto secundario */
-  --olive:#6B4A35;
-  --marfil:#FBF0E8;
-  --metal:linear-gradient(100deg,#a8665f 0%,#f0c4b1 28%,#fde6d8 50%,#d49a8d 72%,#a8665f 100%);
-  --linea:rgba(237,194,174,.38);
-  background:var(--vino-0);
+  --fx-script:'Parisienne',cursive;
+  --fx-disp:'Playfair Display',Georgia,serif;
+  --fs:var(--fx-script);                  /* la caligráfica de index.css */
+  --fd:var(--fx-disp);                    /* títulos y cifras */
+
+  --marfil:#FFF8F2;                       /* marfil */
+  --champan:#F6E7DA;                      /* champán */
+  --rubor:#F8E3E4;                        /* rubor muy suave */
+  --rosa:#EBB9C2;                         /* palo rosa */
+  --malva:#9A4A5E;                        /* palo rosa profundo: acentos de texto (6,6:1) */
+  --tinta:#4A2433;                        /* ciruela de cacao: texto (12:1 sobre marfil) */
+  --tinta-2:#6F4150;                      /* texto secundario (7:1) */
+  --acc:#C98B83;--acc-dk:#8C4852;         /* oro rosa */
+  --gold:#8E4A4A;                         /* oro rosa oscuro, para texto pequeño (6,7:1) */
+  --olsft:var(--tinta-2);
+  --olive:#6A3A4A;
+  --metal:linear-gradient(105deg,#c98c80 0%,#f0c9ba 30%,#fbe3d6 50%,#dba597 72%,#c98c80 100%);
+  --metal-txt:linear-gradient(100deg,#8c4a46 0%,#a8625c 28%,#bd7b73 50%,#a2605a 74%,#8c4a46 100%);
+  --linea:rgba(201,139,131,.55);
+  --tarjeta:rgba(255,248,242,.82);
+  background:var(--marfil);
+  color:var(--tinta);
 }
 
-/* Contenido: centrado y con scroll propio cuando no cabe (móvil) */
-.tpl-xv .sec-c{text-align:center;display:flex;flex-direction:column;align-items:center;overflow-y:auto;scrollbar-width:none;padding-bottom:calc(5rem + env(safe-area-inset-bottom))}
+/* ─── Disposición: tarjeta de marfil esmerilado ───
+   Móvil: foto a sangre arriba y la tarjeta asentada abajo, para que la cara
+   quede a la vista. La columna derecha queda libre para los puntos de navegación. */
+.tpl-xv .sec{align-items:flex-end;padding:0 54px calc(4.7rem + env(safe-area-inset-bottom)) 12px}
+.tpl-xv .sec-c{
+  max-width:560px;max-height:calc(100dvh - 8.6rem);
+  padding:1.5rem 1.25rem 1.6rem;
+  text-align:center;display:flex;flex-direction:column;align-items:center;
+  overflow-y:auto;scrollbar-width:none;
+  background:var(--tarjeta);border-radius:28px;
+  box-shadow:0 0 0 1.5px var(--linea),0 0 0 5px rgba(255,248,242,.38),0 24px 50px -22px rgba(110,50,65,.55);
+}
+@supports(backdrop-filter:blur(1px)){.tpl-xv .sec-c{background:rgba(255,248,242,.74);backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15)}}
 .tpl-xv .sec-c::-webkit-scrollbar{display:none}
-.tpl-xv .sec-title{font-weight:400;color:var(--marfil);text-shadow:0 2px 18px rgba(26,7,16,.6)}
-.tpl-xv .sec-title em{color:var(--rosa)}
+.tpl-xv .sec-bg{transition:none}
+.tpl-xv .sec.active .sec-bg{transform:none}
+.tpl-xv .sec-foto{display:none}
+
+.tpl-xv .sec-title{font-weight:700;font-size:clamp(1.9rem,7.4vw,3rem);line-height:1.12;letter-spacing:0;color:var(--tinta)}
+.tpl-xv .sec-title em{font-style:italic;font-weight:500;color:var(--malva)}
+.tpl-xv .sec-subtitle{color:var(--tinta-2)}
+.tpl-xv .eyebrow{color:var(--tinta-2);font-weight:500;font-size:.68rem}
 .tpl-xv .eyebrow::before,.tpl-xv .eyebrow::after{background:var(--linea)}
 .tpl-xv .div-orn{width:min(260px,70%)}
-.tpl-xv .div-line{background:linear-gradient(90deg,transparent,#e3ad9c 60%,#f6d3c3)}
-.tpl-xv .div-line:last-child{background:linear-gradient(270deg,transparent,#e3ad9c 60%,#f6d3c3)}
-.tpl-xv .div-dot{width:7px;height:7px;background:var(--metal);box-shadow:0 0 8px rgba(240,196,177,.5)}
-.tpl-xv .btn-acc{background:var(--metal);color:var(--vino-0);font-weight:600;box-shadow:0 4px 18px rgba(201,139,131,.28)}
-.tpl-xv .btn-acc:hover{background:linear-gradient(100deg,#c9877d,#fde6d8 50%,#c9877d)}
-.tpl-xv .btn-ghost{background:rgba(44,14,29,.55);border-color:var(--linea);color:var(--marfil)}
-.tpl-xv .btn-ghost:hover{background:rgba(75,26,51,.7)}
+.tpl-xv .div-line{background:linear-gradient(90deg,transparent,#c98c80 60%,#a8625c)}
+.tpl-xv .div-line:last-child{background:linear-gradient(270deg,transparent,#c98c80 60%,#a8625c)}
+.tpl-xv .div-dot{width:7px;height:7px;background:var(--metal);box-shadow:0 0 0 1px rgba(168,98,92,.5)}
+.tpl-xv .btn-acc{background:var(--metal);color:#3d1a28;font-weight:600;box-shadow:0 0 0 1px #c98c80,0 6px 16px rgba(168,98,92,.28)}
+.tpl-xv .btn-acc:hover{background:linear-gradient(105deg,#d19a8e,#fde9de 50%,#d19a8e)}
+.tpl-xv .btn-ghost{background:rgba(255,255,255,.6);border-color:var(--linea);color:var(--tinta)}
+.tpl-xv .btn-ghost:hover{background:#fff}
 .tpl-xv .btn svg{stroke:currentColor}
-.tpl-xv .nd.active .nd-ico{box-shadow:0 0 12px rgba(237,194,174,.5)}
-.tpl-xv .nd-ico svg{stroke:var(--rosa)}
-.tpl-xv .sec-bg{filter:saturate(.92) sepia(.12)}
-.tpl-xv #audio-btn.playing{color:var(--gold);border-color:var(--linea)}
+.tpl-xv .btn:focus-visible,.tpl-xv .nd:focus-visible,.tpl-xv .narr:focus-visible{outline:2px solid var(--malva);outline-offset:3px}
+
+/* Controles fijos en vidrio marfil */
+.tpl-xv #audio-btn,.tpl-xv #autoplay-btn,.tpl-xv .narr{background:rgba(255,248,242,.86);border-color:var(--linea);color:var(--tinta)}
+.tpl-xv #audio-btn:hover,.tpl-xv #autoplay-btn:hover,.tpl-xv .narr:hover{background:#fff}
+.tpl-xv #audio-btn.playing{color:var(--malva);border-color:var(--acc);background:rgba(255,248,242,.92)}
+.tpl-xv #autoplay-btn.active{background:var(--metal);color:#3d1a28;border-color:#c98c80}
+.tpl-xv #nav-pos{color:var(--tinta);background:rgba(255,248,242,.86);border-radius:999px;padding:.3rem .7rem}
+.tpl-xv #prog-bar{background:var(--metal)}
+
+/* Puntos laterales: siempre visibles, chicos, con etiqueta al pasar el cursor */
+.tpl-xv #nav-dots{opacity:1;pointer-events:auto;right:.65rem;gap:.34rem}
+.tpl-xv .nd{gap:0;padding:0}
+.tpl-xv .nd-ico{width:30px;height:30px;background:rgba(255,248,242,.9);border:1.5px solid var(--linea);backdrop-filter:none}
+.tpl-xv .nd-ico svg{width:14px;height:14px;stroke:var(--tinta)}
+.tpl-xv .nd.active .nd-ico{background:var(--metal);border-color:#b9786f;box-shadow:0 0 0 3px rgba(255,248,242,.55)}
+.tpl-xv .nd.active .nd-ico svg{stroke:#3d1a28}
+.tpl-xv .nd:hover:not(.active) .nd-ico{background:#fff;border-color:var(--acc-dk)}
+.tpl-xv .nd-lbl{order:-1;max-width:0;padding:0;margin:0;border-radius:999px;background:var(--tinta);color:var(--marfil);font-size:.62rem;letter-spacing:.1em;transition:max-width .25s var(--sp),padding .25s var(--sp),margin .25s var(--sp),color .2s}
+.tpl-xv .nd.active .nd-lbl{color:transparent;max-width:0}
+.tpl-xv .nd:hover .nd-lbl,.tpl-xv .nd:focus-visible .nd-lbl{color:var(--marfil);max-width:180px;padding:.35rem .7rem;margin-right:.45rem}
+@media(max-width:500px){.tpl-xv .nd-lbl{display:none}.tpl-xv .nd-ico{width:28px;height:28px}}
 
 /* Entradas de cada slide (el equivalente a #sN de la boda) */
 .tpl-xv #x2:not(.active):not(.exiting){transform:scale(.9)}
@@ -49,91 +102,144 @@
 .tpl-xv #x9:not(.active):not(.exiting){transform:translateX(-38px)}
 .tpl-xv #x10:not(.active):not(.exiting){transform:scale(.9)}
 
-/* Decoración fija: marco, filigrana en las esquinas, destellos */
+/* Decoración fija: marco y filigrana en las esquinas, destellos */
 .xv-deco{position:fixed;inset:0;z-index:3;pointer-events:none}
-.xv-marco{position:absolute;inset:10px;border:1px solid transparent;border-image:linear-gradient(160deg,rgba(240,196,177,.55),rgba(240,196,177,.1) 40%,rgba(240,196,177,.1) 60%,rgba(240,196,177,.55)) 1}
-.xv-esq{position:absolute;width:46px;height:46px;fill:none;stroke:url(#xv-metal);stroke-width:1.1;stroke-linecap:round;opacity:.9}
+.xv-marco{position:absolute;inset:10px;border:1px solid transparent;border-image:linear-gradient(160deg,rgba(201,139,131,.85),rgba(201,139,131,.12) 40%,rgba(201,139,131,.12) 60%,rgba(201,139,131,.85)) 1}
+.xv-esq{position:absolute;width:46px;height:46px;fill:none;stroke:url(#xv-metal);stroke-width:1.3;stroke-linecap:round;opacity:.95}
 .xv-esq0{top:6px;left:6px}
 .xv-esq1{top:6px;right:6px;transform:scaleX(-1)}
 .xv-esq2{bottom:6px;left:6px;transform:scaleY(-1)}
 .xv-esq3{bottom:6px;right:6px;transform:scale(-1)}
-.xv-chispa{position:absolute;background:linear-gradient(135deg,#fde6d8,#e3ad9c);clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;animation:xv-brillo 4s ease-in-out infinite}
-@keyframes xv-brillo{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:.85;transform:scale(1) rotate(45deg)}}
+.xv-chispa{position:absolute;background:linear-gradient(135deg,#fff3ea,#e0a898);clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;animation:xv-brillo 4s ease-in-out infinite}
+.xv-chispa:nth-child(n+14){display:none}
+@keyframes xv-brillo{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:.9;transform:scale(1) rotate(45deg)}}
 
 /* Tipografía */
-.xv-corona{width:54px;height:34px;fill:none;stroke:url(#xv-metal);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;margin-bottom:.7rem;filter:drop-shadow(0 0 8px rgba(240,196,177,.4))}
-.xv-corona circle{fill:#f6d3c3;stroke:none}
-.xv-eyebrow{font-family:var(--fb);font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--olsft);margin-bottom:.8rem}
-.xv-titulo{font-family:var(--fd);font-weight:300;font-style:italic;font-size:clamp(2.4rem,7vw,4.4rem);line-height:1;color:var(--marfil);text-shadow:0 2px 24px rgba(26,7,16,.7)}
-.xv-nombre,.xv-invitado,.xv-firma{background:var(--metal);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 14px rgba(26,7,16,.6))}
-.xv-nombre{font-family:var(--fs);font-size:clamp(3.6rem,13vw,7.2rem);line-height:1.15;padding:0 .12em;margin:.05em 0 0}
-.xv-nombre-s{font-size:clamp(2.8rem,9vw,4.6rem)}
-.xv-apellido{font-family:var(--fb);font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;color:var(--olsft);margin-top:.2rem}
-.xv-fecha{font-family:var(--fd);font-size:clamp(1.05rem,2.6vw,1.4rem);color:var(--gold);letter-spacing:.04em}
+.xv-corona{width:54px;height:34px;fill:none;stroke:url(#xv-metal);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;margin-bottom:.6rem}
+.xv-corona circle{fill:#bd7b73;stroke:none}
+.xv-eyebrow{font-family:var(--fb);font-weight:500;font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;color:var(--tinta-2);margin-bottom:.6rem}
+.xv-titulo{font-family:var(--fd);font-weight:800;font-size:clamp(1.9rem,8vw,3.6rem);line-height:1.05;color:var(--tinta)}
+.xv-titulo,.xv-nombre,.xv-invitado,.xv-firma{background:var(--metal-txt);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.xv-num{font-size:1.9em;font-style:italic;font-weight:800;line-height:.9;padding:0 .04em;font-variant-numeric:lining-nums}
+.xv-nombre{font-family:var(--fs);font-size:clamp(3.8rem,17vw,7.4rem);line-height:1.1;padding:0 .12em;margin:0}
+.xv-nombre-s{font-size:clamp(3rem,13vw,5rem)}
+.xv-apellido{font-family:var(--fb);font-weight:500;font-size:.72rem;letter-spacing:.26em;text-transform:uppercase;color:var(--tinta-2);margin-top:.2rem}
+.xv-fecha{text-wrap:balance;font-family:var(--fd);font-weight:500;font-size:clamp(1rem,3.4vw,1.35rem);color:var(--tinta);letter-spacing:.02em}
 .xv-fecha::first-letter,.xv-det-t::first-letter{text-transform:uppercase}
 
 /* Cuenta regresiva */
-.xv-cd{display:flex;gap:clamp(.6rem,2.5vw,1.2rem);margin-top:1.3rem}
-.xv-cd-i{display:flex;flex-direction:column;align-items:center;min-width:3.6rem;padding:.55rem .5rem;border-radius:14px;background:rgba(36,9,24,.62);border:1px solid var(--linea);backdrop-filter:blur(8px)}
-.xv-cd-i b{font-family:var(--fd);font-weight:500;font-size:clamp(1.5rem,4.5vw,2.1rem);line-height:1;color:var(--gold);font-variant-numeric:tabular-nums lining-nums}
-.xv-cd-i span{font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:var(--olsft);margin-top:.25rem}
+.xv-cd{display:flex;gap:clamp(.45rem,2vw,1rem);margin-top:1.1rem}
+.xv-cd-i{display:flex;flex-direction:column;align-items:center;min-width:3.4rem;padding:.5rem .4rem;border-radius:14px;background:var(--champan);border:1px solid var(--linea)}
+.xv-cd-i b{font-family:var(--fd);font-weight:700;font-size:clamp(1.4rem,5vw,2rem);line-height:1;color:var(--tinta);font-variant-numeric:tabular-nums lining-nums}
+.xv-cd-i span{font-size:.56rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--tinta-2);margin-top:.28rem}
 
 /* Mensaje y cierre */
-.xv-cita{font-family:var(--fd);font-style:italic;font-weight:400;font-size:clamp(1.2rem,3.2vw,1.9rem);line-height:1.65;color:var(--marfil);max-width:36rem;text-shadow:0 2px 16px rgba(26,7,16,.7)}
-.xv-firma{font-family:var(--fs);font-size:clamp(2rem,6vw,3rem);margin-top:1rem;padding:0 .1em}
-.xv-cierre{font-family:var(--fd);font-style:italic;font-size:clamp(1.3rem,3.6vw,2.1rem);line-height:1.55;color:var(--marfil);max-width:34rem;text-shadow:0 2px 18px rgba(26,7,16,.7)}
-.xv-mono{display:flex;align-items:center;justify-content:center;width:3.4rem;height:3.4rem;margin:.3rem 0 .2rem;border-radius:50%;border:1.5px solid transparent;background:linear-gradient(var(--vino),var(--vino)) padding-box,var(--metal) border-box;box-shadow:0 0 18px rgba(240,196,177,.25)}
-.xv-mono span{font-family:var(--fs);font-size:2rem;line-height:1;padding-top:.15rem;background:var(--metal);-webkit-background-clip:text;background-clip:text;color:transparent}
+.xv-cita{font-family:var(--fd);font-style:italic;font-weight:500;font-size:clamp(1.1rem,4.2vw,1.7rem);line-height:1.6;color:var(--tinta);max-width:36rem}
+.xv-firma{font-family:var(--fs);font-size:clamp(2.6rem,10vw,3.6rem);margin-top:.6rem;padding:0 .1em}
+.xv-cierre{font-family:var(--fd);font-style:italic;font-weight:500;font-size:clamp(1.1rem,4.4vw,1.8rem);line-height:1.55;color:var(--tinta);max-width:34rem}
+.xv-mono{display:flex;align-items:center;justify-content:center;width:3.4rem;height:3.4rem;margin:.3rem 0 .2rem;border-radius:50%;border:1.5px solid transparent;background:linear-gradient(var(--marfil),var(--marfil)) padding-box,var(--metal) border-box}
+.xv-mono span{font-family:var(--fd);font-weight:800;font-size:1.25rem;line-height:1;background:var(--metal-txt);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* Invitación exclusiva */
-.xv-invitado{font-family:var(--fs);font-size:clamp(2.4rem,8vw,4.4rem);line-height:1.2;margin:.5rem 0 .6rem;padding:0 .1em}
-.xv-nro{font-family:var(--fb);font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;color:var(--olsft);margin-bottom:1rem}
-.xv-nro b{font-family:var(--fd);font-weight:600;font-size:1.25rem;letter-spacing:.08em;color:var(--gold);margin-left:.35rem;vertical-align:-.1em;font-variant-numeric:lining-nums}
-.xv-cupos{display:inline-flex;align-items:center;gap:.8rem;padding:.5rem 1.2rem .5rem .6rem;border-radius:999px;background:rgba(36,9,24,.68);border:1px solid var(--linea)}
-.xv-cupos b{display:flex;align-items:center;justify-content:center;width:2.4rem;height:2.4rem;border-radius:50%;background:var(--metal);color:var(--vino-0);font-family:var(--fd);font-weight:600;font-size:1.4rem;line-height:1}
-.xv-cupos span{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--marfil)}
+.xv-invitado{font-family:var(--fs);font-size:clamp(2.7rem,11vw,4.6rem);line-height:1.15;margin:.3rem 0 .5rem;padding:0 .1em}
+.xv-nro{font-family:var(--fb);font-weight:500;font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--tinta-2);margin-bottom:1rem}
+.xv-nro b{font-family:var(--fd);font-weight:800;font-size:1.3rem;letter-spacing:.06em;color:var(--malva);margin-left:.35rem;vertical-align:-.1em;font-variant-numeric:lining-nums}
+.xv-cupos{display:inline-flex;align-items:center;gap:.8rem;padding:.45rem 1.2rem .45rem .5rem;border-radius:999px;background:var(--champan);border:1px solid var(--linea)}
+.xv-cupos b{display:flex;align-items:center;justify-content:center;width:2.4rem;height:2.4rem;border-radius:50%;background:var(--metal);color:#3d1a28;font-family:var(--fd);font-weight:800;font-size:1.35rem;line-height:1;box-shadow:0 0 0 1px #c98c80}
+.xv-cupos span{font-size:.78rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta)}
 .xv-miembros{list-style:none;margin-top:1.1rem;display:flex;flex-direction:column;gap:.3rem}
-.xv-miembros li{font-family:var(--fd);font-size:clamp(1.05rem,2.4vw,1.3rem);color:var(--marfil)}
-.xv-miembros li::before{content:'◆';color:var(--gold);font-size:.55em;margin-right:.7rem;vertical-align:middle}
+.xv-miembros li{font-family:var(--fd);font-weight:500;font-size:clamp(1.05rem,2.4vw,1.3rem);color:var(--tinta)}
+.xv-miembros li::before{content:'◆';color:var(--acc);font-size:.55em;margin-right:.7rem;vertical-align:middle}
 
 /* Detalles y vestuario */
-.xv-detalles{display:grid;grid-template-columns:1fr 1fr;gap:1rem;width:100%;max-width:640px}
-@media(max-width:600px){.xv-detalles{grid-template-columns:1fr}}
-.xv-det{padding:1.2rem 1rem;border-radius:18px;background:rgba(36,9,24,.7);border:1px solid var(--linea);backdrop-filter:blur(10px)}
-.xv-det svg{width:26px;height:26px;stroke:var(--gold);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.55rem}
-.xv-det-t{font-family:var(--fd);font-size:clamp(1.15rem,2.6vw,1.4rem);color:var(--marfil);line-height:1.3}
-.xv-det-s{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--olsft);margin-top:.2rem}
-.xv-det-d{font-size:.78rem;line-height:1.6;color:rgba(251,240,232,.78);margin-top:.5rem}
-.xv-botones{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.3rem}
-.xv-nota{font-family:var(--fd);font-style:italic;font-size:.9rem;color:var(--olsft);margin-top:.9rem}
+.xv-detalles{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;width:100%;max-width:640px}
+@media(max-width:600px){.xv-detalles{grid-template-columns:1fr;gap:.6rem}.xv-det{padding:.75rem .9rem!important}.xv-det svg{width:22px;height:22px;margin-bottom:.25rem}.xv-botones{margin-top:.9rem;gap:.45rem}.tpl-xv .xv-botones .btn{padding:.55rem 1rem;font-size:.7rem}.xv-nota{display:none}}
+.xv-det{padding:1.1rem 1rem;border-radius:18px;background:var(--champan);border:1px solid var(--linea)}
+.xv-det svg{width:26px;height:26px;stroke:var(--malva);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.5rem}
+.xv-det-t{font-family:var(--fd);font-weight:700;font-size:clamp(1.05rem,2.8vw,1.3rem);color:var(--tinta);line-height:1.3}
+.xv-det-s{font-size:.74rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta-2);margin-top:.2rem}
+.xv-det-d{font-size:.82rem;line-height:1.6;color:var(--tinta);margin-top:.5rem}
+.xv-botones{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.2rem}
+.xv-nota{font-family:var(--fd);font-style:italic;font-size:.9rem;color:var(--tinta-2);margin-top:.9rem}
 
 /* Tonos reservados */
-.xv-tonos{display:flex;flex-wrap:wrap;gap:clamp(.8rem,3vw,1.6rem);justify-content:center;max-width:36rem}
+.xv-tonos{display:flex;flex-wrap:wrap;gap:clamp(.8rem,3vw,1.5rem);justify-content:center;max-width:36rem}
 .xv-tono{display:flex;flex-direction:column;align-items:center;gap:.3rem}
-.xv-tono-c{width:clamp(54px,13vw,76px);height:clamp(54px,13vw,76px);border-radius:50%;border:2px solid rgba(251,240,232,.4);box-shadow:0 6px 18px rgba(26,7,16,.5)}
-.xv-tono-n{font-family:var(--fd);font-size:1.05rem;color:var(--marfil)}
-.xv-tono-h{font-size:.58rem;letter-spacing:.14em;color:var(--olsft)}
-.xv-texto{font-family:var(--fd);font-style:italic;font-size:clamp(1rem,2.2vw,1.2rem);line-height:1.7;color:var(--marfil);max-width:30rem;margin-top:1.4rem}
+.xv-tono-c{width:clamp(52px,13vw,72px);height:clamp(52px,13vw,72px);border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--linea),0 6px 14px rgba(110,50,65,.25)}
+.xv-tono-n{font-family:var(--fd);font-weight:700;font-size:1rem;color:var(--tinta)}
+.xv-tono-h{font-size:.62rem;letter-spacing:.12em;color:var(--tinta-2)}
+.xv-texto{font-family:var(--fd);font-style:italic;font-weight:500;font-size:clamp(1rem,2.2vw,1.2rem);line-height:1.7;color:var(--tinta);max-width:30rem;margin-top:1.2rem}
 
-/* Tarjeta de aviso (restricción y regalos) */
-.xv-tarjeta{max-width:32rem;padding:1.6rem 1.5rem;border-radius:22px;background:rgba(36,9,24,.72);border:1px solid var(--linea);backdrop-filter:blur(12px)}
-.xv-tarjeta svg{width:34px;height:34px;stroke:var(--gold);fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.8rem}
-.xv-tarjeta p{font-family:var(--fd);font-style:italic;font-size:clamp(1.05rem,2.3vw,1.3rem);line-height:1.7;color:var(--marfil)}
+/* Tarjeta de aviso (restricción y regalos): una tarjeta champán dentro de la tarjeta */
+.xv-tarjeta{max-width:32rem;padding:1.4rem 1.3rem;border-radius:22px;background:var(--champan);border:1px solid var(--linea)}
+.xv-tarjeta svg{width:34px;height:34px;stroke:var(--malva);fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.7rem}
+.xv-tarjeta p{font-family:var(--fd);font-style:italic;font-weight:500;font-size:clamp(1.02rem,2.3vw,1.25rem);line-height:1.7;color:var(--tinta)}
 
 /* RSVP: mismo formulario compartido, con el layout de este deck */
-.tpl-xv #x9 .sec-c{text-align:left;align-items:stretch;padding:1.5rem clamp(1rem,4vw,3rem) calc(5rem + env(safe-area-inset-bottom))}
-.tpl-xv .rsvp-who{border-color:var(--linea);background:rgba(36,9,24,.6)}
-.tpl-xv .rsvp-who-name{color:var(--gold)}
-.tpl-xv .rsvp-who-cupos{background:rgba(237,194,174,.14);border-color:var(--linea);box-shadow:none}
-.tpl-xv .rsvp-who-cupos b{color:var(--gold);text-shadow:none}
-.tpl-xv .rsvp-who-cupos span{color:var(--marfil)}
-.tpl-xv .ff label,.tpl-xv .rsvp-note{color:var(--olsft)}
-.tpl-xv .ff input{background:rgba(36,9,24,.55);border-color:var(--linea)}
-.tpl-xv .ff input:focus{border-color:var(--rosa)}
-.tpl-xv .choice-lbl.selected{background:var(--metal);border-color:transparent;color:var(--vino-0);font-weight:500}
-.tpl-xv .choice-lbl.selected .choice-radio{border-color:var(--vino-0)}
-.tpl-xv .rsvp-contador button{background:rgba(36,9,24,.6);border-color:var(--linea)}
+.tpl-xv #x9 .sec-c{text-align:left;align-items:stretch}
+.tpl-xv .rsvp-img-col{border-color:var(--linea)}
+.tpl-xv .rsvp-who{border-color:var(--linea);background:var(--champan)}
+.tpl-xv .rsvp-who-label{color:var(--tinta-2)}
+.tpl-xv .rsvp-who-name{color:var(--malva);font-weight:500}
+.tpl-xv .rsvp-who-cupos{background:var(--marfil);border-color:var(--linea);box-shadow:none}
+.tpl-xv .rsvp-who-cupos b{color:var(--malva);font-weight:800;text-shadow:none}
+.tpl-xv .rsvp-who-cupos span{color:var(--tinta)}
+.tpl-xv .ff label,.tpl-xv .rsvp-note{color:var(--tinta-2)}
+.tpl-xv .ff input{background:#fff;border-color:var(--linea);color:var(--tinta)}
+.tpl-xv .ff input::placeholder{color:#8a6572}
+.tpl-xv .ff input:focus{border-color:var(--malva);box-shadow:0 0 0 3px rgba(154,74,94,.18)}
+.tpl-xv .choice-lbl,.tpl-xv .member-chk{text-transform:none;letter-spacing:0;font-size:.84rem}
+.tpl-xv .choice-lbl{background:rgba(255,255,255,.7);border-color:var(--linea);color:var(--tinta)}
+.tpl-xv .choice-lbl:not(.selected):hover{background:#fff;border-color:var(--acc)}
+.tpl-xv .choice-radio{border-color:var(--acc-dk)}
+.tpl-xv .choice-lbl.selected{background:var(--metal);border-color:#c98c80;color:#3d1a28;font-weight:600}
+.tpl-xv .choice-lbl.selected .choice-radio{border-color:#3d1a28;background:#3d1a28}
+.tpl-xv .member-chk{background:rgba(255,255,255,.7);border-color:var(--linea);color:var(--tinta)}
+.tpl-xv .member-check-icon{border-color:var(--acc-dk)}
+.tpl-xv .member-chk.checked{background:rgba(235,185,194,.35);border-color:var(--acc);color:var(--tinta)}
+.tpl-xv .member-chk.checked .member-check-icon{background:var(--malva);border-color:var(--malva);color:#fff}
+.tpl-xv .rsvp-contador button{background:#fff;border-color:var(--linea);color:var(--tinta)}
+.tpl-xv .rsvp-contador button:hover:not(:disabled){background:var(--rubor);border-color:var(--acc-dk)}
+.tpl-xv .rsvp-contador output b{color:var(--malva);font-weight:800}
+.tpl-xv .rsvp-contador output span{color:var(--tinta-2)}
+.tpl-xv .rsvp-confirmed-badge{background:var(--rubor);border-color:var(--linea);box-shadow:none}
+.tpl-xv .rsvp-confirmed-badge svg{stroke:#47703a}
+.tpl-xv .rsvp-confirmed-badge.soft svg{stroke:var(--malva);fill:rgba(235,185,194,.5)}
+.tpl-xv .rsvp-confirmed-lead{color:var(--tinta)}
+.tpl-xv .rsvp-confirmed-lead strong{color:var(--malva);font-weight:700}
+.tpl-xv .rcr{background:var(--champan);border-color:var(--linea)}
+.tpl-xv .rcr-label{color:var(--tinta-2)}
+.tpl-xv .rcr-value{color:var(--tinta)}
+.tpl-xv .rsvp-confirmed-foot{color:var(--tinta-2)}
+
+/* ─── Escritorio: la foto entera en un panel, sobre su propio desenfoque ───
+   En 1440×900 una vertical 2:3 a sangre pierde el 63 % del alto. Aquí el fondo es
+   la misma foto muy desenfocada y la foto va entera, con marco, a un lado; el
+   contenido va al otro, y los pares e impares alternan lado. */
+@media(min-width:1024px){
+  .tpl-xv .sec{align-items:center;justify-content:flex-start;padding:0 clamp(4rem,7vw,7rem) 0 clamp(3rem,7vw,7rem)}
+  .tpl-xv .sec:nth-of-type(even){justify-content:flex-end}
+  .tpl-xv .sec-bg{filter:blur(38px) saturate(1.1);transform:scale(1.2)}
+  .tpl-xv .sec.active .sec-bg{transform:scale(1.2)}
+  .tpl-xv .sec-c{width:min(47vw,620px);max-width:620px;max-height:calc(100dvh - 7rem);padding:2rem 2.2rem 2.2rem;border-radius:32px}
+  .tpl-xv .sec-foto{display:block;position:absolute;z-index:1;top:50%;right:clamp(4rem,7vw,7rem);transform:translateY(-50%);
+    width:auto;height:auto;max-height:calc(100dvh - 7rem);max-width:min(44vw,720px);
+    border:9px solid var(--marfil);border-radius:22px;box-shadow:0 0 0 1.5px #c98c80,0 0 0 7px rgba(255,248,242,.4),0 30px 60px -20px rgba(80,30,45,.55)}
+  .tpl-xv .sec:nth-of-type(even) .sec-foto{right:auto;left:clamp(3rem,7vw,7rem)}
+  /* el RSVP trae su propia foto lateral: sin panel y con la tarjeta ancha */
+  .tpl-xv #x9{justify-content:center;padding-left:clamp(3rem,7vw,7rem)}
+  .tpl-xv #x9 .sec-c{width:min(82vw,1000px);max-width:1000px}
+  .tpl-xv .rsvp-img-col img{border-radius:12px}
+}
 
 @media(prefers-reduced-motion:reduce){
   .xv-chispa{animation:none;opacity:.5}
+}
+
+/* El slide de detalles es el más alto: en móvil pierde el rótulo y el adorno para
+   que la tarjeta no se coma la cara de la foto */
+@media(max-width:600px){
+  .tpl-xv #x4 .xv-eyebrow,.tpl-xv #x4 .div-orn{display:none}
+  .tpl-xv #x4 .sec-title{margin-bottom:.8rem}
+  .tpl-xv .choice-lbl{padding:.58rem .75rem;min-width:0;font-size:.8rem}
 }

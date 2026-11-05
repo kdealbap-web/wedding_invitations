@@ -46,9 +46,21 @@ export default function YoutubeBtn({ videoId }) {
     return () => { vivo = false; try { player.current?.destroy() } catch { /* nada */ } }
   }, [videoId])
 
+  // Si el primer toque (p. ej. el sello del sobre) llegó antes de que el
+  // reproductor estuviera listo, se recuerda: ya hay activación del usuario y
+  // al estar listo puede sonar sin esperar a otro gesto.
+  const gesto = useRef(false)
+  useEffect(() => {
+    const evs = ['pointerdown', 'keydown', 'touchend']
+    const marca = () => { gesto.current = true }
+    evs.forEach(e => window.addEventListener(e, marca, { once: true }))
+    return () => evs.forEach(e => window.removeEventListener(e, marca))
+  }, [])
+
   // Primer gesto del invitado → empieza
   useEffect(() => {
     if (!listo) return
+    if (gesto.current) { if (onRef.current) try { player.current.playVideo() } catch { /* nada */ } return }
     const evs = ['pointerdown', 'keydown', 'touchend']
     const start = (e) => {
       if (e.target.closest?.('#audio-btn')) return   // ese toque ya es pausa/play

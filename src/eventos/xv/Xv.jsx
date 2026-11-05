@@ -1,6 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useGuest } from '../../invitacion/GuestContext'
 import Deck from '../../invitacion/Deck'
+import Sobre from '../../invitacion/Sobre'
+import { fechaCorta } from '../../invitacion/fechas'
 import { manifiestoDe } from './fotos'
 import {
   XHero, XMensaje, XExclusiva, XDetalles, XVestuario, XTonos,
@@ -14,25 +16,33 @@ import './xv.css'
 // opcionales (vestuario, tonos, restricción, regalos) solo aparecen si el
 // evento trae esa clave en su config.
 
-const OV_OSCURO = 'linear-gradient(160deg,rgba(48,14,32,.82),rgba(26,7,16,.9))'
-// El formulario va sobre un velo más cerrado: la foto de fondo trae letras
-// El cierre pone texto sobre el vestido claro y la balaustrada: más velo al centro
-const OV_CIERRE = 'linear-gradient(to bottom,rgba(36,9,24,.55) 0%,rgba(36,9,24,.72) 50%,rgba(26,7,16,.92) 100%)'
-const OV_FORM = 'linear-gradient(160deg,rgba(48,14,32,.93),rgba(26,7,16,.96))'
-// Hero y cierre dejan ver más la foto; el texto va centrado y con sombra
-const OV_FOTO = 'linear-gradient(to bottom,rgba(36,9,24,.5) 0%,rgba(40,10,26,.5) 45%,rgba(26,7,16,.9) 100%)'
+// Velos claros y cálidos: suavizan la foto sin oscurecerla. Lo que da contraste
+// al texto no es el velo sino la tarjeta de marfil de .sec-c (ver xv.css).
+const OV_CLARO  = 'linear-gradient(170deg,rgba(255,248,242,.28),rgba(250,228,228,.34))'
+const OV_HERO   = 'linear-gradient(to bottom,rgba(255,248,242,.06) 0%,rgba(255,240,235,.14) 55%,rgba(247,222,224,.4) 100%)'
+const OV_FORM   = 'linear-gradient(170deg,rgba(255,248,242,.55),rgba(247,226,226,.6))'
 
+// Interior del <svg> de cada punto lateral (trazo, viewBox 24)
 const ICONOS = {
-  x1:  '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',
-  x2:  '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
-  x3:  '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="11" r="3"/><path d="M6 20c0-3 3-5 6-5s6 2 6 5"/>',
-  x4:  '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/>',
-  x5:  '<path d="M12 2c-2 0-4 1-4 4v1l-3 14h14l-3-14V6c0-3-2-4-4-4z"/>',
-  x6:  '<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="15.5" cy="10" r="1.3"/><path d="M12 21a3 3 0 0 1 0-6h2"/>',
-  x7:  '<circle cx="9" cy="7" r="4"/><circle cx="17" cy="7" r="4"/><path d="M2 21v-2a7 7 0 0 1 7-7"/><path d="M22 21v-2a7 7 0 0 0-7-7"/>',
-  x8:  '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
-  x9:  '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/>',
-  x10: '<path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>',
+  x1:  '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',                                                                    // corona
+  x2:  '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',                                          // mensaje
+  x3:  '<path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>', // boleto
+  x4:  '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',               // lugar
+  x5:  '<path d="M9 3h6l-1 6 5 12H5l5-12z"/>',                                                                        // vestido
+  x6:  '<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="15.5" cy="10" r="1.3"/><path d="M12 21a3 3 0 0 1 0-6h2"/>', // paleta
+  x7:  '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6v.2"/>',                                    // aviso
+  x8:  '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8"/><path d="M12 8C10 4 6 4 7 6.5 7.7 8 10.5 8 12 8zM12 8c2-4 6-4 5-1.5-.7 1.5-3.5 1.5-5 1.5z"/>', // regalo
+  x9:  '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',                                                  // confirmar
+  x10: '<path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>',                            // estrella
+}
+
+// Colores del sobre de apertura (variables de invitacion/sobre.css)
+const TEMA_SOBRE = {
+  '--sb-fondo-1': '#fffaf5', '--sb-fondo-2': '#f9e7e0', '--sb-fondo-3': '#efc7cc',
+  '--sb-papel': '#fbefe7', '--sb-papel-2': '#f1d9cf',
+  '--sb-forro': '#eebbc4', '--sb-forro-2': '#f7d3d8',
+  '--sb-borde': '#d4968a', '--sb-tinta': '#4a2433', '--sb-tinta-2': '#7a4656',
+  '--sb-script': "'Parisienne',cursive", '--sb-disp': "'Playfair Display',Georgia,serif",
 }
 
 // id, componente, etiqueta, ¿aparece? (según config)
@@ -50,7 +60,8 @@ const SECCIONES = [
 ]
 
 export default function Xv() {
-  const { event } = useGuest()
+  const { event, nombre } = useGuest()
+  const [abierto, setAbierto] = useState(false)
   const cfg = event?.config || {}
   const man = manifiestoDe(event?.slug)
 
@@ -62,10 +73,24 @@ export default function Xv() {
         id: s.id, Component: s.Component, label: s.label, icon: ICONOS[s.id],
         bg: f?.src || fotos[i % Math.max(fotos.length, 1)] || '',
         pos: f?.pos,
-        ov: s.id === 'x1' ? OV_FOTO : s.id === 'x10' ? OV_CIERRE : s.id === 'x9' ? OV_FORM : OV_OSCURO,
+        panel: s.id !== 'x9',   // el RSVP ya trae su propia foto lateral
+        ov: s.id === 'x1' ? OV_HERO : s.id === 'x9' ? OV_FORM : OV_CLARO,
       }
     })
   }, [cfg, man])
 
-  return <Deck sections={sections} musica={cfg.musica} className="tpl-xv"><XDecoracion /></Deck>
+  return (
+    <>
+      <Deck sections={sections} musica={cfg.musica} className="tpl-xv"><XDecoracion /></Deck>
+      {!abierto && (
+        <Sobre
+          listo para={nombre} monograma="15" tema={TEMA_SOBRE}
+          linea="Te invito a celebrar" titulo={cfg.titulo || event?.titulo}
+          nombre={cfg.nombre_corto || cfg.anfitrion}
+          fecha={event?.fecha ? `${fechaCorta(event.fecha)} · ${new Date(event.fecha).getFullYear()}` : ''}
+          onAbierto={() => setAbierto(true)}
+        />
+      )}
+    </>
+  )
 }

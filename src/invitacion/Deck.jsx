@@ -9,9 +9,11 @@ import Toast       from '../components/Toast'
 import AutoPlayBtn from '../components/AutoPlayBtn'
 
 // ─── El slide-deck, sin saber de qué evento es ───
-// Recibe `sections` [{ id, Component, label, bg, ov, icon }] y se ocupa de la
+// Recibe `sections` [{ id, Component, label, bg, pos, ov, icon, panel }] y se ocupa de la
 // navegación: no hay scroll de página, son secciones fijas superpuestas y solo
 // una lleva `.active`. `icon` es el interior del <svg> del punto lateral.
+//   panel     → pinta además la foto entera en un <img.sec-foto>; la plantilla
+//               decide en su CSS cuándo se ve (p. ej. en escritorio)
 //   musica    → lista de pistas (opcional; sin ellas no hay botón de audio)
 //   className → clase de la plantilla en #app, para sus tokens de color
 //   children  → decoración extra (pétalos, destellos…)
@@ -123,6 +125,7 @@ export default function Deck({ sections, musica, className = '', children }) {
         return (
           <section key={id} className={cls} id={id} data-label={sec.label}>
             <div className="sec-bg" style={{ backgroundImage: `url('${bg}')`, backgroundPosition: sec.pos }} />
+            {sec.panel && <img className="sec-foto" src={bg} alt="" draggable="false" />}
             <div className="sec-ov" style={{ background: ov }} />
             <div className="sec-c">
               <Component tipo={tipo} onToast={showToast} onGoTo={goToId} />

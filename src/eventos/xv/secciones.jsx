@@ -4,7 +4,7 @@ import Rsvp from '../../invitacion/Rsvp'
 import { fechaLarga, fechaCorta, googleCalUrl, descargarIcs } from '../../invitacion/fechas'
 import { useFoto } from './fotos'
 
-// ─── Secciones de la plantilla XV ───
+// ─── Secciones de la plantilla de quinceañera (carpeta «xv») ───
 // Todo el contenido sale de event.config (ver 008_multi_evento.sql): nada de
 // esto lleva texto de un evento concreto, así que otro XV solo cambia su config.
 
@@ -39,9 +39,9 @@ export function XDecoracion() {
       <svg width="0" height="0" style={{ position: 'absolute' }}>
         <defs>
           <linearGradient id="xv-metal" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#a8665f" /><stop offset=".35" stopColor="#f0c4b1" />
-            <stop offset=".55" stopColor="#fde6d8" /><stop offset=".8" stopColor="#c9877d" />
-            <stop offset="1" stopColor="#a8665f" />
+            <stop offset="0" stopColor="#8c4a46" /><stop offset=".4" stopColor="#bd7b73" />
+            <stop offset=".6" stopColor="#d79a8d" /><stop offset=".85" stopColor="#a2605a" />
+            <stop offset="1" stopColor="#8c4a46" />
           </linearGradient>
         </defs>
       </svg>
@@ -81,7 +81,7 @@ export function XHero() {
     <>
       <Corona />
       <p className="xv-eyebrow">Te invito a celebrar</p>
-      <h1 className="xv-titulo">{cfg.titulo || event?.titulo}</h1>
+      <h1 className="xv-titulo">{(cfg.titulo || event?.titulo || '').split(/(d+)/).map((t, i) => (i % 2 ? <span key={i} className="xv-num">{t}</span> : t))}</h1>
       <p className="xv-nombre">{nombre}</p>
       {cfg.anfitrion && cfg.anfitrion !== nombre && <p className="xv-apellido">{cfg.anfitrion}</p>}
       <Orn />

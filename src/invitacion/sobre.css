@@ -1,0 +1,108 @@
+/* ─── El sobre de apertura (Sobre.jsx) ───
+   Los colores y tipografías son variables: la plantilla las cambia con la prop
+   `tema`. Los valores de aquí son palo rosa y oro rosa sobre marfil.
+   Solo se animan transform y opacity. */
+
+.sobre-root{
+  --sb-fondo-1:#fffaf5;--sb-fondo-2:#f8e6df;--sb-fondo-3:#efc9cd;
+  --sb-papel:#fbefe7;--sb-papel-2:#f1d9cf;      /* papel del sobre */
+  --sb-forro:#eebbc4;--sb-forro-2:#f7d3d8;      /* forro interior, palo rosa */
+  --sb-borde:#d4968a;                           /* canto en oro rosa */
+  --sb-tinta:#4a2433;--sb-tinta-2:#7a4656;
+  --sb-metal:linear-gradient(120deg,#c98c80,#f0c9ba 35%,#fbe3d6 52%,#dba597 75%,#c98c80);
+  --sb-cera:radial-gradient(circle at 32% 28%,#fde8da 0%,#e9b5a4 30%,#c47f74 68%,#93524e 100%);
+  --sb-metal-txt:linear-gradient(100deg,#8c4a46,#a8625c 30%,#bd7b73 50%,#a2605a 72%,#8c4a46);
+  --sb-cera-tinta:#8f4f4b;
+  --sb-script:'Parisienne',cursive;
+  --sb-disp:'Playfair Display',Georgia,serif;
+  --sb-body:'Jost',system-ui,sans-serif;
+  --sb-w:min(88vw,600px);
+  --sb-sello:max(66px,calc(var(--sb-w) * .2));
+  --sb-ease:cubic-bezier(.3,.9,.3,1);
+  --sb-ruido:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45 0 0 0 0 .3 0 0 0 0 .3 0 0 0 .1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+
+  position:fixed;inset:0;z-index:800;display:grid;place-items:center;overflow:hidden;
+  background:radial-gradient(90% 70% at 50% 38%,var(--sb-fondo-1),var(--sb-fondo-2) 62%,var(--sb-fondo-3));
+  transition:opacity .65s ease;
+}
+.sobre-root.is-sale{opacity:0;pointer-events:none}
+.s-escena{display:flex;flex-direction:column;align-items:center;gap:clamp(1.6rem,5vh,2.6rem);padding-top:clamp(6rem,17vh,9rem)}
+
+/* ─── El sobre ─── */
+.s-sobre{position:relative;width:var(--sb-w);aspect-ratio:1.3;perspective:1400px}
+.s-sobre>*{position:absolute}
+.s-fondo{inset:0;z-index:0;border-radius:6px;border:2px solid var(--sb-borde);box-shadow:0 22px 40px -14px rgba(120,60,70,.45),0 4px 10px rgba(120,60,70,.18);
+  background:
+    linear-gradient(45deg,rgba(255,255,255,.12) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.12) 75%) 0 0/20px 20px,
+    linear-gradient(45deg,rgba(255,255,255,.12) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.12) 75%) 10px 10px/20px 20px,
+    var(--sb-forro)}
+
+/* Carta: el papel marfil con su filete en oro rosa */
+.s-carta{left:5%;top:12%;width:90%;height:62%;z-index:2;border-radius:4px;background:var(--sb-ruido),linear-gradient(180deg,#fffaf5,#fbeee6);border:1px solid var(--sb-borde);box-shadow:0 2px 8px rgba(120,60,70,.2);
+  transition:transform .8s var(--sb-ease) 1s;will-change:transform}
+.s-carta::before{content:'';position:absolute;inset:7px;border:1px solid var(--sb-borde);border-radius:2px;opacity:.55;pointer-events:none}
+.s-carta-in{display:flex;flex-direction:column;align-items:center;text-align:center;padding:5% 8% 0;color:var(--sb-tinta);transition:opacity .35s ease}
+.s-c-linea{font:500 clamp(.52rem,1.9vw,.66rem)/1 var(--sb-body);letter-spacing:.3em;text-transform:uppercase;color:var(--sb-tinta-2)}
+.s-c-titulo{margin-top:.5em;font:800 clamp(1.45rem,6.6vw,2.2rem)/1.05 var(--sb-disp);font-variant-numeric:lining-nums;background:var(--sb-metal-txt);-webkit-background-clip:text;background-clip:text;color:transparent}
+.s-c-nombre{margin-top:.05em;font:400 clamp(2.2rem,10vw,3.6rem)/1.15 var(--sb-script);color:var(--sb-tinta);padding:0 .1em}
+.s-c-fecha{margin-top:.15em;font:500 clamp(.56rem,2.1vw,.72rem)/1.3 var(--sb-body);letter-spacing:.2em;text-transform:uppercase;color:var(--sb-tinta-2)}
+
+/* Frente: bolsillo con las dos solapas laterales y la inferior */
+.s-frente{inset:0;z-index:3;clip-path:polygon(0 0,50% 52%,100% 0,100% 100%,0 100%);
+  background:var(--sb-ruido),linear-gradient(170deg,var(--sb-papel),var(--sb-papel-2))}
+.s-pliegue{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:var(--sb-borde);stroke-width:1.2;opacity:.5}
+.s-pliegue .s-borde{stroke-width:2.4;opacity:1}
+.s-para{left:12%;right:12%;bottom:5%;z-index:4;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;color:var(--sb-tinta)}
+.s-para span{font:500 clamp(.5rem,1.8vw,.62rem)/1 var(--sb-body);letter-spacing:.34em;text-transform:uppercase;color:var(--sb-tinta-2)}
+.s-para b{font:400 clamp(1.25rem,5.6vw,2rem)/1.1 var(--sb-script);font-weight:400;padding:.05em .1em;text-wrap:balance;animation:sb-aparece .6s ease both}
+.s-para b.espera{animation:none}
+@keyframes sb-aparece{from{opacity:0}to{opacity:1}}
+
+/* Solapa: dos caras (papel por fuera, forro por dentro) que giran en 3D */
+.s-solapa{left:0;top:0;width:100%;height:52%;z-index:5;transform-origin:50% 0;transform-style:preserve-3d}
+.s-solapa i{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;clip-path:polygon(0 0,100% 0,50% 100%)}
+.s-solapa svg{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:var(--sb-borde);stroke-width:2.4}
+.s-sol-fuera{background:var(--sb-ruido),linear-gradient(180deg,var(--sb-papel-2),var(--sb-papel) 80%)}
+.s-sol-dentro{transform:rotateX(180deg);
+  background:
+    linear-gradient(45deg,rgba(255,255,255,.12) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.12) 75%) 0 0/20px 20px,
+    linear-gradient(45deg,rgba(255,255,255,.12) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.12) 75%) 10px 10px/20px 20px,
+    var(--sb-forro-2)}
+
+/* Sello de cera: dos mitades con el borde roto, para que se parta al abrir */
+.s-sello{left:50%;top:52%;z-index:6;width:var(--sb-sello);height:var(--sb-sello);margin:calc(var(--sb-sello) / -2) 0 0 calc(var(--sb-sello) / -2);padding:0;border:0;background:none;cursor:default;-webkit-tap-highlight-color:transparent}
+.s-sello.listo{cursor:pointer;animation:sb-latido 2.4s ease-in-out infinite}
+.s-sello:focus-visible{outline:2px solid var(--sb-tinta);outline-offset:6px;border-radius:50%}
+.s-sello::before{content:'';position:absolute;inset:6% -2% -10%;border-radius:50%;background:rgba(80,30,40,.4);filter:blur(6px);transition:opacity .3s}
+.s-mitad{position:absolute;inset:0;transition:transform .6s cubic-bezier(.5,0,.8,.5),opacity .5s ease-in}
+.s-izq{clip-path:polygon(0 0,52% 0,46% 22%,56% 40%,45% 60%,54% 80%,48% 100%,0 100%)}
+.s-der{clip-path:polygon(52% 0,100% 0,100% 100%,48% 100%,54% 80%,45% 60%,56% 40%,46% 22%)}
+.s-cera{position:absolute;inset:0;border-radius:52% 48% 55% 45%/48% 54% 46% 52%;background:var(--sb-cera);box-shadow:inset 0 -4px 8px rgba(90,40,40,.4),inset 0 3px 5px rgba(255,238,228,.65)}
+.s-cera::after{content:'';position:absolute;inset:13%;border-radius:50%;border:1.5px solid rgba(255,238,228,.55);box-shadow:inset 0 0 0 1px rgba(90,40,40,.22),0 0 0 1px rgba(90,40,40,.18)}
+.s-mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 calc(var(--sb-sello) * .34)/1 var(--sb-disp);font-variant-numeric:lining-nums;color:var(--sb-cera-tinta);text-shadow:0 1px 0 rgba(255,238,228,.75),0 -1px 0 rgba(90,40,40,.35)}
+@keyframes sb-latido{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+
+.s-pista{font:500 .68rem/1 var(--sb-body);letter-spacing:.26em;text-transform:uppercase;color:var(--sb-tinta-2);min-height:1em}
+
+/* ─── La secuencia (la dispara .is-abre) ─── */
+.is-abre .s-sello{animation:none;pointer-events:none}
+.is-abre .s-sello::before{opacity:0}
+.is-abre .s-izq{transform:translate3d(-60%,50%,0) rotate(-28deg);opacity:0}
+.is-abre .s-der{transform:translate3d(60%,60%,0) rotate(24deg);opacity:0}
+.is-abre .s-solapa{animation:sb-solapa .85s cubic-bezier(.45,.05,.3,1) .3s both}
+@keyframes sb-solapa{0%{transform:rotateX(0);z-index:5}49%{z-index:5}50%{z-index:1}100%{transform:rotateX(-180deg);z-index:1}}
+.is-abre .s-carta{transform:translateY(-72%)}
+.is-abre .s-pista{opacity:0;transition:opacity .2s}
+
+/* La carta crece hasta cubrir la pantalla (--dx, --dy y --k los pone Sobre.jsx) */
+.is-crece .s-carta{z-index:10;transform:translate(var(--dx,0),calc(-72% + var(--dy,0))) scale(var(--k,1));transition:transform .9s cubic-bezier(.65,0,.25,1)}
+.is-crece .s-carta-in{opacity:0}
+.is-crece .s-frente,.is-crece .s-para{opacity:0;transition:opacity .35s}
+
+@media(max-height:560px){.s-escena{padding-top:3.5rem;gap:1rem}.s-sobre{--sb-w:min(60vw,420px)}}
+
+/* Sin movimiento: el sello no late y al tocarlo solo hay un fundido */
+@media(prefers-reduced-motion:reduce){
+  .s-sello.listo{animation:none}
+  .sobre-root{transition-duration:.4s}
+}
