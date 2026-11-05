@@ -1,0 +1,13 @@
+{
+  // Worker de solo estáticos que sirve la plataforma: invitation.kdealbap.com y
+  // los subdominios de cada evento (dominios conectados con scripts/cloudflare-dominios.bat).
+  // Se despliega desde la máquina con scripts/desplegar.bat.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "weddingskya",
+  "compatibility_date": "2026-06-15",
+  "assets": {
+    "directory": "./dist",
+    // Cualquier ruta que no sea un archivo (/i/<token>, /admin/…) cae en index.html
+    "not_found_handling": "single-page-application"
+  }
+}
