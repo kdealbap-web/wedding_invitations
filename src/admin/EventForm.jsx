@@ -165,7 +165,7 @@ export default function EventForm() {
         <div className="adm-ff-row">
           <div className="adm-ff">
             <label>Título</label>
-            <input value={titulo} onChange={e => cambiarTitulo(e.target.value)} placeholder="Mis XV años · Mauren" required autoFocus />
+            <input value={titulo} onChange={e => cambiarTitulo(e.target.value)} placeholder="Mis 15 años · Mauren" required autoFocus />
           </div>
           <div className="adm-ff">
             <label>Slug (URL del panel)</label>

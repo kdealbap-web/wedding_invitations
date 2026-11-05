@@ -6,7 +6,7 @@ import './landing.css'
 // Kevin los llena. Si WHATSAPP_VENTAS está vacío, el botón apunta a mailto: con
 // CORREO_VENTAS; si los dos están vacíos, baja a la sección de contacto y
 // muestra «Escríbenos» sin enlace. Número en formato internacional, sin + ni espacios.
-const WHATSAPP_VENTAS = ''
+const WHATSAPP_VENTAS = '573104743755'
 const CORREO_VENTAS = ''
 
 const MENSAJE = 'Hola, quiero cotizar una invitación digital para mi evento.'
@@ -39,7 +39,7 @@ const PANEL = [
   { t: 'Se cierra sola', d: 'Si alguien dice que no va, su enlace deja de mostrar el evento. Si cambia de opinión, se reabre.' },
 ]
 
-const EVENTOS = ['Bodas', 'Quinceañeras', 'Cumpleaños', 'Bautizos', 'Grados', 'Eventos corporativos']
+const EVENTOS = ['Bodas', '15 años', 'Cumpleaños', 'Bautizos', 'Grados', 'Eventos corporativos']
 
 const PAQUETES = [
   { n: 'Esencial', l: 'Para reuniones íntimas', xs: ['Invitación digital con la historia y los datos del evento', 'Un enlace personal por familia', 'Confirmación en línea', 'Panel con vistas y cupos'] },

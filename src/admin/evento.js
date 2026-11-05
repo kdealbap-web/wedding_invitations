@@ -11,7 +11,7 @@ export const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 export const TIPOS_EVENTO = [
   { key: 'boda',        lbl: 'Boda' },
-  { key: 'xv',          lbl: 'XV años' },
+  { key: 'xv',          lbl: '15 años' },
   { key: 'cumpleanos',  lbl: 'Cumpleaños' },
   { key: 'bautizo',     lbl: 'Bautizo' },
   { key: 'grado',       lbl: 'Grado' },
@@ -29,7 +29,7 @@ export const ESTADOS_EVENTO = {
 }
 export const linksInactivos = ev => ev?.estado === 'cerrado' || ev?.estado === 'archivado'
 
-/** «Mis XV años · Mauren» → «mis-xv-anos-mauren» */
+/** «Mis 15 años · Mauren» → «mis-15-anos-mauren» */
 export const slugify = s => (s || '').toLowerCase()
   .normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
