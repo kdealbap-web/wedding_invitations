@@ -14,8 +14,8 @@ import AutoPlayBtn from '../components/AutoPlayBtn'
 // una lleva `.active`. `icon` es el interior del <svg> del punto lateral.
 //   bloqueado → no navega (teclado, deslizar, autoplay): p. ej. mientras el sobre
 //               de apertura está abierto encima
-//   panel     → pinta además la foto entera en un <img.sec-foto>; la plantilla
-//               decide en su CSS cuándo se ve (p. ej. en escritorio)
+//   panel     → pinta además la foto en un <img.sec-foto> (con `pos` como
+//               object-position); la plantilla decide en su CSS cómo se ve
 //   musica    → lista de pistas (opcional; sin ellas no hay botón de audio)
 //   className → clase de la plantilla en #app, para sus tokens de color
 //   children  → decoración extra (pétalos, destellos…)
@@ -127,7 +127,7 @@ export default function Deck({ sections, musica, className = '', bloqueado = fal
         return (
           <section key={id} className={cls} id={id} data-label={sec.label}>
             <div className="sec-bg" style={{ backgroundImage: `url('${bg}')`, backgroundPosition: sec.pos }} />
-            {sec.panel && <img className="sec-foto" src={bg} alt="" draggable="false" />}
+            {sec.panel && <img className="sec-foto" src={bg} alt="" draggable="false" decoding="async" fetchPriority={i === 0 ? 'high' : 'auto'} style={{ objectPosition: sec.pos }} />}
             <div className="sec-ov" style={{ background: ov }} />
             <div className="sec-c">
               <Component tipo={tipo} onToast={showToast} onGoTo={goToId} />

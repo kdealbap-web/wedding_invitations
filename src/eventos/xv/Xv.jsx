@@ -68,10 +68,6 @@ const SECCIONES = [
 export default function Xv() {
   const { event, nombre } = useGuest()
   const [abierto, setAbierto] = useState(false)
-  const { numero, tipo } = useGuest()
-  // Serie de la invitación (Adultos → A-01), igual que en el slide «Tu invitación»
-  const etiqueta = event?.invitation_types?.find(t => t.key === tipo)?.label?.trim()
-  const nro = numero != null ? `${etiqueta ? etiqueta[0].toUpperCase() + '-' : ''}${String(numero).padStart(2, '0')}` : null
   const cfg = event?.config || {}
   const man = manifiestoDe(event?.slug)
 
@@ -94,7 +90,7 @@ export default function Xv() {
       <Deck sections={sections} musica={cfg.musica} className="tpl-xv" bloqueado={!abierto}><XDecoracion /></Deck>
       {!abierto && (
         <Sobre
-          listo para={nombre} numero={nro} monograma="15" tema={TEMA_SOBRE}
+          listo para={nombre} monograma="15" tema={TEMA_SOBRE}
           linea="Te invito a celebrar" titulo={cfg.titulo || event?.titulo}
           nombre={cfg.nombre_corto || cfg.anfitrion}
           fecha={event?.fecha ? `${fechaCorta(event.fecha)} · ${new Date(event.fecha).getFullYear()}` : ''}

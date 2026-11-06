@@ -1,6 +1,6 @@
 /**
  * Ingiere las fotos de un evento: aplica la rotación EXIF, las reduce a
- * 1800 px de lado largo y las deja en src/assets/eventos/<evento>/ con
+ * 2400 px de lado largo y las deja en src/assets/eventos/<evento>/ con
  * nombres limpios (_MIL1166.JPG.jpeg → mil1166.jpg).
  *
  *   npm run fotos-evento -- --desde="XV MAUREN" --evento=xv-mauren
@@ -20,7 +20,7 @@ if (!desde || !evento) {
   process.exit(1)
 }
 
-const LADO = 1800
+const LADO = 2400   // 402×874 @3x con cover pide ~2600 de alto: 1800 se ampliaba ×1,45 en iPhone
 const origen  = resolve(desde)
 const destino = resolve('src/assets/eventos', evento)
 await mkdir(destino, { recursive: true })

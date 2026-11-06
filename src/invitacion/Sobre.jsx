@@ -22,7 +22,7 @@ import './sobre.css'
 //
 // Es genérico: la plantilla lo configura con props y `tema` (variables --sb-*).
 //   listo      → ya llegaron los datos; hasta entonces el sello no se puede tocar
-//   para       → nombre del invitado; numero → su número de invitación (A-01)
+//   para       → nombre del invitado (el sobrescrito, a mano)
 //   monograma  → lo que lleva el lacre (15, M…)
 //   linea / titulo / nombre / fecha → la presentación que trae la tarjeta
 //   onAbierto  → se llama al terminar el fundido (aquí se desmonta el sobre)
@@ -227,7 +227,27 @@ const Papel = ({ d, color = 'var(--sb-papel)', luz = 'url(#sb-luz)' }) => (
   </>
 )
 
-export default function Sobre({ listo = false, para, numero, monograma = '15', linea, titulo, nombre, fecha, tema, onAbierto }) {
+// ─── El tamaño del sobrescrito ───
+// El sobre mide lo mismo para «Ana» que para «Sr. Francisco Obando y Sra.», así
+// que lo que se ajusta es la letra. Devuelve el cuerpo en unidades --u (1 % del
+// ancho del sobre). Se calcula y no se mide: medir obliga a esperar a que cargue
+// Parisienne, y el nombre aparecería primero grande y después encogido.
+//   · Ancho útil: 80u (el sobrescrito va de 13 % a 7 %).
+//   · Parisienne gasta ~0,42 em por letra (medido con «Familia Figueroa Salcedo»).
+//   · Hasta 2 renglones: la palabra más larga tiene que caber entera en uno, y el
+//     nombre completo en dos (a 1,7 y no 2, porque los cortes nunca caen parejos).
+//   · Entre 5,6u (se sigue leyendo a 375 px) y 9.4u (el tope que deja aire al lacre).
+const ANCHO_U = 80, EM_LETRA = 0.42
+export function tallaPara(nombre = '') {
+  const t = nombre.trim()
+  if (!t) return 9.4
+  const palabra = Math.max(...t.split(/\s+/).map(p => p.length))
+  const porPalabra = ANCHO_U / (palabra * EM_LETRA)
+  const porTotal = (ANCHO_U * 1.7) / (t.length * EM_LETRA)
+  return Math.max(5.6, Math.min(9.4, porPalabra, porTotal))
+}
+
+export default function Sobre({ listo = false, para, monograma = '15', linea, titulo, nombre, fecha, tema, onAbierto }) {
   const [fase, setFase] = useState('cerrado')   // cerrado → abre → crece → sale
   const [rz] = useState(ruido)
   const [lacreUrl, setLacreUrl] = useState(null)   // null: pintándose · '' : falló, va el filtro SVG
@@ -469,10 +489,10 @@ export default function Sobre({ listo = false, para, numero, monograma = '15', l
               {/* La sombra que la solapa, al levantarse, echa sobre el sobre */}
               <svg className="s-proy" viewBox="0 0 525 319" overflow="visible" aria-hidden="true"><path d={SOLAPA} transform="translate(10 0)" filter="url(#sb-f-proy)" /></svg>
 
-              <div className="s-sobrescrito">
+              <div className="s-sobrescrito" style={{ '--talla': tallaPara(para) }}>
+                {para && <span className="s-para-t">Para</span>}
                 <b className={para ? '' : 'espera'}>{para || ' '}</b>
               </div>
-              {numero && <span className="s-numero">Invitación N.º {numero}</span>}
 
               <div className="s-pieza s-pieza-b" aria-hidden="true">{lacre}</div>
               <button type="button" className={`s-toque${listo ? ' listo' : ''}`} onClick={abrir} disabled={!listo || fase !== 'cerrado'} aria-label={listo ? 'Abrir la invitación' : 'Preparando tu invitación'} />

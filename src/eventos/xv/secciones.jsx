@@ -110,28 +110,22 @@ export function XMensaje() {
       <p className="xv-eyebrow">Un mensaje para ti</p>
       <Orn />
       <blockquote className="xv-cita">{cfg.mensaje}</blockquote>
-      <p className="xv-firma">{cfg.nombre_corto || cfg.anfitrion}</p>
     </>
   )
 }
 
 // ─── Invitación exclusiva ───
 export function XExclusiva() {
-  const { nombre, members, numero, cupos, tipo, event } = useGuest()
-  // Serie de la invitación: inicial de la etiqueta del tipo (Adultos → A)
-  const etiqueta = event?.invitation_types?.find(t => t.key === tipo)?.label?.trim()
-  const nro = numero != null ? `${etiqueta ? etiqueta[0].toUpperCase() + '-' : ''}${String(numero).padStart(2, '0')}` : null
+  const { nombre, members, cupos } = useGuest()
   const n = cupos || members.length
   return (
     <>
       <p className="xv-eyebrow">Invitación exclusiva</p>
-      <h2 className="sec-title" style={{ textAlign: 'center' }}>Reservado <em>para</em></h2>
       <p className="xv-invitado">{nombre}</p>
-      {nro && <p className="xv-nro">Invitación N.º <b>{nro}</b></p>}
       {n > 0 && (
         <div className="xv-cupos">
           <b>{n}</b>
-          <span>Cupos asignados: {n} {n === 1 ? 'persona' : 'personas'}</span>
+          <span>{n === 1 ? 'Persona' : 'Personas'}</span>
         </div>
       )}
       {members.length > 0 && (
@@ -155,16 +149,17 @@ export function XDetalles({ onToast }) {
   return (
     <>
       <p className="xv-eyebrow">Los detalles</p>
-      <h2 className="sec-title" style={{ textAlign: 'center' }}>Cuándo <em>y dónde</em></h2>
       <Orn />
       <div className="xv-detalles">
         <div className="xv-det">
           <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <p className="xv-det-r">Fecha</p>
           <p className="xv-det-t">{fechaLarga(event?.fecha)}</p>
-          {cfg.hora_texto && <p className="xv-det-s">{cfg.hora_texto}</p>}
+          {cfg.hora_texto && <p className="xv-det-h">{cfg.hora_texto}</p>}
         </div>
         <div className="xv-det">
           <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <p className="xv-det-r">Lugar</p>
           <p className="xv-det-t">{l.nombre}</p>
           {l.salon && <p className="xv-det-s">{l.salon}</p>}
           {l.direccion && <p className="xv-det-d">{l.direccion}</p>}
@@ -230,8 +225,7 @@ export function XTonos() {
   const t = cfg.tonos_reservados || {}
   return (
     <>
-      <p className="xv-eyebrow">Tonos reservados</p>
-      <h2 className="sec-title" style={{ textAlign: 'center' }}>Estos colores son <em>de la quinceañera</em></h2>
+      <h2 className="sec-title" style={{ textAlign: 'center' }}>Tonos reservados</h2>
       <Orn />
       <div className="xv-tonos">
         {(t.colores || []).map(c => (
@@ -302,7 +296,6 @@ export function XCierre() {
       <p className="xv-cierre">{cfg.cierre}</p>
       <Orn />
       <div className="xv-mono"><span>{(cfg.nombre_corto || cfg.anfitrion || '').trim()[0]}</span></div>
-      <p className="xv-nombre xv-nombre-s">{cfg.nombre_corto || cfg.anfitrion}</p>
       <p className="xv-apellido">{event?.fecha ? fechaLarga(event.fecha) : ''}</p>
     </>
   )
