@@ -121,10 +121,9 @@ npx supabase functions deploy submit-rsvp
 npm run build     # → dist/
 ```
 
-Sube `dist/` a Netlify, Cloudflare Pages o similar. El archivo `public/_redirects`
-ya incluye el fallback de SPA (`/* /index.html 200`), imprescindible para que
-funcionen los links de invitación. Recuerda definir las variables `VITE_*` en el
-panel del proveedor de hosting.
+Se publica en el Worker de Cloudflare `weddingskya` con `scriptsdesplegar.bat`
+(publica el último commit). El fallback de SPA lo da `wrangler.jsonc`
+(`not_found_handling`); no uses `_redirects`: el Worker rechaza `/* /index.html 200`.
 
 ## Seguridad
 
