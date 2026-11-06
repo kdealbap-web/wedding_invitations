@@ -3,7 +3,7 @@ import { useGuest } from '../../invitacion/GuestContext'
 import Deck from '../../invitacion/Deck'
 import Sobre from '../../invitacion/Sobre'
 import { fechaCorta } from '../../invitacion/fechas'
-import { manifiestoDe } from './fotos'
+import { manifiestoDe, urlFoto } from './fotos'
 import {
   XHero, XMensaje, XExclusiva, XDetalles, XVestuario, XTonos,
   XRestriccion, XRegalos, XRsvp, XCierre, XGuarda, XDecoracion,
@@ -75,10 +75,11 @@ export default function Xv() {
     const fotos = man?.fotos || []
     return SECCIONES.filter(s => !s.si || s.si(cfg)).map((s, i) => {
       const f = man?.fondos?.[s.id]
+      const sub = cfg.fotos?.[s.id]   // la que subió el admin del evento manda
       return {
         id: s.id, Component: s.Component, label: s.label, icon: ICONOS[s.id],
-        bg: f?.src || fotos[i % Math.max(fotos.length, 1)] || '',
-        pos: f?.pos,
+        bg: (sub?.key && urlFoto(sub.key)) || f?.src || fotos[i % Math.max(fotos.length, 1)] || '',
+        pos: sub?.key ? sub.pos : f?.pos,
         panel: s.id !== 'x9',   // el RSVP ya trae su propia foto lateral
         ov: s.id === 'x1' ? OV_HERO : s.id === 'x9' ? OV_FORM : s.id === 'x11' ? OV_SOLA : OV_CLARO,
       }

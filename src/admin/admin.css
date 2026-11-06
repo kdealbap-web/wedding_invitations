@@ -866,3 +866,16 @@ body.admin-body {
 
 /* Enlaces con aspecto de botón (lista de eventos, formulario) */
 a.adm-btn { text-decoration: none }
+
+/* ─── Fotos de la invitación (FotosEvento.jsx) ─── */
+.adm-fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; margin-bottom: 1.25rem }
+.adm-foto { background: #1e293b; border: 1px solid #334155; border-radius: 8px; overflow: hidden }
+.adm-foto-img { position: relative; line-height: 0 }
+.adm-foto-img img { width: 100%; height: 170px; object-fit: contain; background: #0f172a }
+.adm-foto-img.tocable { cursor: crosshair }
+.adm-foto-img.tocable img { height: auto; max-height: none }
+.adm-foto-punto { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0,0,0,.5); pointer-events: none }
+.adm-foto-cargando { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(15,23,42,.75); color: #e2e8f0; font-size: .8rem; line-height: 1.2 }
+.adm-foto-pie { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; padding: .45rem .5rem; font-size: .75rem; color: #94a3b8 }
+.adm-foto-pie span { flex: 1 1 100% }
+.adm-foto-pie .adm-btn { padding: .25rem .55rem; font-size: .75rem }

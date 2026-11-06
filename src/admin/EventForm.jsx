@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useEvent } from './EventContext'
+import FotosEvento, { borrarFoto } from './FotosEvento'
 import {
   SLUG_RE, TIPOS_EVENTO, ESTADOS_EVENTO, slugify, utcALocalInput, localInputAUtc,
 } from './evento'
@@ -149,6 +150,9 @@ export default function EventForm() {
     setGuardando(false)
     if (err) return setError(err.code === '23505' ? `Ya existe un evento con el slug «${slug}».` : err.message)
     if (!data?.length) return setError('No se guardó: tu cuenta no tiene permiso para editar este evento.')
+    // Las fotos que se reemplazaron o quitaron ya no las usa nadie: fuera de R2
+    const quedan = new Set(Object.values(cfg.fotos || {}).map(x => x.key))
+    for (const x of Object.values(evento?.config?.fotos || {})) if (x?.key && !quedan.has(x.key)) borrarFoto(evento.id, x.key)
     navigate('/admin')
   }
 
@@ -243,6 +247,8 @@ export default function EventForm() {
             <textarea value={leer(cfg, ruta)} onChange={e => campo(ruta, e.target.value)} />
           </div>
         ))}
+
+        {!esNuevo && <FotosEvento evento={evento} fotos={cfg.fotos} onChange={v => campo('fotos', v)} />}
 
         <details style={{ marginBottom: '1rem' }}>
           <summary style={{ cursor: 'pointer', color: '#94a3b8', marginBottom: '.5rem' }}>Avanzado (JSON)</summary>

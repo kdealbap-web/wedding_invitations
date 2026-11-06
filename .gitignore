@@ -53,3 +53,4 @@ XV MAUREN/
 # Despliegue manual a Cloudflare: solo local. Publicar = push a master.
 scripts/desplegar.bat
 scripts/cloudflare-*
+.wrangler/

@@ -115,6 +115,11 @@ en todo lo visible.
 - **El estado manda sobre los links** (lo aplica `get-invitation`):
   `borrador` → vista previa, RSVP deshabilitado · `activo` → normal ·
   `cerrado`/`archivado` → el link muestra «evento finalizado» y no viaja ningún dato.
+- **Fotos subidas desde el panel** («Ajustes del evento» → Fotos de la invitación,
+  `src/admin/FotosEvento.jsx`): el navegador las reduce a 2000 px, van a **R2**
+  (bucket `invitation-fotos`) por el Worker, y en el config queda
+  `fotos: { x10: { key, pos } }`. Mandan sobre el manifiesto; sin subida, sale la del manifiesto.
+  Cada subida tiene nombre nuevo → se sirven con caché `immutable` de un año.
 - La plantilla se elige por `event.config.plantilla` en `src/invitacion/plantillas.js`.
   **Añadir una plantilla** = carpeta `src/eventos/<nombre>/` con un componente que
   renderice `<Deck sections …/>` + una línea lazy en `plantillas.js`.
@@ -1241,8 +1246,11 @@ La sección correcta del RSVP es `src/sections/S10Rsvp.jsx`, **no**
 
 ## Deploy
 
-**Worker de Cloudflare `weddingskya`** (solo estáticos, `wrangler.jsonc`, SPA por
-`not_found_handling`). Sirve `invitation.kdealbap.com` y los subdominios de evento.
+**Worker de Cloudflare `weddingskya`** (`wrangler.jsonc`): estáticos de `dist/` con SPA por
+`not_found_handling`, y **solo `/fotos/*` y `/api/*` pasan por código** (`worker/index.js`,
+`run_worker_first`): servir y subir las fotos de R2. El permiso de subida lo decide Supabase:
+el Worker pide el evento con la sesión del panel y RLS responde. Probar local:
+`npm run build && npx wrangler@4 dev --local` (R2 simulado en `.wrangler/`). Sirve `invitation.kdealbap.com` y los subdominios de evento.
 **Push a `master` = publicar**: Workers Builds compila y despliega solo. (También
 compila el proyecto de Pages `weddingkya`, redundante, que sirve weddingkya.kdealbap.com.)
 No hay otro camino de publicación: los scripts de despliegue manual

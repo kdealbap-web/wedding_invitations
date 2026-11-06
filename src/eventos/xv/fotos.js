@@ -7,6 +7,10 @@ import { useGuest } from '../../invitacion/GuestContext'
 // navegador baja únicamente las fotos que se pintan.
 const MANIFIESTOS = import.meta.glob('../../assets/eventos/*/index.js', { eager: true, import: 'default' })
 
+// Fotos subidas desde el panel (config.fotos → R2, servidas por el Worker en /fotos/).
+// En desarrollo Vite no tiene el Worker: se piden a producción.
+const BASE_FOTOS = import.meta.env.DEV ? 'https://invitation.kdealbap.com' : ''
+export const urlFoto = (key) => `${BASE_FOTOS}/fotos/${key}` 
 export const manifiestoDe = (slug) => MANIFIESTOS[`../../assets/eventos/${slug}/index.js`] || null
 
 // Foto suelta del manifiesto del evento actual (p. ej. «retrato»), o null
