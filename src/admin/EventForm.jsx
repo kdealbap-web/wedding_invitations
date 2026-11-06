@@ -141,11 +141,14 @@ export default function EventForm() {
       invitation_types: lista,
       config: cfg,
     }
-    const { error: err } = esNuevo
-      ? await supabase.from('events').insert(fila)
-      : await supabase.from('events').update(fila).eq('id', evento.id)
+    // .select() porque un UPDATE que RLS no deja pasar no da error: toca 0 filas y
+    // el panel volvía a la lista como si hubiera guardado.
+    const { data, error: err } = esNuevo
+      ? await supabase.from('events').insert(fila).select('id')
+      : await supabase.from('events').update(fila).eq('id', evento.id).select('id')
     setGuardando(false)
     if (err) return setError(err.code === '23505' ? `Ya existe un evento con el slug «${slug}».` : err.message)
+    if (!data?.length) return setError('No se guardó: tu cuenta no tiene permiso para cambiar los ajustes de este evento (solo los administradores de la plataforma).')
     navigate('/admin')
   }
 
