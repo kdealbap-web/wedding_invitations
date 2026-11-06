@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { p5875, p5810, p5661, e6181, logoWedding } from '../assets/images'
+import { p5661, logoWedding } from '../assets/images'
+// Las fotos con gente salen de scripts/landing-fotos.mjs: caras desenfocadas
+import fHero from '../assets/landing/hero.jpg'
+import fPuerta from '../assets/landing/puerta.jpg'
+import fMar from '../assets/landing/mar.jpg'
+import fBoda from '../assets/landing/boda.jpg'
+import fQuince from '../assets/landing/quince.jpg'
 import './landing.css'
 
 // ─── Contacto ───
@@ -126,6 +132,56 @@ const Flecha = () => <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h
 
 function Cta({ children, alt }) {
   return <a className={`k-btn${alt ? ' alt' : ''}`} href={HREF_CONTACTO} {...EXTERNO}><span>{children}</span><Flecha /></a>
+}
+
+// ─── Vista previa de cada plantilla ───
+// Un teléfono por plantilla con su portada, en su propia tipografía y paleta.
+// Nombres, fechas y lugares son de ejemplo: no son de ningún cliente.
+const PLANTILLAS = [
+  { id: 'boda', tipo: 'Boda', foto: fBoda, pos: '50% 50%', eyebrow: 'Nos casamos', nombre: 'Laura & Andrés', fecha: 'Sábado · 14 · III · 2027', hora: 'Ceremonia 5:00 p. m. · Recepción 7:30 p. m.',
+    cd: [128, 6, 42], puntos: ['Ceremonia y recepción, cada invitado ve la suya', 'Mesas redondas con el nombre de cada uno', 'Cupos por familia y confirmación en un toque'] },
+  { id: 'quince', tipo: '15 años', foto: fQuince, pos: '35% 20%', eyebrow: 'Te invito a celebrar', titulo: 'Mis 15 años', nombre: 'Valentina', fecha: 'Sábado · 19 · VI · 2027', hora: '8:00 p. m. · Salón Los Almendros',
+    cd: [224, 11, 7], puntos: ['Un sobre con lacre que se abre al tocarlo', 'Tonos reservados y código de vestuario', 'Su canción sonando desde el primer toque'] },
+]
+const hrefPlantilla = (tipo) => WHATSAPP_VENTAS
+  ? `https://wa.me/${WHATSAPP_VENTAS}?text=${encodeURIComponent(`Hola, me gustó la plantilla de ${tipo} y quiero cotizar mi invitación.`)}`
+  : HREF_CONTACTO
+
+function Plantillas() {
+  return (
+    <section className="k-pl" id="plantillas">
+      <div className="k-wrap">
+        <Rev className="pl-h">
+          <h2>Elige cómo se abre <span>tu invitación.</span></h2>
+          <p className="k-lead">Cada plantilla tiene su paleta, su letra y su forma de entrar. Después la vestimos con tus fotos, tus textos y tu música.</p>
+        </Rev>
+        <ul className="pl-g">
+          {PLANTILLAS.map((p, n) => (
+            <Rev as="li" key={p.id} d={n * 120} className={`pl-i pl-${p.id}`}>
+              <div className="pl-tel" aria-hidden="true">
+                <img src={p.foto} alt="" loading="lazy" style={{ objectPosition: p.pos }} />
+                <div className="pl-pant">
+                  <p className="pl-eb">{p.eyebrow}</p>
+                  {p.titulo && <p className="pl-ti">{p.titulo}</p>}
+                  <p className="pl-no">{p.nombre}</p>
+                  <p className="pl-fe">{p.fecha}</p>
+                  <p className="pl-ho">{p.hora}</p>
+                  <div className="pl-cd">{p.cd.map((v, j) => <span key={j}><b>{v}</b>{['días', 'horas', 'min'][j]}</span>)}</div>
+                  <span className="pl-bt">Confirmar asistencia</span>
+                </div>
+              </div>
+              <div className="pl-tx">
+                <p className="pl-tipo">{p.tipo}</p>
+                <ul>{p.puntos.map(t => <li key={t}>{t}</li>)}</ul>
+                <a className="pl-lk" href={hrefPlantilla(p.tipo)} {...EXTERNO}>Quiero esta plantilla <Flecha /></a>
+              </div>
+            </Rev>
+          ))}
+        </ul>
+        <p className="pl-nota">Nombres, fechas y lugares de ejemplo.</p>
+      </div>
+    </section>
+  )
 }
 
 function Rev({ children, d = 0, as: Tag = 'div', className = '' }) {
@@ -376,7 +432,7 @@ export default function Landing() {
             <Nombre />
           </h1>
           <figure className="h-ph">
-            <img src={p5875} alt="Angely y Kevin al atardecer, en su sesión de preboda" fetchPriority="high" />
+            <img src={fHero} alt="Angely y Kevin al atardecer, en su sesión de preboda" fetchPriority="high" />
             <figcaption>Angely &amp; Kevin · 12·IX·2026</figcaption>
           </figure>
           <div className="h-b">
@@ -420,17 +476,19 @@ export default function Landing() {
             </ul>
           </Rev>
           <div className="his-f">
-            <figure className="hf hf1"><img src={p5810} alt="Angely y Kevin frente a una puerta colonial" loading="lazy" /><span className="his-seal"><img src={logoWedding} alt="Monograma A&K" loading="lazy" /></span></figure>
+            <figure className="hf hf1"><img src={fPuerta} alt="Angely y Kevin frente a una puerta colonial" loading="lazy" /><span className="his-seal"><img src={logoWedding} alt="Monograma A&K" loading="lazy" /></span></figure>
             <figure className="hf hf2"><img src={p5661} alt="El anillo de compromiso" loading="lazy" /></figure>
-            <figure className="hf hf3"><img src={e6181} alt="Angely y Kevin en el mar al atardecer" loading="lazy" /><figcaption>La sesión de preboda</figcaption></figure>
+            <figure className="hf hf3"><img src={fMar} alt="Angely y Kevin en el mar al atardecer" loading="lazy" /><figcaption>La sesión de preboda</figcaption></figure>
           </div>
         </div>
       </section>
 
+      <Plantillas />
+
       <section className="k-pz" id="piezas">
         <div className="k-wrap">
           <Rev className="pz-h">
-            <h2>Y también se toca.</h2>
+            <h2>Y también en papel.</h2>
             <p className="k-lead">Con la misma identidad de la invitación, preparamos lo que se imprime o se proyecta el día del evento.</p>
           </Rev>
           <ul className="pz-g">
