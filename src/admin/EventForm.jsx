@@ -76,12 +76,6 @@ export default function EventForm() {
   const [enUso, setEnUso]     = useState({})   // { clave: tarjetas que la usan }
   const [error, setError]     = useState('')
   const [guardando, setGuardando] = useState(false)
-  // El admin de un evento (no de la plataforma) solo edita textos: lo demás lo bloquea la 011.
-  const [bloq, setBloq]       = useState(false)
-  useEffect(() => {
-    if (esNuevo) return
-    supabase.rpc('es_admin_plataforma').then(({ data, error }) => setBloq(!error && data === false))
-  }, [esNuevo])
 
   // Cuántas tarjetas usa cada tipo: quitar uno en uso las deja huérfanas.
   useEffect(() => {
@@ -179,7 +173,7 @@ export default function EventForm() {
           <div className="adm-ff">
             <label>Slug (URL del panel)</label>
             <input
-              value={slug} placeholder="xv-mauren" disabled={bloq}
+              value={slug} placeholder="xv-mauren"
               onChange={e => { setSlugTocado(true); setSlug(e.target.value) }}
               style={slug && !SLUG_RE.test(slug) ? { borderColor: '#f56565' } : undefined}
             />
@@ -189,13 +183,13 @@ export default function EventForm() {
         <div className="adm-ff-row">
           <div className="adm-ff">
             <label>Tipo de evento</label>
-            <select value={tipo} disabled={bloq} onChange={e => setTipo(e.target.value)}>
+            <select value={tipo} onChange={e => setTipo(e.target.value)}>
               {TIPOS_EVENTO.map(t => <option key={t.key} value={t.key}>{t.lbl}</option>)}
             </select>
           </div>
           <div className="adm-ff">
             <label>Estado</label>
-            <select value={estado} disabled={bloq} onChange={e => setEstado(e.target.value)}>
+            <select value={estado} onChange={e => setEstado(e.target.value)}>
               {Object.entries(ESTADOS_EVENTO).map(([k, v]) => <option key={k} value={k}>{v.lbl} — {v.desc}</option>)}
             </select>
           </div>
@@ -204,7 +198,7 @@ export default function EventForm() {
         <div className="adm-ff-row">
           <div className="adm-ff">
             <label>Fecha y hora (hora de Colombia)</label>
-            <input type="datetime-local" value={fecha} disabled={bloq} onChange={e => setFecha(e.target.value)} />
+            <input type="datetime-local" value={fecha} onChange={e => setFecha(e.target.value)} />
           </div>
           <div className="adm-ff">
             <label>Límite para confirmar (RSVP)</label>
@@ -214,7 +208,7 @@ export default function EventForm() {
 
         <div className="adm-ff">
           <label>Tipos de invitación (el primero es el de defecto)</label>
-          <fieldset className="adm-members" disabled={bloq} style={{ border: 0, padding: 0, margin: 0 }}>
+          <div className="adm-members">
             {tipos.map((t, i) => (
               <div key={i} className="adm-member-row">
                 <input value={t.label} placeholder="Nombre (Adultos)" onChange={e => cambiarEtiqueta(i, t, e.target.value)} />
@@ -231,7 +225,7 @@ export default function EventForm() {
               </div>
             ))}
             <button type="button" className="adm-add-member" onClick={() => setTipos(ts => [...ts, { key: '', label: '', auto: true }])}>+ Agregar tipo</button>
-          </fieldset>
+          </div>
         </div>
 
         <h3 style={{ margin: '1.5rem 0 .75rem', color: '#e2e8f0', fontSize: '1rem' }}>Contenido de la invitación</h3>
@@ -239,7 +233,7 @@ export default function EventForm() {
           {CAMPOS.map(([ruta, lbl, ph]) => (
             <div className="adm-ff" key={ruta}>
               <label>{lbl}</label>
-              <input value={leer(cfg, ruta)} placeholder={ph} disabled={bloq && ruta === 'plantilla'} onChange={e => campo(ruta, e.target.value)} />
+              <input value={leer(cfg, ruta)} placeholder={ph} onChange={e => campo(ruta, e.target.value)} />
             </div>
           ))}
         </div>

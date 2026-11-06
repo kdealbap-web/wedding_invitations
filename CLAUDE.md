@@ -1127,10 +1127,10 @@ del JWT. Las vistas pasaron a `security_invoker = on`: sin eso leían como postg
 saltaban todo. **Si creas una vista nueva sobre estas tablas, ponle security_invoker.**
 Para dar acceso a alguien: una fila en `event_admins` + crearle la cuenta.
 
-Migración `011_admin_evento_edita_textos.sql`: el admin del evento **sí edita los textos** de
-su invitación (título, límite RSVP y el `config`). Un trigger le bloquea lo que rompe links o
-publica: slug, tipo, estado, fecha, tipos de invitación y `config.plantilla`/`config.subdominio`.
-En `EventForm` esos campos le salen deshabilitados.
+Migraciones `011` + `012`: **el admin del evento edita TODO su evento** (textos, estado,
+fecha, plantilla, tipos, slug…) desde «Ajustes del evento». Lo único que sigue siendo de la
+plataforma es crear y borrar eventos. Ojo: si cambia el slug o el subdominio, los links ya
+enviados dejan de funcionar.
 
 Migración `008_multi_evento.sql`: tabla `events`, `event_id` en `guests` y `mesas`,
 tipos de invitación por evento, vistas rehechas con `event_id` y nueva `event_summary`.
