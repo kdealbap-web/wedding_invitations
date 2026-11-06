@@ -1,7 +1,7 @@
 @echo off
 rem Publica la plataforma en el Worker weddingskya (invitation.kdealbap.com y
-rem subdominios de eventos). Publica EXACTAMENTE el último commit: compila en una
-rem copia limpia (git worktree), así lo que esté a medio editar no llega a nadie.
+rem subdominios de eventos). Publica EXACTAMENTE el ultimo commit: compila en una
+rem copia limpia (git worktree), asi lo que este a medio editar no llega a nadie.
 rem Pide los datos por consola, no los guarda y los borra al terminar.
 chcp 65001 >nul
 cd /d "%~dp0.."
@@ -11,19 +11,19 @@ set "COPIA=%TEMP%\invitation-deploy"
 set "CLOUDFLARE_ACCOUNT_ID="
 set "CLOUDFLARE_API_TOKEN="
 echo.
-for /f "delims=" %%c in ('git log -1 --format^="%%h %%s"') do echo  Se publicará: %%c
+for /f "delims=" %%c in ('git log -1 --format^="%%h %%s"') do echo  Se publicara: %%c
 echo.
 set /p "CLOUDFLARE_ACCOUNT_ID=1/2  Account ID: "
 set /p "CLOUDFLARE_API_TOKEN=2/2  API Token: "
 echo.
 
-rem Primero se suelta el enlace a node_modules: borrar la copia con él puesto
-rem podría llevarse el node_modules real.
+rem Primero se suelta el enlace a node_modules: borrar la copia con el puesto
+rem podria llevarse el node_modules real.
 rmdir "%COPIA%\node_modules" >nul 2>&1
 if exist "%COPIA%" git worktree remove --force "%COPIA%" >nul 2>&1
 if exist "%COPIA%" rmdir /s /q "%COPIA%"
 git worktree add --detach "%COPIA%" HEAD > "%REPO%\desplegar.log" 2>&1 || goto :fallo
-rem .env (llaves de Supabase) no está en git; node_modules se enlaza, no se reinstala
+rem .env (llaves de Supabase) no esta en git; node_modules se enlaza, no se reinstala
 copy /y "%REPO%\.env" "%COPIA%\.env" >nul || goto :fallo
 mklink /J "%COPIA%\node_modules" "%REPO%\node_modules" >nul || goto :fallo
 
@@ -40,7 +40,7 @@ goto :fin
 :fallo
 type "%REPO%\desplegar.log"
 echo.
-echo  Falló la publicación. Detalle en desplegar.log
+echo  Fallo la publicacion. Detalle en desplegar.log
 
 :fin
 rmdir "%COPIA%\node_modules" >nul 2>&1
