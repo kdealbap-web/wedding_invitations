@@ -1,172 +1,171 @@
 /* ─── El sobre de apertura (Sobre.jsx) ───
-   Una caja de papelería de lujo: el sobre claro bajo un foco, sobre terciopelo
-   oscuro. Los colores y tipografías son variables (la plantilla las cambia con
-   la prop `tema`). Solo se animan transform y opacity. */
+   La foto de un objeto: un sobre A7 de algodón sobre terciopelo, con una sola luz
+   que entra por arriba a la izquierda. Nada flota, nada late, nada brilla solo.
+   Los colores y tipografías son variables (la plantilla las cambia con `tema`).
+   Solo se animan transform, opacity y filter. */
 
 .sobre-root{
-  --sb-v1:#6a3150;--sb-v2:#3b1731;--sb-v3:#1a0916;         /* terciopelo ciruela */
-  --sb-papel:#fbefe7;--sb-papel-2:#efd5ca;                 /* papel del sobre */
-  --sb-forro:#eeb4be;--sb-forro-2:#f6cdd3;                 /* forro, palo rosa */
-  --sb-borde:#d09184;
-  --sb-tinta:#4a2433;--sb-tinta-2:#7a4656;
-  --sb-luz:#f6dccf;                                        /* texto sobre el terciopelo */
-  --sb-metal-txt:linear-gradient(100deg,#8c4a46,#a8625c 28%,#c4857a 50%,#a2605a 72%,#8c4a46);
-  --sb-cera:radial-gradient(circle at 30% 26%,#fff0e6 0%,#f0c2b0 24%,#cf8c80 58%,#9a5650 85%,#7c403d 100%);
-  --sb-cera-tinta:#8a4a46;
+  --sb-v1:#5c2748;--sb-v2:#3a1530;--sb-v3:#1a0817;          /* terciopelo: con luz, medio, en sombra */
+  --sb-papel:#f2dfd6;--sb-papel-2:#e8cfc4;                  /* algodón del sobre (fuera / dentro) */
+  --sb-carta:#fcf7f1;                                       /* la tarjeta */
+  --sb-forro:#d9a3a4;--sb-forro-2:#fbefe9;                  /* forro: fondo palo rosa e impresión */
+  --sb-cera:#eba39a;--sb-cera-luz:#fff0e7;                  /* lacre: color y su reflejo */
+  --sb-cinta:#c98f90;--sb-cinta-2:#a1676c;                  /* cinta de seda */
+  --sb-tinta:#43202f;--sb-tinta-2:#7b4c58;
+  --sb-oro:linear-gradient(100deg,#8e4f49,#b9746b 26%,#e9b9a9 46%,#c4887c 62%,#8e4f49);
+  --sb-luz:#f3d9cd;                                         /* la leyenda, sobre el terciopelo */
   --sb-script:'Parisienne',cursive;
   --sb-disp:'Playfair Display',Georgia,serif;
-  --sb-body:'Jost',system-ui,sans-serif;
-  /* tamaño: ancho por pantalla, pero sin pasar del 52 % del alto */
-  --sb-w:min(92vw,720px,calc(55dvh * 1.3));
+  /* A7 vertical: 5¼ × 7¼". Ancho por pantalla, sin pasar del 52 % del alto */
+  --sb-w:min(78vw,calc(55dvh * .724),420px);
+  --sb-h:calc(var(--sb-w) * 1.381);
   --u:calc(var(--sb-w) / 100);
-  --sb-sello:max(74px,calc(var(--sb-w) * .21));
-  --sb-ruido:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45 0 0 0 0 .3 0 0 0 0 .3 0 0 0 .1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  --sb-fibra:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.012 .5' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .55 0 0 0 0 .38 0 0 0 0 .34 0 0 0 .24 -.05'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>");
-  --sb-filigrana:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56' fill='none' stroke='%23b86f69' stroke-width='1' opacity='.6'><path d='M28 3c3 9 10 12 19 15-9 3-16 6-19 15-3-9-10-12-19-15 9-3 16-6 19-15z'/><circle cx='28' cy='18' r='1.8'/><path d='M0 28c9 0 12 6 12 12M56 28c-9 0-12 6-12 12M0 56c9 0 12-6 12-12M56 56c-9 0-12-6-12-12'/></svg>");
+  --sb-sello:calc(var(--sb-w) * .36);
+  --dx:0px;--dy:0px;
 
-  position:fixed;inset:0;z-index:800;display:grid;place-items:center;overflow:hidden;
-  background:
-    radial-gradient(58% 44% at 50% 46%,rgba(255,214,196,.5),transparent 76%),
-    radial-gradient(130% 95% at 50% 38%,var(--sb-v1) 0%,var(--sb-v2) 54%,var(--sb-v3) 100%);
-  transition:opacity .65s ease;
+  position:fixed;inset:0;z-index:800;overflow:hidden;background:var(--sb-v3);
+  transition:opacity .7s ease;
 }
-/* viñeta y trama de terciopelo, encima del fondo */
-.sobre-root::before{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(120% 90% at 50% 46%,transparent 52%,rgba(8,2,8,.62)),
-    repeating-linear-gradient(97deg,rgba(255,255,255,.014) 0 3px,transparent 3px 52px,rgba(0,0,0,.05) 52px 56px),var(--sb-ruido)}
-.sobre-root.is-sale{opacity:0;pointer-events:none}
+.sobre-root.is-sale{opacity:0;pointer-events:none;transition:opacity .5s ease}
+.s-defs{position:absolute;width:0;height:0;overflow:hidden}
 
-/* El haz del foco, cayendo desde arriba */
-.s-haz{position:absolute;inset:0;pointer-events:none;
-  background:conic-gradient(from 180deg at 50% -8%,transparent 152deg,rgba(255,226,210,.13) 168deg,rgba(255,226,210,.2) 180deg,rgba(255,226,210,.13) 192deg,transparent 208deg)}
+/* La cámara: todo lo que se ve. Entra como si se encendiera la luz y al final se acerca */
+.s-camara{position:absolute;inset:0;display:grid;place-items:center;animation:sb-luz-on .9s ease both}
+@keyframes sb-luz-on{from{opacity:0}}
 
-/* Ambiente: pétalos que caen y polvo de oro rosa que titila */
-.s-ambiente{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-.s-petalo{position:absolute;top:-8%;border-radius:80% 0 80% 0;background:linear-gradient(135deg,#f6c9d1,#e59aab);opacity:.8;animation:sb-cae linear infinite;will-change:transform}
-.s-brillo-a{position:absolute;background:linear-gradient(135deg,#fff3ea,#e8b3a2);clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;animation:sb-titila ease-in-out infinite}
-@keyframes sb-cae{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(var(--w),55vh,0) rotate(200deg)}100%{transform:translate3d(calc(var(--w) * -.4),115vh,0) rotate(420deg)}}
-@keyframes sb-titila{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:.85;transform:scale(1) rotate(45deg)}}
+/* ─── La mesa: terciopelo ciruela, pelo fino, luz que cae desde arriba a la izquierda ─── */
+.s-mesa{position:absolute;inset:-6%;
+  background:radial-gradient(115% 95% at 26% 14%,var(--sb-v1) 0%,var(--sb-v2) 48%,var(--sb-v3) 100%)}
+/* pelo del terciopelo: el mismo ruido que el papel (lo pinta Sobre.jsx en un canvas), muy ampliado para las aguas y a escala 1 para el pelo */
+.s-mesa::before{content:'';position:absolute;inset:0;mix-blend-mode:soft-light;opacity:.22;
+  background:var(--sb-ruido-f) 0 0/1680px 1680px,var(--sb-ruido-g) 0 0/150px 150px}
+/* viñeta: el borde del encuadre se queda sin luz, más hacia abajo a la derecha */
+.s-mesa::after{content:'';position:absolute;inset:0;background:radial-gradient(100% 85% at 38% 32%,transparent 40%,rgba(8,1,6,.6) 100%)}
 
-/* ─── Escena en 3D ─── */
-.s-escena{position:relative;display:flex;flex-direction:column;align-items:center;gap:clamp(1.6rem,5vh,2.8rem);padding-top:clamp(2rem,10vh,6rem);perspective:1800px}
-.s-mundo{transform-style:preserve-3d;will-change:transform}
-.s-flota{animation:sb-flota 6.5s ease-in-out infinite}
-@keyframes sb-flota{0%,100%{transform:translateY(0) rotateZ(-.4deg)}50%{transform:translateY(-10px) rotateZ(.4deg)}}
-.s-suelo{position:absolute;left:8%;right:8%;bottom:-9%;height:14%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.6),transparent);transform:translateZ(-1px)}
+/* ─── La escena ─── */
+.s-escena{position:relative;display:grid;margin-top:-5vh;perspective:1500px}
+.s-escena>.s-sombra,.s-escena>.s-mundo{grid-area:1/1}
+.s-mundo{will-change:transform}
+/* La sombra del sobre sobre la mesa: contacto apretado + sombra larga hacia abajo a la derecha */
+.s-sombra{width:var(--sb-w);height:var(--sb-h);border-radius:calc(var(--u) * 1.6);
+  box-shadow:0 1px 1px rgba(8,1,6,.7),calc(var(--u) * .5) calc(var(--u) * .9) calc(var(--u) * 1.4) rgba(8,1,6,.55),calc(var(--u) * 3.6) calc(var(--u) * 6) calc(var(--u) * 9) rgba(8,1,6,.62)}
 
-.s-sobre{position:relative;width:var(--sb-w);aspect-ratio:1.3;perspective:1400px}
-@media(orientation:portrait) and (max-width:700px){.s-sobre{aspect-ratio:.96}}
+.s-sobre{position:relative;width:var(--sb-w);height:var(--sb-h);perspective:1600px}
 .s-sobre>*{position:absolute}
+.s-sobre svg{display:block}
+/* Capas propias desde el principio: así cada pieza se rasteriza mientras el sobre
+   espera cerrado y no en el primer fotograma de su animación (se notaba un tirón) */
+.s-camara,.s-escena,.s-sol-fuera,.s-sol-dentro,.s-pieza,.s-proy,.s-velo,.s-mesa{will-change:transform}
+.sobre-root,.s-pista{will-change:opacity}
 
-/* Forro: palo rosa con filigrana */
-.s-fondo{inset:0;z-index:0;border-radius:4px;border:2px solid var(--sb-borde);box-shadow:0 28px 60px -16px rgba(0,0,0,.75),0 0 0 1px rgba(255,220,205,.18);
-  background:var(--sb-filigrana) 0 0/calc(var(--u) * 9) calc(var(--u) * 9),radial-gradient(90% 70% at 50% 30%,var(--sb-forro-2),var(--sb-forro))}
-/* Sombra que proyecta la solapa al abrirse sobre el forro */
-.s-proy{left:0;top:0;width:100%;height:50%;z-index:1;clip-path:polygon(0 0,100% 0,50% 100%);background:linear-gradient(180deg,rgba(60,20,35,.55),rgba(60,20,35,0));opacity:0;transform:translateY(8%)}
+/* El interior por la garganta: forro en penumbra */
+.s-dentro{left:.4%;right:.4%;top:0;height:60%;z-index:1;
+  background:linear-gradient(rgba(60,14,34,.55),rgba(60,14,34,.3) 40%,rgba(60,14,34,.28)),var(--sb-forro)}
 
-/* Carta: papel marfil con filete de oro rosa */
-.s-carta{left:5%;top:12%;width:90%;height:64%;z-index:2;border-radius:3px;background:var(--sb-fibra),var(--sb-ruido),linear-gradient(180deg,#fffaf5,#f8e9df);border:1px solid var(--sb-borde);box-shadow:0 3px 14px rgba(60,20,35,.35);will-change:transform}
-.s-carta::before{content:'';position:absolute;inset:calc(var(--u) * 1.5);border:1px solid var(--sb-borde);opacity:.6;pointer-events:none}
-.s-carta-in{display:flex;flex-direction:column;align-items:center;text-align:center;padding:calc(var(--u) * 4) calc(var(--u) * 6) 0;color:var(--sb-tinta);transition:opacity .35s ease}
-.s-corona{width:calc(var(--u) * 7.5);height:auto;fill:none;stroke:#a8625c;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
-.s-corona circle{fill:#bd7b73;stroke:none}
-.s-c-linea{margin-top:calc(var(--u) * 1.6);font:600 max(.5rem,calc(var(--u) * 1.8))/1 var(--sb-disp);letter-spacing:.34em;text-transform:uppercase;color:var(--sb-tinta-2)}
-.s-c-titulo{margin-top:calc(var(--u) * 1.2);font:800 calc(var(--u) * 6.6)/1.05 var(--sb-disp);font-variant-numeric:lining-nums;background:var(--sb-metal-txt);-webkit-background-clip:text;background-clip:text;color:transparent}
-.s-c-nombre{margin-top:calc(var(--u) * .2);font:400 calc(var(--u) * 12.5)/1.12 var(--sb-script);color:var(--sb-tinta);padding:0 .1em}
-.s-c-fecha{margin-top:calc(var(--u) * .6);font:600 max(.52rem,calc(var(--u) * 2))/1.3 var(--sb-disp);letter-spacing:.24em;text-transform:uppercase;color:var(--sb-tinta-2)}
+.s-cuerpo{inset:0;width:100%;height:100%;z-index:4}
+.s-penumbra{left:0;right:0;top:0;height:33%;z-index:3;pointer-events:none;background:linear-gradient(rgba(104,52,44,.3),rgba(104,52,44,.08))}
+.s-mezcla{mix-blend-mode:soft-light}
 
-/* Frente: papel con fibra, y el bolsillo con sus pliegues */
-.s-frente{inset:0;z-index:3;clip-path:polygon(0 0,50% 50%,100% 0,100% 100%,0 100%);overflow:hidden;
-  background:var(--sb-fibra),var(--sb-ruido),linear-gradient(172deg,var(--sb-papel),var(--sb-papel-2))}
-.s-pliegue{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:var(--sb-borde);stroke-width:1.2;opacity:.55}
-.s-pliegue .s-borde{stroke:url(#sb-foil);stroke-width:3;opacity:1}
-/* Destello que barre el papel dorado de vez en cuando */
-.s-frente::after,.s-sol-fuera::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 38%,rgba(255,244,232,.7) 50%,transparent 62%);transform:translateX(-110%);animation:sb-barre 6s ease-in-out 1.2s infinite;pointer-events:none}
-@keyframes sb-barre{0%{transform:translateX(-110%)}38%,100%{transform:translateX(110%)}}
+/* ─── Solapa: dos caras que giran sobre la bisagra ─── */
+.s-solapa{left:0;top:0;width:100%;height:44%;z-index:6;transform-origin:50% 0;transform-style:preserve-3d;will-change:transform}
+.s-sol-fuera,.s-sol-dentro{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.s-sol-dentro{transform:rotateX(180deg)}
+.s-solapa svg{position:absolute;inset:0;width:100%;height:100%}
+.s-sol-sombra,.s-sol-sombra-in{fill:#2a0a18;opacity:.32;transition:opacity .25s ease}
+.s-sol-sombra-in{opacity:.4}
 
-/* Filigrana en las esquinas de abajo, en oro rosa */
-.s-orn{width:calc(var(--u) * 13);height:auto;z-index:4;fill:none;stroke:url(#sb-foil);stroke-width:1.6;stroke-linecap:round;pointer-events:none}
-.s-orn-i{left:2.2%;bottom:2.6%;transform:scaleY(-1)}
-.s-orn-d{right:2.2%;bottom:2.6%;transform:scale(-1)}
+/* ─── El lacre: dos piezas del mismo dibujo, recortadas por la grieta ─── */
+.s-pieza{width:var(--sb-sello);height:var(--sb-sello);pointer-events:none}
+.s-pieza svg,.s-pieza img{display:block;width:100%;height:100%;overflow:visible;user-select:none}
+/* La de arriba vive en la solapa (se va con ella); la de abajo, en el sobre */
+.s-pieza-a{position:absolute;left:calc(50% - var(--sb-sello) / 2);top:calc(100% - var(--sb-sello) / 2);
+  clip-path:polygon(-20% -20%,120% -20%,120% 50%,74% 52.5%,66% 48%,58% 53%,51% 49.5%,44% 54%,37% 49%,29% 52%,-20% 50.5%)}
+.s-pieza-b{left:calc(50% - var(--sb-sello) / 2);top:calc(44% - var(--sb-sello) / 2);z-index:7;
+  clip-path:polygon(-20% 49.8%,29% 51.3%,37% 48.3%,44% 53.3%,51% 48.8%,58% 52.3%,66% 47.3%,74% 51.8%,120% 49.3%,120% 120%,-20% 120%)}
+/* la de abajo sube un pelo sobre la de arriba: son la misma imagen, y sin solapar
+   el antialias de los dos cortes dejaba ver la grieta antes de partirse */
+/* El área que se toca: el lacre entero, sin aspecto de botón */
+.s-toque{left:calc(50% - var(--sb-w) * .14);top:calc(44% - var(--sb-w) * .14);z-index:8;width:calc(var(--sb-w) * .28);height:calc(var(--sb-w) * .28);
+  padding:0;border:0;border-radius:50%;background:none;cursor:default;-webkit-tap-highlight-color:transparent}
+.s-toque.listo{cursor:pointer}
+.s-toque:focus-visible{outline:1px solid var(--sb-luz);outline-offset:6px}
 
-/* El destinatario */
-.s-para{left:14%;right:14%;bottom:5.5%;z-index:4;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;color:var(--sb-tinta)}
-.s-para-t{display:flex;align-items:center;gap:.7em;font:600 max(.55rem,calc(var(--u) * 2.1))/1 var(--sb-disp);letter-spacing:.42em;text-transform:uppercase;color:var(--sb-tinta-2)}
-.s-para-t i{width:calc(var(--u) * 6);height:1px;background:linear-gradient(90deg,transparent,#b9786f)}
-.s-para-t i:last-child{transform:scaleX(-1)}
-.s-para b{margin-top:calc(var(--u) * .4);font:400 calc(var(--u) * 9.4)/1.08 var(--sb-script);padding:.04em .1em;text-wrap:balance;text-shadow:0 1px 0 rgba(255,246,238,.9);animation:sb-aparece .7s ease both}
-.s-para b.espera{animation:none}
-.s-para em{margin-top:calc(var(--u) * .6);font:italic 500 max(.58rem,calc(var(--u) * 2))/1 var(--sb-disp);letter-spacing:.14em;color:var(--sb-tinta-2)}
-@keyframes sb-aparece{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* La cinta de seda que asoma por debajo del lacre */
+.s-cinta{left:21.43%;top:calc(44% - var(--sb-w) * .2857);width:57.14%;aspect-ratio:1;z-index:5;pointer-events:none}
+.s-cinta svg{width:100%;height:100%;overflow:visible}
 
-/* Solapa: dos caras (papel por fuera, forro por dentro) que giran en 3D */
-.s-solapa{left:0;top:0;width:100%;height:50%;z-index:5;transform-origin:50% 0;transform-style:preserve-3d;will-change:transform}
-.s-solapa i{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;clip-path:polygon(0 0,100% 0,50% 100%);overflow:hidden}
-.s-solapa svg{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:url(#sb-foil);stroke-width:3}
-.s-sol-fuera{background:var(--sb-fibra),var(--sb-ruido),linear-gradient(180deg,var(--sb-papel-2),var(--sb-papel) 85%)}
-.s-sol-dentro{transform:rotateX(180deg);background:var(--sb-filigrana) 0 0/calc(var(--u) * 9) calc(var(--u) * 9),linear-gradient(0deg,var(--sb-forro),var(--sb-forro-2))}
+/* La sombra que echa la solapa al levantarse */
+.s-proy{left:0;top:0;width:100%;height:44%;z-index:5;pointer-events:none;opacity:0;transform-origin:50% 0;overflow:visible;fill:#2a0a18;fill-opacity:.42}
 
-/* Sello de cera con relieve: dos mitades de borde roto para que se parta */
-.s-sello{left:50%;top:50%;z-index:7;width:var(--sb-sello);height:var(--sb-sello);margin:calc(var(--sb-sello) / -2) 0 0 calc(var(--sb-sello) / -2);padding:0;border:0;background:none;cursor:default;-webkit-tap-highlight-color:transparent}
-.s-sello.listo{cursor:pointer;animation:sb-latido 2.4s ease-in-out infinite}
-.s-sello:focus-visible{outline:2px solid var(--sb-tinta);outline-offset:8px;border-radius:50%}
-.s-sello::before{content:'';position:absolute;inset:4% -4% -14%;border-radius:50%;background:rgba(60,20,30,.5);filter:blur(7px);transition:opacity .3s}
-/* Halo que respira mientras espera el toque */
-.s-sello.listo::after{content:'';position:absolute;inset:-18%;border-radius:50%;border:1.5px solid rgba(255,214,196,.7);animation:sb-onda 2.4s ease-out infinite;pointer-events:none}
-@keyframes sb-onda{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.5);opacity:0}}
-.s-mitad{position:absolute;inset:0;transition:transform .7s cubic-bezier(.5,0,.8,.5),opacity .55s ease-in}
-.s-izq{clip-path:polygon(0 0,52% 0,46% 22%,56% 40%,45% 60%,54% 80%,48% 100%,0 100%)}
-.s-der{clip-path:polygon(52% 0,100% 0,100% 100%,48% 100%,54% 80%,45% 60%,56% 40%,46% 22%)}
-.s-cera{position:absolute;inset:0;overflow:hidden;border-radius:52% 48% 55% 45%/48% 54% 46% 52%;background:var(--sb-cera);box-shadow:inset 0 -5px 10px rgba(90,40,40,.45),inset 0 4px 6px rgba(255,238,228,.7)}
-.s-cera::before{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,250,244,.75) 50%,transparent 60%);transform:translateX(-120%);animation:sb-barre 4.6s ease-in-out .6s infinite}
-.s-cera::after{content:'';position:absolute;inset:12%;border-radius:50%;border:1.5px solid rgba(255,238,228,.6);box-shadow:inset 0 0 0 1px rgba(90,40,40,.22),0 0 0 1px rgba(90,40,40,.2)}
-.s-mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 calc(var(--sb-sello) * .36)/1 var(--sb-disp);font-variant-numeric:lining-nums;color:var(--sb-cera-tinta);text-shadow:0 1px 0 rgba(255,238,228,.8),0 -1px 0 rgba(90,40,40,.4)}
-@keyframes sb-latido{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+/* ─── El sobrescrito: a mano, con tinta, como lo pondría quien lo escribe ─── */
+.s-sobrescrito{left:13%;right:6%;top:63.5%;z-index:5;display:flex;justify-content:center;text-align:center;pointer-events:none;transform:rotate(-2.4deg)}
+.s-sobrescrito b{font:400 calc(var(--u) * 10.2)/1.12 var(--sb-script);color:var(--sb-tinta);opacity:.9;mix-blend-mode:multiply;text-wrap:balance;padding:0 .1em;animation:sb-aparece .7s ease both}
+.s-sobrescrito b.espera{animation:none}
+.s-numero{left:7.5%;bottom:3.6%;z-index:5;font:italic 500 max(.56rem,calc(var(--u) * 2.15))/1 var(--sb-disp);letter-spacing:.12em;color:var(--sb-tinta-2);opacity:.8;mix-blend-mode:multiply;pointer-events:none}
+@keyframes sb-aparece{from{opacity:0}}
 
-/* Destello del sello al romperse */
-.s-destello{left:50%;top:50%;z-index:6;width:calc(var(--sb-sello) * 2.2);height:calc(var(--sb-sello) * 2.2);margin:calc(var(--sb-sello) * -1.1) 0 0 calc(var(--sb-sello) * -1.1);border-radius:50%;pointer-events:none;opacity:0;
-  background:radial-gradient(closest-side,rgba(255,236,220,.95),rgba(255,190,170,.55) 45%,transparent)}
+/* ─── La tarjeta: algodón 5 × 7" con borde de barba y filete de oro rosa ─── */
+.s-carta{left:2.5%;top:1.4%;width:95%;height:96.5%;z-index:3;transform-origin:50% 100%;will-change:transform}
+.s-carta-fondo{position:absolute;inset:0;width:100%;height:100%}
+.s-carta-sombra{fill:#2a0a18;opacity:.38}
+.s-carta-in{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:calc(var(--u) * 21) calc(var(--u) * 8) 0;color:var(--sb-tinta)}
+.s-corona{width:calc(var(--u) * 10);height:auto;fill:none;stroke:url(#sb-foil);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.s-corona circle{fill:url(#sb-foil);stroke:none}
+.s-c-linea{margin-top:calc(var(--u) * 4);font:500 max(.5rem,calc(var(--u) * 2.5))/1.3 var(--sb-disp);letter-spacing:.32em;text-transform:uppercase;color:var(--sb-tinta-2)}
+.s-c-titulo{margin-top:calc(var(--u) * 2.4);font:700 calc(var(--u) * 8.8)/1.05 var(--sb-disp);font-variant-numeric:lining-nums;background:var(--sb-oro);-webkit-background-clip:text;background-clip:text;color:transparent}
+.s-c-nombre{margin-top:calc(var(--u) * 1);font:400 calc(var(--u) * 19)/1.1 var(--sb-script);color:var(--sb-tinta);padding:0 .12em}
+.s-c-fecha{margin-top:calc(var(--u) * 2.4);font:500 max(.52rem,calc(var(--u) * 2.5))/1.3 var(--sb-disp);letter-spacing:.26em;text-transform:uppercase;color:var(--sb-tinta-2)}
 
-/* Ráfaga de partículas de oro rosa al salir la carta */
-.s-rafaga{left:50%;top:6%;width:0;height:0;z-index:9;pointer-events:none}
-.s-rafaga i{position:absolute;left:0;top:0;opacity:0;background:linear-gradient(135deg,#ffe6d2,#f09a84);filter:drop-shadow(0 0 4px rgba(255,200,170,.9));clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%)}
+/* La leyenda: casi un pie de foto */
+.s-pista{position:absolute;left:0;right:0;top:calc(100% + clamp(1.4rem,4.5vh,2.6rem));text-align:center;
+  font:italic 400 .86rem/1 var(--sb-disp);letter-spacing:.05em;color:var(--sb-luz);opacity:.62;min-height:1em;
+  animation:sb-aparece 1s ease 1.6s both;transition:opacity .25s}
 
-.s-pista{font:italic 500 1.02rem/1 var(--sb-disp);letter-spacing:.06em;color:var(--sb-luz);min-height:1em;text-shadow:0 1px 10px rgba(0,0,0,.6)}
+/* ─── La secuencia (la dispara .is-abre; ~3,5 s) ─── */
+.is-abre .s-pista{opacity:0}
+.is-abre .s-sol-sombra{opacity:0}
 
-/* ─── La secuencia (la dispara .is-abre; ~3,4 s) ─── */
-.is-abre .s-sello{animation:none;pointer-events:none}
-.is-abre .s-sello::before,.is-abre .s-sello::after{opacity:0;animation:none}
-.is-abre .s-izq{transform:translate3d(-70%,60%,0) rotate(-34deg);opacity:0}
-.is-abre .s-der{transform:translate3d(70%,75%,0) rotate(28deg);opacity:0}
-.is-abre .s-destello{animation:sb-flash .9s ease-out both}
-@keyframes sb-flash{0%{opacity:0;transform:scale(.4)}25%{opacity:1}100%{opacity:0;transform:scale(2.2)}}
-.is-abre .s-solapa{animation:sb-solapa 1s cubic-bezier(.45,.05,.25,1) .35s both}
-@keyframes sb-solapa{0%{transform:rotateX(0);z-index:5}49%{z-index:5}50%{z-index:1}100%{transform:rotateX(-180deg);z-index:1}}
-.is-abre .s-proy{animation:sb-proy 1.2s ease .5s both}
-@keyframes sb-proy{0%{opacity:0}45%{opacity:1}100%{opacity:.35}}
-/* La carta sube con un balanceo en Z y X, y se endereza al llegar */
-.is-abre .s-carta{animation:sb-sube 1.1s cubic-bezier(.3,.8,.3,1) 1.05s both}
-@keyframes sb-sube{
-  0%{transform:translateY(0) rotateZ(0) rotateX(0) scale(1)}
-  55%{transform:translateY(-80%) rotateZ(-3.5deg) rotateX(9deg) scale(1.04)}
-  100%{transform:translateY(-68%) rotateZ(0) rotateX(0) scale(1)}}
-.is-abre .s-pista{opacity:0;transition:opacity .2s}
-.is-abre .s-rafaga i{animation:sb-chispa 1.3s cubic-bezier(.2,.7,.3,1) calc(1.25s + var(--t)) both}
-@keyframes sb-chispa{0%{opacity:0;transform:translate3d(0,0,0) scale(.3)}15%{opacity:1}100%{opacity:0;transform:translate3d(var(--x),var(--y),0) scale(1) rotate(180deg)}}
+/* 1 · El lacre cede un pelo bajo el dedo y se parte: cada pieza gira a su lado */
+.is-abre .s-pieza-a{animation:sb-pieza-a .55s cubic-bezier(.2,.8,.3,1) both}
+.is-abre .s-pieza-b{animation:sb-pieza-b .55s cubic-bezier(.2,.8,.3,1) both}
+@keyframes sb-pieza-a{0%{transform:none}20%{transform:scale(.975)}100%{transform:translate(-1.5%,-3.5%) rotate(-5deg)}}
+@keyframes sb-pieza-b{0%{transform:none}20%{transform:scale(.975)}100%{transform:translate(2%,3%) rotate(4deg)}}
 
-/* La cámara entra en la carta: crece hasta cubrir la pantalla (--dx, --dy y --k los pone Sobre.jsx) */
-.is-crece .s-carta{z-index:10;animation:sb-entra .95s cubic-bezier(.65,0,.25,1) both}
-@keyframes sb-entra{from{transform:translateY(-68%)}to{transform:translate(var(--dx,0),calc(-68% + var(--dy,0))) scale(var(--k,1))}}
-.is-crece .s-carta-in{opacity:0}
-.is-crece .s-frente,.is-crece .s-para,.is-crece .s-orn,.is-crece .s-solapa,.is-crece .s-fondo{opacity:0;transition:opacity .4s ease .1s}
-.is-crece .s-flota{animation:none}
-.is-crece .s-ambiente,.is-crece .s-haz{opacity:0;transition:opacity .5s}
+/* 2 · La solapa gira sobre su bisagra: arranca despacio, pasa de canto (ahí cambia
+   de capa, cuando no se ve) y queda apoyada sin llegar a plana, con memoria del doblez */
+.is-abre .s-solapa{animation:sb-solapa .95s .4s both,sb-solapa-z .4s steps(1,end) .4s both}
+@keyframes sb-solapa{
+  0%{transform:rotateX(0);animation-timing-function:cubic-bezier(.5,0,.5,1)}
+  80%{transform:rotateX(-180deg);animation-timing-function:cubic-bezier(.3,0,.4,1)}
+  100%{transform:rotateX(-174deg)}}
+@keyframes sb-solapa-z{from{z-index:6}to{z-index:2}}
+.is-abre .s-proy{animation:sb-proy .8s ease-in-out .42s both}
+@keyframes sb-proy{0%{opacity:0;transform:scaleY(.25)}45%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(.15)}}
 
-@media(max-height:560px){.s-escena{padding-top:1rem}.s-sobre{--sb-w:min(60vw,420px)}}
+/* 3 · La tarjeta sale: un tirón, desliza con roce y frena */
+.is-abre .s-carta{animation:sb-carta 1.1s 1.15s both}
+@keyframes sb-carta{
+  0%{transform:translateY(0);animation-timing-function:cubic-bezier(.5,0,.7,.4)}
+  10%{transform:translateY(-2.4%) rotate(-.25deg);animation-timing-function:cubic-bezier(.25,.35,.2,1)}
+  80%{transform:translateY(-75.6%) rotate(-.5deg);animation-timing-function:cubic-bezier(.4,0,.4,1)}
+  100%{transform:translateY(-74.6%) rotate(0)}}
+/* y la cámara la acompaña para que tarjeta y sobre queden en cuadro */
+.s-escena{transition:transform 1.1s cubic-bezier(.45,0,.25,1) 1.15s}
+.is-abre .s-escena{transform:translateY(calc(var(--sb-h) * .353 + 5vh))}
 
-/* Sin movimiento: nada flota ni cae; al tocar el sello solo hay un fundido */
+/* 4 · La cámara se acerca a la tarjeta y todo se funde en el deck */
+.s-camara{transition:transform 1.1s cubic-bezier(.5,0,.25,1)}
+.is-crece .s-camara{transform:translate(calc(var(--dx) * 1.2),calc(var(--dy) * 1.2)) scale(1.2)}
+/* Fundido a papel: la pantalla se vuelve del marfil de la tarjeta y de ahí sale el
+   deck, en vez de encimar las letras de la tarjeta con las del deck */
+.s-velo{position:absolute;inset:0;background:var(--sb-carta);opacity:0;pointer-events:none}
+.is-crece .s-velo{opacity:1;transition:opacity .45s ease-in .25s}
+
+@media(max-height:560px){.s-escena{margin-top:0}}
+
+/* Sin movimiento: nada se mueve; al tocar el sello solo hay un fundido */
 @media(prefers-reduced-motion:reduce){
-  .s-flota,.s-petalo,.s-brillo-a,.s-sello.listo,.s-sello.listo::after,.s-frente::after,.s-sol-fuera::after,.s-cera::before{animation:none}
-  .s-petalo,.s-brillo-a{display:none}
+  .s-camara,.s-pista,.is-abre *{animation:none!important}
+  .s-camara,.s-escena{transition:none!important;transform:none!important}
   .sobre-root{transition-duration:.4s}
 }

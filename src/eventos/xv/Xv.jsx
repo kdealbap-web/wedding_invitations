@@ -40,10 +40,13 @@ const ICONOS = {
 
 // Colores del sobre de apertura (variables de invitacion/sobre.css)
 const TEMA_SOBRE = {
-  '--sb-v1': '#6a3150', '--sb-v2': '#3b1731', '--sb-v3': '#1a0916',     // terciopelo ciruela
-  '--sb-papel': '#fbefe7', '--sb-papel-2': '#efd5ca',
-  '--sb-forro': '#eeb4be', '--sb-forro-2': '#f6cdd3',                    // forro palo rosa
-  '--sb-borde': '#d09184', '--sb-tinta': '#4a2433', '--sb-tinta-2': '#7a4656',
+  '--sb-v1': '#5c2748', '--sb-v2': '#3a1530', '--sb-v3': '#1a0817',     // terciopelo ciruela
+  '--sb-papel': '#f2dfd6', '--sb-papel-2': '#e8cfc4',                    // algodón rubor
+  '--sb-carta': '#fcf7f1',                                               // tarjeta marfil
+  '--sb-forro': '#d9a3a4', '--sb-forro-2': '#fbefe9',                    // forro palo rosa
+  '--sb-cera': '#eba39a', '--sb-cera-luz': '#fff0e7',                    // lacre oro rosa
+  '--sb-cinta': '#c98f90', '--sb-cinta-2': '#a1676c',                    // cinta de seda
+  '--sb-tinta': '#43202f', '--sb-tinta-2': '#7b4c58',
   '--sb-script': "'Parisienne',cursive", '--sb-disp': "'Playfair Display',Georgia,serif",
 }
 
