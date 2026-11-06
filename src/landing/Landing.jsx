@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { p5810, p5887, e6181, logoWedding } from '../assets/images'
+import { p5875, p5810, p5661, e6181, logoWedding } from '../assets/images'
 import './landing.css'
 
 // ─── Contacto ───
@@ -16,11 +16,15 @@ const HREF_CONTACTO = WHATSAPP_VENTAS
     ? `mailto:${CORREO_VENTAS}?subject=${encodeURIComponent('Cotización de invitación digital')}&body=${encodeURIComponent(MENSAJE)}`
     : '#contacto'
 const HAY_CONTACTO = Boolean(WHATSAPP_VENTAS || CORREO_VENTAS)
+const EXTERNO = WHATSAPP_VENTAS ? { target: '_blank', rel: 'noopener' } : {}
 
 const TITULO = 'Invitaciones digitales personalizadas · kdealbap'
 const DESCRIPCION = 'Invitaciones digitales para bodas, 15 años, cumpleaños, bautizos y grados. Un enlace personal por familia, confirmación en línea, plano de mesas y panel de invitados. Hechas en Barranquilla.'
 
 // ─── Contenido ───
+// Los nombres que rotan en el hero: la personalización, demostrada en vez de dicha
+const NOMBRES = ['Familia Rojas Pérez', 'Marcela y Andrés', 'Tíos de Santa Marta', 'Abuela Carmen']
+
 const FLUJO = [
   { k: 'Llega', t: 'Un enlace por WhatsApp', d: 'Cada familia recibe el suyo. No hay app que instalar ni registro que llenar: se abre con un toque.' },
   { k: 'Se abre', t: 'Y ya saben que es para ellos', d: 'El sobre se abre y la invitación los saluda por su nombre, con los lugares que les reservaste.' },
@@ -28,12 +32,12 @@ const FLUJO = [
 ]
 
 const MARGINALIA = [
-  ['a', 'Quién abrió su enlace', 'Cuántas veces y cuándo. Sabes a quién llamar primero.'],
-  ['b', 'Preconfirmado o confirmado', 'Lo que responde el invitado es una pista; lo que confirmas por teléfono es el número real.'],
-  ['c', 'Cupos exactos', 'El total de personas que le das al catering, calculado y no adivinado.'],
-  ['d', 'Mesas redondas', 'Arrastra a la gente al plano del salón y nombra un capitán por mesa.'],
-  ['e', 'Excel con fórmulas vivas', 'Invitados, cupos y mesas en una hoja que se recalcula sola.'],
-  ['f', 'Una invitación que se cierra sola', 'Si alguien dice que no va, su enlace deja de mostrar el evento. Si cambia de idea, se reabre.'],
+  ['Quién abrió su enlace', 'Cuántas veces y cuándo. Sabes a quién llamar primero.'],
+  ['Preconfirmado o confirmado', 'Lo que responde el invitado es una pista; lo que confirmas por teléfono es el número real.'],
+  ['Cupos exactos', 'El total de personas que le das al catering, calculado y no adivinado.'],
+  ['Mesas redondas', 'Arrastra a la gente al plano del salón y nombra un capitán por mesa.'],
+  ['Excel con fórmulas vivas', 'Invitados, cupos y mesas en una hoja que se recalcula sola.'],
+  ['Una invitación que se cierra sola', 'Si alguien dice que no va, su enlace deja de mostrar el evento. Si cambia de idea, se reabre.'],
 ]
 
 const FILAS = [
@@ -56,6 +60,7 @@ const MESAS = [
   { n: 'VII', c: 8, o: 6, x: 74, y: 84 },
 ]
 
+// Cada pieza se dibuja con su proporción real (5:7, 6:15, A4, 16:9)
 const PIEZAS = [
   { id: 'part', t: 'La participación', m: '5 × 7 pulgadas', d: 'El anuncio formal, listo para la imprenta.' },
   { id: 'ban', t: 'El banderín', m: '6 × 15 cm', d: 'Cuelga del cuello de la botella, uno por capitán.' },
@@ -114,50 +119,133 @@ const FAQ = [
   ['¿Puedo imprimir algo además de lo digital?', 'Sí. Hacemos la participación, el cartel de bienvenida y las tarjetas de puesto, listos para la imprenta.'],
 ]
 
+const quieto = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 // ─── Piezas pequeñas ───
-function Cta({ children, ghost }) {
-  const props = WHATSAPP_VENTAS ? { target: '_blank', rel: 'noopener' } : {}
-  return <a className={`lnd-btn${ghost ? ' ghost' : ''}`} href={HREF_CONTACTO} {...props}>{children}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.2" /></svg></a>
+const Flecha = () => <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" /></svg>
+
+function Cta({ children, alt }) {
+  return <a className={`k-btn${alt ? ' alt' : ''}`} href={HREF_CONTACTO} {...EXTERNO}><span>{children}</span><Flecha /></a>
 }
 
 function Rev({ children, d = 0, as: Tag = 'div', className = '' }) {
   return <Tag className={`rv ${className}`} style={{ '--d': `${d}ms` }}>{children}</Tag>
 }
 
-// Sobre con sello de cera: se abre al tocarlo, al pasar el cursor o solo, una vez, al entrar en pantalla
-function Sobre() {
-  const [abierto, setAbierto] = useState(false)
-  const ref = useRef(null)
-  const tocado = useRef(false)
+// El nombre del hero: cambia de familia cada pocos segundos. Todos se apilan en la
+// misma celda de la retícula, así que el bloque mide lo que el más largo y no salta.
+function Nombre() {
+  const [i, setI] = useState(0)
   useEffect(() => {
-    const el = ref.current
-    if (!el || !('IntersectionObserver' in window)) return
-    let t
-    const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && !tocado.current) t = setTimeout(() => { if (!tocado.current) setAbierto(true) }, 1400)
-    }, { threshold: 0.6 })
-    io.observe(el)
-    return () => { io.disconnect(); clearTimeout(t) }
+    if (quieto()) return
+    const t = setInterval(() => setI(n => (n + 1) % NOMBRES.length), 2900)
+    return () => clearInterval(t)
   }, [])
-  const alternar = () => { tocado.current = true; setAbierto(a => !a) }
   return (
-    <div className="sb-wrap" ref={ref}>
-      <button type="button" className={`sb${abierto ? ' open' : ''}`} onClick={alternar} aria-pressed={abierto} aria-label="Sobre de muestra: ábrelo para ver la invitación">
-        <span className="sb-back" />
-        <span className="sb-card">
-          <span className="sb-k">Con mucho cariño te invitamos</span>
-          <span className="sb-para">Para</span>
-          <span className="sb-name">Familia Rojas Pérez</span>
-          <span className="sb-rule" />
-          <span className="sb-lug">Tienen <b>4 lugares</b> reservados</span>
-          <span className="sb-ok">Confirmar asistencia</span>
-        </span>
-        <span className="sb-front" />
-        <span className="sb-flap" />
-        <span className="sb-seal" aria-hidden="true"><i>&amp;</i></span>
-      </button>
-      <p className="sb-cap"><span>{abierto ? 'Así los recibe el invitado' : 'Toca el sobre'}</span></p>
+    <span className="h-name" aria-hidden="true">
+      {NOMBRES.map((n, k) => <span key={n} className={k === i ? 'on' : k === (i + NOMBRES.length - 1) % NOMBRES.length ? 'out' : ''}>{n}.</span>)}
+    </span>
+  )
+}
+
+// ─── Momento firma: el recorrido dentro de un teléfono en 3D ───
+// La sección mide tres pantallas; el teléfono queda fijo (sticky) y el scroll
+// decide el paso. --p (0→1) gira el teléfono de forma continua.
+function Pantalla({ paso }) {
+  return (
+    <div className="ph-scr">
+      <div className={`scr scr-wa${paso === 0 ? ' on' : ''}`}>
+        <div className="wa-top"><i />Ana · Boda Rojas<small>en línea</small></div>
+        <div className="wa-chat">
+          <p className="wa-in">¡Hola, familia! Ya tenemos fecha</p>
+          <div className="wa-in wa-card">
+            <span className="wa-prev"><b>Para</b><em>Familia Rojas Pérez</em></span>
+            <span className="wa-txt">Los esperamos. Abre tu invitación aquí</span>
+            <u>invitation.kdealbap.com/eyJ0Ijoi…</u>
+          </div>
+          <p className="wa-time">7:42 p. m.</p>
+        </div>
+      </div>
+      <div className={`scr scr-sb${paso === 1 ? ' on' : ''}`}>
+        <div className="sb">
+          <span className="sb-back" />
+          <span className="sb-card">
+            <span className="sb-k">Con mucho cariño</span>
+            <span className="sb-para">Para</span>
+            <span className="sb-name">Familia Rojas Pérez</span>
+            <span className="sb-lug">Tienen <b>4 lugares</b> reservados</span>
+          </span>
+          <span className="sb-front" />
+          <span className="sb-flap" />
+          <span className="sb-seal"><i>&amp;</i></span>
+        </div>
+      </div>
+      <div className={`scr scr-rs${paso === 2 ? ' on' : ''}`}>
+        <p className="rs-h">¿Quiénes van?</p>
+        <ul>
+          {['Marcela', 'Andrés', 'Sofía', 'Tomás'].map((n, k) => <li key={n} className={k < 3 ? 'si' : ''} style={{ '--k': k }}><i />{n}</li>)}
+        </ul>
+        <span className="rs-b">Confirmar · 3 de 4</span>
+        <span className="rs-ok">Respuesta enviada</span>
+      </div>
     </div>
+  )
+}
+
+function Recorrido() {
+  const ref = useRef(null)
+  const pin = useRef(null)
+  const [paso, setPaso] = useState(0)
+  const [libre, setLibre] = useState(false)
+
+  useEffect(() => {
+    if (quieto()) { setLibre(true); setPaso(1); return }
+    let raf = 0
+    const mover = () => {
+      raf = 0
+      const el = ref.current
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      const total = r.height - window.innerHeight
+      const p = Math.min(1, Math.max(0, -r.top / (total || 1)))
+      pin.current?.style.setProperty('--p', p.toFixed(4))
+      setPaso(Math.min(2, Math.floor(p * 3.05)))
+    }
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(mover) }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    mover()
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(raf) }
+  }, [])
+
+  return (
+    <section className={`k-rec${libre ? ' libre' : ''}`} id="recorrido" ref={ref} aria-label="Cómo la vive el invitado">
+      <div className="rec-pin" ref={pin}>
+        <div className="k-wrap rec-g">
+          <div className="rec-t">
+            <h2>Así la vive <span>quien la recibe.</span></h2>
+            <ol className="rec-steps">
+              {FLUJO.map((f, n) => (
+                <li key={f.k} className={n === paso ? 'on' : n < paso ? 'past' : ''}>
+                  <span className="rs-k">{f.k}</span>
+                  <h3>{f.t}</h3>
+                  <p>{f.d}</p>
+                </li>
+              ))}
+            </ol>
+            <div className="rec-bar" aria-hidden="true"><i /></div>
+          </div>
+          <div className="rec-stage" aria-hidden="true">
+            <div className="ph">
+              <div className="ph-body"><Pantalla paso={paso} /><span className="ph-notch" /></div>
+              <span className="ph-chip c1">4 lugares</span>
+              <span className="ph-chip c2">Abierta · 5 vistas</span>
+            </div>
+            <span className="ph-shadow" />
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -210,14 +298,15 @@ function Panel() {
 }
 
 function Pieza({ id }) {
-  if (id === 'part') return <span className="pz pz-part"><i className="fl" /><b>Nombres</b><em>&amp;</em><u /><s>fecha · lugar</s></span>
-  if (id === 'ban') return <span className="pz pz-ban"><i className="hole" /><b>Mesa</b><em>VII</em><u /><s>capitán</s></span>
-  if (id === 'afi') return <span className="pz pz-afi"><b>Encuentra tu mesa</b>{[0, 1, 2, 3, 4, 5].map(i => <u key={i} />)}</span>
+  if (id === 'part') return <span className="pz pz-part"><b>Nombres</b><em>&amp;</em><u /><s>fecha · lugar</s></span>
+  if (id === 'ban') return <span className="pz pz-ban"><i className="hole" /><b>Mesa</b><em>VII</em><s>capitán</s></span>
+  if (id === 'afi') return <span className="pz pz-afi"><b>Encuentra tu mesa</b><span>{[0, 1, 2, 3, 4, 5].map(i => <u key={i} />)}</span></span>
   return <span className="pz pz-led"><b>Bienvenidos</b><u /></span>
 }
 
 export default function Landing() {
   const raiz = useRef(null)
+  const [flota, setFlota] = useState(false)
 
   useEffect(() => {
     const prev = document.title
@@ -237,133 +326,119 @@ export default function Landing() {
     els.forEach(e => { e.style.overflow = 'visible'; e.style.height = 'auto' })
     const app = document.getElementById('app')
     if (app) app.style.position = 'static'
+    const fondo = document.body.style.background
+    document.body.style.background = '#2A0A17'
     return () => {
       document.title = prev
       creadas.forEach(m => m.remove())
       previos.forEach(([m, c]) => m.setAttribute('content', c))
       els.forEach((e, n) => { e.style.overflow = guardado[n][0]; e.style.height = guardado[n][1]; e.style.position = guardado[n][2] })
+      document.body.style.background = fondo
     }
   }, [])
 
-  // Revelado al entrar en pantalla + paralaje leve (ambos apagados con prefers-reduced-motion)
+  // Revelado al entrar en pantalla (apagado con prefers-reduced-motion) y el botón
+  // flotante de WhatsApp: aparece al dejar atrás el hero y se va al llegar al cierre
   useEffect(() => {
     const root = raiz.current
-    if (!root) return
-    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const rvs = root.querySelectorAll('.rv')
-    if (quieto || !('IntersectionObserver' in window)) { rvs.forEach(e => e.classList.add('in')); return }
+    if (!root || !('IntersectionObserver' in window)) return
+    const hero = root.querySelector('.k-hero')
+    const fin = root.querySelector('.k-fin')
+    const vis = new Map()
+    const io2 = new IntersectionObserver(es => {
+      es.forEach(e => vis.set(e.target, e.isIntersecting))
+      setFlota(!vis.get(hero) && !vis.get(fin))
+    }, { threshold: 0 })
+    if (hero) io2.observe(hero)
+    if (fin) io2.observe(fin)
+    if (quieto()) return () => io2.disconnect()
     root.classList.add('js')
+    const rvs = root.querySelectorAll('.rv')
     const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } }), { threshold: 0.12, rootMargin: '0px 0px -6% 0px' })
     rvs.forEach(e => io.observe(e))
-    const pars = [...root.querySelectorAll('[data-par]')]
-    let raf = 0
-    const mover = () => {
-      raf = 0
-      const h = window.innerHeight
-      pars.forEach(e => {
-        const r = e.getBoundingClientRect()
-        if (r.bottom < -100 || r.top > h + 100) return
-        e.style.setProperty('--py', `${((r.top + r.height / 2 - h / 2) * Number(e.dataset.par)).toFixed(1)}px`)
-      })
-    }
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(mover) }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
-    mover()
-    return () => { io.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(raf); root.classList.remove('js') }
+    return () => { io.disconnect(); io2.disconnect(); root.classList.remove('js') }
   }, [])
 
   return (
     <div className="lnd" ref={raiz}>
-      <nav className="nv">
-        <div className="lnd-wrap nv-in">
-          <a className="nv-mk" href="#top" aria-label="kdealbap · invitation"><span>k</span>dealbap<em> · invitation</em></a>
-          <a className="nv-a" href={HREF_CONTACTO} {...(WHATSAPP_VENTAS ? { target: '_blank', rel: 'noopener' } : {})}>Cotizar</a>
+      <nav className="k-nav">
+        <div className="k-wrap k-nav-in">
+          <a className="k-mk" href="#top" aria-label="kdealbap · invitation"><b>kdealbap</b><span>invitation</span></a>
+          <a className="k-nav-a" href={HREF_CONTACTO} {...EXTERNO}>Cotizar</a>
         </div>
       </nav>
 
-      <header className="lhero" id="top">
-        <div className="lnd-wrap lhero-g">
-          <div className="lhero-t">
-            <p className="ey rv in">Invitaciones digitales · Barranquilla</p>
-            <h1 className="rv in" style={{ '--d': '120ms' }}>Que abrir tu invitación se sienta como <em>recibir una carta.</em></h1>
-            <p className="lead rv in" style={{ '--d': '260ms' }}>Un enlace personal para cada familia, con su nombre y sus lugares. Llega por WhatsApp, se abre como un sobre y responde con un toque.</p>
-            <div className="row rv in" style={{ '--d': '380ms' }}>
+      <header className="k-hero" id="top">
+        <div className="k-wrap h-g">
+          <h1 className="h-t">
+            <span className="sr">Invitaciones digitales con el nombre de cada invitado</span>
+            <span className="h-para" aria-hidden="true">Para</span>
+            <Nombre />
+          </h1>
+          <figure className="h-ph">
+            <img src={p5875} alt="Angely y Kevin al atardecer, en su sesión de preboda" fetchPriority="high" />
+            <figcaption>Angely &amp; Kevin · 12·IX·2026</figcaption>
+          </figure>
+          <div className="h-b">
+            <p className="h-lead">Invitaciones digitales con el nombre de cada familia. Llegan por WhatsApp, se abren como un sobre y se responden con un toque.</p>
+            <div className="h-row">
               <Cta>Cotiza tu evento</Cta>
-              <a className="lk" href="#historia">Ver el caso real</a>
+              <a className="k-lk" href="#historia">Ver la boda que lo empezó</a>
             </div>
           </div>
-          <div className="lhero-s rv in" style={{ '--d': '300ms' }}><Sobre /></div>
         </div>
-        <p className="lhero-f lnd-wrap">Para bodas, 15 años, cumpleaños, bautizos, grados y eventos corporativos.</p>
+        <p className="k-wrap h-f">Bodas <i /> 15 años <i /> Cumpleaños <i /> Bautizos <i /> Grados <i /> Corporativos <span>Hechas en Barranquilla</span></p>
       </header>
 
-      <section className="lsec" id="flujo">
-        <div className="lnd-wrap">
-          <Rev className="lsec-h"><p className="ey">El recorrido</p><h2>De un mensaje de WhatsApp a <em>una respuesta.</em></h2></Rev>
-          <ol className="flujo">
-            {FLUJO.map((f, n) => (
-              <Rev as="li" key={f.k} d={n * 120} className="fl">
-                <div className="fl-art" aria-hidden="true">
-                  {n === 0 && <div className="wa"><span className="wa-who">Ana · hoy</span><span className="wa-b">Los esperamos. Abre tu invitación aquí<br /><u>invitation.kdealbap.com/eyJ0Ijoi…</u></span></div>}
-                  {n === 1 && <div className="hi"><span>Hola,</span><b>Familia Rojas</b><i /></div>}
-                  {n === 2 && <div className="rs"><span>¿Quiénes van?</span><p><i className="on" />Marcela<br /><i className="on" />Andrés<br /><i className="on" />Sofía<br /><i />Tomás</p><span className="rs-b">3 de 4</span></div>}
-                </div>
-                <p className="fl-k">{f.k}</p>
-                <h3>{f.t}</h3>
-                <p>{f.d}</p>
-              </Rev>
-            ))}
-          </ol>
-        </div>
-      </section>
+      <Recorrido />
 
-      <section className="lsec tint" id="panel">
-        <div className="lnd-wrap panel-g">
-          <Rev className="panel-t">
-            <p className="ey">Lo que controla el organizador</p>
-            <h2>El número exacto, <em>antes de que lo pida el catering.</em></h2>
-            <p className="lead">Un panel privado donde cada invitación tiene un estado, cada tarjeta unos cupos y cada persona un lugar en el salón.</p>
-            <dl className="marg">
-              {MARGINALIA.map(([k, t, d]) => (
-                <div key={k}><dt><span>{k}</span>{t}</dt><dd>{d}</dd></div>
-              ))}
-            </dl>
+      <section className="k-pan" id="panel">
+        <div className="k-wrap pan-g">
+          <Rev className="pan-t">
+            <h2>El número exacto, <span>antes de que lo pida el catering.</span></h2>
+            <p className="k-lead">Un panel privado donde cada invitación tiene un estado, cada tarjeta unos cupos y cada persona un lugar en el salón.</p>
           </Rev>
-          <Rev className="panel-f" d={160}><div data-par="-0.05" className="par"><Panel /></div></Rev>
+          <Rev className="pan-f" d={120}><Panel /></Rev>
+          <ul className="pan-l">
+            {MARGINALIA.map(([t, d], n) => (
+              <Rev as="li" key={t} d={n * 60}><h3>{t}</h3><p>{d}</p></Rev>
+            ))}
+          </ul>
         </div>
       </section>
 
-      <section className="lsec" id="historia">
-        <div className="lnd-wrap hist">
-          <Rev className="hist-t">
-            <p className="ey">Caso real</p>
-            <h2>La boda que <em>lo empezó todo.</em></h2>
-            <p className="lead">Angely y Kevin la hicieron para su matrimonio del 12 de septiembre de 2026. Los invitados la abrieron, les encantó y empezaron a pedirla para sus propios eventos.</p>
-            <ul className="cifras">
+      <section className="k-his" id="historia">
+        <div className="k-wrap his-g">
+          <p className="his-date" aria-hidden="true">12·IX<span>·26</span></p>
+          <Rev className="his-t">
+            <h2>La boda que lo empezó todo.</h2>
+            <p className="k-lead">Angely y Kevin la hicieron para su matrimonio del 12 de septiembre de 2026. Los invitados la abrieron, les encantó y empezaron a pedirla para sus propios eventos.</p>
+            <ul className="his-n">
               <li><b>48</b><span>invitaciones</span></li>
               <li><b>83</b><span>personas</span></li>
               <li><b>11</b><span>mesas redondas</span></li>
             </ul>
-            <img className="sello" src={logoWedding} alt="Monograma A&K" loading="lazy" />
           </Rev>
-          <div className="hist-f">
-            <figure className="ph ph1" data-par="0.06"><img src={p5810} alt="Angely y Kevin" loading="lazy" /><figcaption>Angely &amp; Kevin</figcaption></figure>
-            <figure className="ph ph2" data-par="-0.08"><img src={e6181} alt="Retrato de la pareja" loading="lazy" /></figure>
-            <figure className="ph ph3" data-par="0.03"><img src={p5887} alt="Angely y Kevin en su sesión" loading="lazy" /><figcaption>La sesión de preboda</figcaption></figure>
+          <div className="his-f">
+            <figure className="hf hf1"><img src={p5810} alt="Angely y Kevin frente a una puerta colonial" loading="lazy" /><span className="his-seal"><img src={logoWedding} alt="Monograma A&K" loading="lazy" /></span></figure>
+            <figure className="hf hf2"><img src={p5661} alt="El anillo de compromiso" loading="lazy" /></figure>
+            <figure className="hf hf3"><img src={e6181} alt="Angely y Kevin en el mar al atardecer" loading="lazy" /><figcaption>La sesión de preboda</figcaption></figure>
           </div>
         </div>
       </section>
 
-      <section className="lsec tint" id="piezas">
-        <div className="lnd-wrap">
-          <Rev className="lsec-h"><p className="ey">Más allá de la pantalla</p><h2>Lo digital se <em>puede tocar.</em></h2><p className="lead">Con la misma identidad de la invitación, preparamos lo que se imprime o se proyecta el día del evento.</p></Rev>
-          <ul className="piezas">
+      <section className="k-pz" id="piezas">
+        <div className="k-wrap">
+          <Rev className="pz-h">
+            <h2>Y también se toca.</h2>
+            <p className="k-lead">Con la misma identidad de la invitación, preparamos lo que se imprime o se proyecta el día del evento.</p>
+          </Rev>
+          <ul className="pz-g">
             {PIEZAS.map((p, n) => (
-              <Rev as="li" key={p.id} d={n * 90}>
+              <Rev as="li" key={p.id} d={n * 80} className={`pz-i pz-i-${p.id}`}>
                 <div className="pz-box"><Pieza id={p.id} /></div>
                 <h3>{p.t}</h3>
-                <p className="med">{p.m}</p>
+                <p className="pz-m">{p.m}</p>
                 <p>{p.d}</p>
               </Rev>
             ))}
@@ -371,74 +446,84 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="lsec" id="eventos">
-        <div className="lnd-wrap">
-          <Rev className="lsec-h"><p className="ey">Para cada celebración</p><h2>Una invitación <em>a la medida.</em></h2></Rev>
-          <ul className="evs">
+      <section className="k-ev" id="eventos">
+        <div className="k-wrap">
+          <h2 className="ev-h">Para lo que celebres</h2>
+          <ul className="ev-l">
             {EVENTOS.map(([e, d], n) => (
-              <Rev as="li" key={e} d={n * 60}><span className="ev-n">{e}</span><span className="ev-d">{d}</span></Rev>
+              <Rev as="li" key={e} d={n * 50}><span className="ev-n">{e}</span><span className="ev-d">{d}</span></Rev>
             ))}
           </ul>
         </div>
       </section>
 
-      <section className="lsec tint" id="proceso">
-        <div className="lnd-wrap proc">
-          <Rev className="proc-t"><p className="ey">Cómo se hace</p><h2>Cuatro pasos, <em>sin enredos.</em></h2></Rev>
-          <ol className="pasos">
+      <section className="k-pr" id="proceso">
+        <div className="k-wrap">
+          <Rev><h2 className="pr-h">De la primera conversación <span>al último invitado sentado.</span></h2></Rev>
+          <ol className="pr-l">
             {PASOS.map((p, n) => (
-              <Rev as="li" key={p.t} d={n * 90}><span className="pn-num">{n + 1}</span><div><h3>{p.t}</h3><p>{p.d}</p></div></Rev>
+              <Rev as="li" key={p.t} d={n * 90}><span className="pr-n">{n + 1}</span><h3>{p.t}</h3><p>{p.d}</p></Rev>
             ))}
           </ol>
         </div>
       </section>
 
-      <section className="lsec" id="paquetes">
-        <div className="lnd-wrap">
-          <Rev className="lsec-h"><p className="ey">Paquetes</p><h2>Tres maneras de <em>empezar.</em></h2><p className="lead">Precios en pesos colombianos, por evento. Video para pantallas y piezas impresas a medida se cotizan aparte.</p></Rev>
-          <div className="paqs">
+      <section className="k-paq" id="paquetes">
+        <div className="k-wrap">
+          <Rev className="paq-h">
+            <h2>¿Solo la invitación, <span>o la noche entera?</span></h2>
+            <p className="k-lead">Precios en pesos colombianos, por evento. Video para pantallas y piezas impresas a medida se cotizan aparte.</p>
+          </Rev>
+          <div className="paq-g">
             {PAQUETES.map((p, n) => (
               <Rev as="article" key={p.n} d={n * 100} className={`paq${p.dest ? ' dest' : ''}`}>
-                {p.dest && <span className="paq-s" aria-hidden="true"><i>&amp;</i></span>}
+                {p.dest && <span className="paq-s">Recomendado</span>}
                 <h3>{p.n}</h3>
                 <p className="paq-l">{p.l}</p>
-                <p className="paq-p"><span>$</span>{p.precio}<small>COP</small></p>
+                <p className="paq-p"><span className="cur">$</span>{p.precio}<small>COP</small></p>
                 <ul>{p.xs.map(x => <li key={x}>{x}</li>)}</ul>
+                <a className="paq-a" href={HREF_CONTACTO} {...EXTERNO}>Cotizar {p.n}<Flecha /></a>
               </Rev>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="lsec tint">
-        <div className="lnd-wrap faq">
-          <Rev className="faq-t"><p className="ey">Preguntas</p><h2>Lo que <em>suelen preguntar.</em></h2></Rev>
+      <section className="k-faq">
+        <div className="k-wrap faq-g">
+          <Rev><h2>Preguntas, con respuesta corta.</h2></Rev>
           <Rev className="faq-l" d={100}>
             {FAQ.map(([q, a]) => (
-              <details key={q}><summary>{q}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" fill="none" stroke="currentColor" strokeWidth="1.2" /></svg></summary><p>{a}</p></details>
+              <details key={q}><summary>{q}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" fill="none" stroke="currentColor" strokeWidth="1.8" /></svg></summary><p>{a}</p></details>
             ))}
           </Rev>
         </div>
       </section>
 
-      <section className="fin" id="contacto">
-        <div className="lnd-wrap">
-          <Rev>
-            <p className="ey">Escríbenos</p>
-            <h2>Cuéntanos de <em>tu evento.</em></h2>
-            <p className="lead">Fecha, lugar y cuántos invitados. Con eso te decimos qué paquete te conviene.</p>
-            {HAY_CONTACTO ? <Cta>Cotiza tu evento</Cta> : <p className="escr">Escríbenos</p>}
-          </Rev>
+      <section className="k-fin" id="contacto">
+        <div className="k-wrap fin-g">
+          <h2>Cuéntanos de tu evento.</h2>
+          <div className="fin-b">
+            <p>Fecha, lugar y cuántos invitados. Con eso te decimos qué paquete te conviene.</p>
+            {HAY_CONTACTO ? <Cta alt>Cotiza tu evento</Cta> : <p className="fin-e">Escríbenos</p>}
+          </div>
         </div>
       </section>
 
-      <footer className="ft">
-        <div className="lnd-wrap ft-in">
-          <span className="nv-mk"><span>k</span>dealbap<em> · invitation</em></span>
+      <footer className="k-ft">
+        <div className="k-wrap ft-in">
+          <span className="k-mk"><b>kdealbap</b><span>invitation</span></span>
           <span>Hecho a mano en Barranquilla, Colombia</span>
           <a href="#top">Volver arriba</a>
         </div>
       </footer>
+
+      {HAY_CONTACTO && (
+        <a className={`k-float${flota ? ' on' : ''}`} href={HREF_CONTACTO} {...EXTERNO} tabIndex={flota ? 0 : -1} aria-hidden={!flota}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+          {WHATSAPP_VENTAS ? 'Cotiza por WhatsApp' : 'Cotiza tu evento'}
+        </a>
+      )}
     </div>
   )
 }
