@@ -79,10 +79,31 @@ const PASOS = [
   { t: 'Te acompañamos', d: 'Ves las respuestas llegar, armas las mesas y, si quieres, imprimimos lo que haga falta.' },
 ]
 
+// Precios en pesos colombianos (noviembre de 2026).
 const PAQUETES = [
-  { n: 'Esencial', l: 'Para reuniones íntimas', xs: ['Invitación digital con la historia y los datos del evento', 'Un enlace personal por familia', 'Confirmación en línea', 'Panel con vistas y cupos'] },
-  { n: 'Completa', l: 'Para la mayoría de eventos', dest: true, xs: ['Todo lo de Esencial', 'Plano de mesas y capitanes', 'Excel de invitados con fórmulas vivas', 'Participación impresa y cartel de bienvenida', 'Tarjetas de puesto'] },
-  { n: 'Premium', l: 'Para una noche de cine', xs: ['Todo lo de Completa', 'Video y cartelas para las pantallas LED', 'Minuto a minuto con la música para el DJ', 'Piezas impresas a medida'] },
+  { n: 'Lite', l: 'Invitación personalizada', precio: '150.000', xs: [
+    'Invitación digital con las fotos y los datos de tu evento',
+    'Un enlace personal por familia, con su nombre',
+    'Cupos asignados en cada invitación',
+    'Sobre de apertura y música de fondo',
+    'Ubicación, código de vestuario y agregar al calendario',
+  ] },
+  { n: 'Pro', l: 'Con panel de administración', precio: '250.000', dest: true, xs: [
+    'Todo lo de Lite',
+    'Tu propio panel para manejar a los invitados',
+    'Confirmación en línea y registro de llamadas',
+    'Base de datos propia: quién abrió, quién confirmó y cuántos van',
+    'Envío por WhatsApp con un mensaje para cada familia',
+    'Excel de invitados con fórmulas vivas',
+  ] },
+  { n: 'Max', l: 'Todo el diseño y la operación', precio: '400.000', xs: [
+    'Todo lo de Pro',
+    'Diseño a tu medida dentro de la app: colores, letras y fotos',
+    'Plano del salón con mesas redondas y capitanes',
+    'Evento activo y configuración general desde el panel',
+    'Subdominio propio: tunombre.invitation.kdealbap.com',
+    'Afiche de bienvenida y hojas de mesa listos para imprimir',
+  ] },
 ]
 
 const FAQ = [
@@ -374,13 +395,14 @@ export default function Landing() {
 
       <section className="lsec" id="paquetes">
         <div className="lnd-wrap">
-          <Rev className="lsec-h"><p className="ey">Paquetes</p><h2>Tres maneras de <em>empezar.</em></h2><p className="lead">Referencias para orientarte. Cada evento se cotiza a su medida.</p></Rev>
+          <Rev className="lsec-h"><p className="ey">Paquetes</p><h2>Tres maneras de <em>empezar.</em></h2><p className="lead">Precios en pesos colombianos, por evento. Video para pantallas y piezas impresas a medida se cotizan aparte.</p></Rev>
           <div className="paqs">
             {PAQUETES.map((p, n) => (
               <Rev as="article" key={p.n} d={n * 100} className={`paq${p.dest ? ' dest' : ''}`}>
                 {p.dest && <span className="paq-s" aria-hidden="true"><i>&amp;</i></span>}
                 <h3>{p.n}</h3>
                 <p className="paq-l">{p.l}</p>
+                <p className="paq-p"><span>$</span>{p.precio}<small>COP</small></p>
                 <ul>{p.xs.map(x => <li key={x}>{x}</li>)}</ul>
               </Rev>
             ))}

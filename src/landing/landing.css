@@ -208,6 +208,10 @@
 .paq.dest{background:linear-gradient(170deg,var(--ink),#432922);color:var(--ivory);border-color:var(--ink);box-shadow:0 40px 60px -30px rgba(42,28,23,.6)}
 .paq.dest h3{color:var(--gold-l)}
 .paq.dest .paq-l{color:var(--gold-l)}
+.lnd .paq-p{font-family:var(--fd);font-size:2.6rem;font-weight:400;line-height:1;margin:-.4rem 0 1.5rem;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.01em}
+.lnd .paq-p span{font-size:.5em;vertical-align:.7em;margin-right:.12em;opacity:.7}
+.lnd .paq-p small{font-size:.62rem;letter-spacing:.2em;margin-left:.45em;opacity:.6;font-family:inherit}
+.paq.dest .paq-p{color:var(--ivory)}
 .paq.dest li{color:rgba(251,247,240,.78);border-color:rgba(255,255,255,.14)}
 .paq.dest li::before{border-color:var(--gold-l)}
 .paq-s{position:absolute;right:1.4rem;top:-22px;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#c4574a,var(--wax) 55%,#5e2219);display:grid;place-items:center;box-shadow:0 4px 8px rgba(0,0,0,.3),inset 0 2px 2px rgba(255,255,255,.25)}
