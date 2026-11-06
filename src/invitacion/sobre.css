@@ -99,11 +99,12 @@
 
 /* ─── El sobrescrito: a mano, con tinta, como lo pondría quien lo escribe ─── */
 /* «Para» en versalitas y debajo el nombre, con el cuerpo que da tallaPara() en
-   Sobre.jsx (--talla, en unidades --u). Máximo dos renglones, sin pasar del borde. */
+   Sobre.jsx (--talla, en unidades --u): ella es la que lo deja en dos renglones.
+   Sin line-clamp ni overflow:hidden: en Safari cortan la cola de la «z» y de la «g»
+   de Parisienne, que bajan más allá del renglón. El padding inferior les da aire. */
 .s-sobrescrito{left:13%;right:7%;top:61.5%;bottom:7%;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:calc(var(--u) * 1.2);text-align:center;pointer-events:none;transform:rotate(-2.4deg)}
 .s-para-t{font:500 max(.55rem,calc(var(--u) * 2.3))/1 var(--sb-disp);letter-spacing:.32em;text-transform:uppercase;color:var(--sb-tinta-2);padding-left:.32em;animation:sb-aparece .7s ease both}
-.s-sobrescrito b{max-width:100%;font:400 calc(var(--u) * var(--talla,9.4))/1.12 var(--sb-script);color:var(--sb-tinta);text-shadow:0 .5px 0 rgba(255,255,255,.35);text-wrap:balance;overflow-wrap:break-word;padding:0 .1em;
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;animation:sb-aparece .7s ease both}
+.s-sobrescrito b{max-width:100%;font:400 calc(var(--u) * var(--talla,9.4))/1.12 var(--sb-script);color:var(--sb-tinta);text-shadow:0 .5px 0 rgba(255,255,255,.35);text-wrap:balance;overflow-wrap:break-word;padding:.05em .2em .35em;animation:sb-aparece .7s ease both}
 .s-sobrescrito b.espera{animation:none}
 @keyframes sb-aparece{from{opacity:0}}
 
