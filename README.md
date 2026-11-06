@@ -121,7 +121,7 @@ npx supabase functions deploy submit-rsvp
 npm run build     # → dist/
 ```
 
-Se publica en el Worker de Cloudflare `weddingskya` con `scriptsdesplegar.bat`
+Se publica en el Worker de Cloudflare `weddingskya` con `scripts/desplegar.bat`
 (publica el último commit). El fallback de SPA lo da `wrangler.jsonc`
 (`not_found_handling`); no uses `_redirects`: el Worker rechaza `/* /index.html 200`.
 
