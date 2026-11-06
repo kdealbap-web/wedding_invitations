@@ -3,6 +3,7 @@ import { useGuest } from '../../invitacion/GuestContext'
 import Rsvp from '../../invitacion/Rsvp'
 import { fechaLarga, fechaCorta, googleCalUrl, descargarIcs } from '../../invitacion/fechas'
 import { useFoto } from './fotos'
+import HechoPor from '../../invitacion/HechoPor'
 
 // ─── Secciones de la plantilla de quinceañera (carpeta «xv») ───
 // Todo el contenido sale de event.config (ver 008_multi_evento.sql): nada de
@@ -81,7 +82,7 @@ export function XHero() {
     <>
       <Corona />
       <p className="xv-eyebrow">Te invito a celebrar</p>
-      <h1 className="xv-titulo">{(cfg.titulo || event?.titulo || '').split(/(d+)/).map((t, i) => (i % 2 ? <span key={i} className="xv-num">{t}</span> : t))}</h1>
+      <h1 className="xv-titulo">{(cfg.titulo || event?.titulo || '').split(/(\d+)/).map((t, i) => (i % 2 ? <span key={i} className="xv-num">{t}</span> : t))}</h1>
       <p className="xv-nombre">{nombre}</p>
       {cfg.anfitrion && cfg.anfitrion !== nombre && <p className="xv-apellido">{cfg.anfitrion}</p>}
       <Orn />
@@ -284,7 +285,8 @@ export function XRsvp({ onToast }) {
 // ─── Guarda la fecha: solo la foto, entera ───
 // El texto va en la imagen misma; aquí solo un pie discreto.
 export function XGuarda() {
-  return <p className="xv-guarda">Guarda la fecha</p>
+  // El cartel de la foto ya dice «Reserva la fecha»: aquí solo va el crédito
+  return <HechoPor />
 }
 
 // ─── Cierre ───
