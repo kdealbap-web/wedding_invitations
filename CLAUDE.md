@@ -1238,8 +1238,9 @@ La sección correcta del RSVP es `src/sections/S10Rsvp.jsx`, **no**
 
 **Worker de Cloudflare `weddingskya`** (solo estáticos, `wrangler.jsonc`, SPA por
 `not_found_handling`). Sirve `invitation.kdealbap.com` y los subdominios de evento.
-**No hay despliegue automático**: hacer push a `master` no publica nada (el Worker
-se quedó en un build de junio). Se publica desde la máquina:
+**Push a `master` = publicar**: Workers Builds compila y despliega solo. (También
+compila el proyecto de Pages `weddingkya`, redundante, que sirve weddingkya.kdealbap.com.)
+`desplegar.bat` queda como plan B, para publicar desde la máquina sin pasar por git:
 
 ```
 scriptsdesplegar.bat            # pide Account ID + API Token, compila y sube dist/
@@ -1248,8 +1249,10 @@ scriptscloudflare-dominios.bat  # conecta dominios nuevos al Worker (idempotente
 
 - `desplegar.bat` se niega si hay cambios sin commitear en `src/`: a los invitados
   solo llega lo commiteado.
-- El build de producción toma `.env` (llaves de Supabase, local) + `.env.production`
-  (`VITE_APP_URL`, público, en el repo).
+- **Las variables del build viven en `.env.production`, en el repo** (URL, anon key y
+  `VITE_APP_URL`, todas públicas). No dependas de las variables del panel de
+  Cloudflare: el Worker compiló meses sin la URL de Supabase y cada push dejaba las
+  invitaciones rotas. La API de Workers Builds además rechaza nuestro token (401).
 - El token es un API Token general (plantilla «Edit Cloudflare Workers» + Zone DNS,
   Zone Read, SSL). Un token de **R2** no sirve. Los `.bat` lo piden por consola y no
   lo escriben en disco; los `.log` están gitignoreados.
