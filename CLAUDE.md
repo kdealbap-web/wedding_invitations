@@ -1240,25 +1240,16 @@ La sección correcta del RSVP es `src/sections/S10Rsvp.jsx`, **no**
 `not_found_handling`). Sirve `invitation.kdealbap.com` y los subdominios de evento.
 **Push a `master` = publicar**: Workers Builds compila y despliega solo. (También
 compila el proyecto de Pages `weddingkya`, redundante, que sirve weddingkya.kdealbap.com.)
-`desplegar.bat` queda como plan B, para publicar desde la máquina sin pasar por git:
+No hay otro camino de publicación: los scripts de despliegue manual
+(`scripts/desplegar.bat`, `scripts/cloudflare-*`) están **gitignoreados** y solo
+viven en la máquina de Kevin. No los recrees ni los propongas para publicar.
 
-```
-scriptsdesplegar.bat            # pide Account ID + API Token, compila y sube dist/
-scriptscloudflare-dominios.bat  # conecta dominios nuevos al Worker (idempotente)
-```
-
-- `desplegar.bat` se niega si hay cambios sin commitear en `src/`: a los invitados
-  solo llega lo commiteado.
 - **Las variables del build viven en `.env.production`, en el repo** (URL, anon key y
   `VITE_APP_URL`, todas públicas). No dependas de las variables del panel de
   Cloudflare: el Worker compiló meses sin la URL de Supabase y cada push dejaba las
   invitaciones rotas. La API de Workers Builds además rechaza nuestro token (401).
-- El token es un API Token general (plantilla «Edit Cloudflare Workers» + Zone DNS,
-  Zone Read, SSL). Un token de **R2** no sirve. Los `.bat` lo piden por consola y no
-  lo escriben en disco; los `.log` están gitignoreados.
-- **Evento nuevo con subdominio**: añadir el host a `DOMINIOS` en
-  `scripts/cloudflare-dominios.mjs`, correr el `.bat` y poner `config.subdominio` en
-  el evento. El certificado de segundo nivel (`x.invitation.kdealbap.com`) lo emite
+- **Evento nuevo con subdominio**: conectar el host al Worker en Cloudflare
+  (Settings → Domains & Routes) y poner `config.subdominio` en el evento. El certificado de segundo nivel (`x.invitation.kdealbap.com`) lo emite
   Cloudflare solo en unos minutos.
 
 Las Edge Functions y las migraciones se despliegan aparte, contra Supabase

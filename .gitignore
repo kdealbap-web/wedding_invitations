@@ -49,3 +49,7 @@ src/imagenes_editadas/
 # Material de clientes: nombres reales de invitados y fotos originales
 XV MAUREN/
 *.zip
+
+# Despliegue manual a Cloudflare: solo local. Publicar = push a master.
+scripts/desplegar.bat
+scripts/cloudflare-*
